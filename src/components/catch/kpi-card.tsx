@@ -19,15 +19,16 @@ export function KpiCard({ label, value, hint, icon: Icon }: KpiCardProps) {
         <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
           <Icon className="size-4" />
         </span>
-        <div className="min-w-0 space-y-0.5">
+        <div className="min-w-0 flex-1 space-y-0.5">
           <p className="truncate text-xs font-medium text-muted-foreground">{label}</p>
           <p className="text-lg font-semibold leading-tight">{value}</p>
           <p className="truncate text-[11px] text-muted-foreground">{hint}</p>
+          <span className="mt-1.5 inline-block rounded border px-1 py-px text-[10px] uppercase tracking-wide text-muted-foreground placeholder-hatch">
+            Platzhalter
+          </span>
         </div>
-        <span className="absolute right-2 top-2 rounded border px-1 py-px text-[10px] uppercase tracking-wide text-muted-foreground placeholder-hatch">
-          Platzhalter
-        </span>
       </CardContent>
     </Card>
+
   );
 }
