@@ -8,7 +8,10 @@ import { EmptyState } from "@/components/layout/empty-state";
 import { PageHeader, PageSection } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchClosedCatches, fetchRunningCatches } from "@/lib/catches";
+import { aggregateCatches } from "@/lib/catch-calculation";
+import { catchToCalculationInput, fetchClosedCatches, fetchRunningCatches } from "@/lib/catches";
+import { formatCurrency, formatPercentValue, formatQuantity } from "@/lib/format";
+
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
