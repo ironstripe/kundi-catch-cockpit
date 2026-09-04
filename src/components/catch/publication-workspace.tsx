@@ -98,7 +98,6 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
   const hasManualEdits = storedGenerated !== null && finalText.trim() !== storedGenerated.trim();
   const unsaved = finalText !== (item.post_final_text ?? "");
   const outdated =
-    item.post_generated_at !== null &&
     item.post_source_signature !== null &&
     item.post_source_signature !== signature &&
     item.post_outdated_decision !== "keep";
