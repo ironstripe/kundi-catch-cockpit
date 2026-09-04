@@ -184,7 +184,7 @@ async function dispatch(catchId: string, userId: string, retry: boolean, publish
     payload: { idempotency_key: idempotencyKey, publish_at: publishAt },
   });
 
-  const origin = process.env["APP_PUBLIC_URL"] ?? "";
+  const origin = process.env["APP_PUBLIC_URL"] ?? "https://kundi-catch-core.lovable.app";
   const payload = {
     catch_id: catchId,
     catch_number: row.catch_number,
