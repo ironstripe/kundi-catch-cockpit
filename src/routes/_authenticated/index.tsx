@@ -29,38 +29,51 @@ export const Route = createFileRoute("/_authenticated/")({
   component: DashboardPage,
 });
 
-const kpis = [
-  {
-    label: "Aktive Catches",
-    value: "3",
-    hint: "Entwurf, Bereit und Publiziert",
-    icon: Fish,
-  },
-  {
-    label: "Geplante Einkaufsmenge",
-    value: "120 kg",
-    hint: "Summe offener Catches",
-    icon: Boxes,
-  },
-  {
-    label: "Erwarteter Deckungsbeitrag",
-    value: "CHF 1'240.00",
-    hint: "Nach Beschaffung und Lieferkosten",
-    icon: TrendingUp,
-  },
-  {
-    label: "Durchschnittlicher Abverkauf",
-    value: "78 %",
-    hint: "Letzte 10 abgeschlossene Catches",
-    icon: Percent,
-  },
-];
-
 function DashboardPage() {
   const running = useQuery({ queryKey: ["catches", "running"], queryFn: fetchRunningCatches });
   const closed = useQuery({ queryKey: ["catches", "closed"], queryFn: fetchClosedCatches });
   const runningCatches = running.data ?? [];
   const closedCatches = closed.data ?? [];
+
+  const totals = aggregateCatches(runningCatches.map(catchToCalculationInput));
+  const quantityText =
+    totals.quantity_by_unit.length === 0
+      ? "—"
+      : totals.quantity_by_unit
+          .map((entry) => formatQuantity(entry.quantity, entry.unit))
+          .join(" · ");
+
+  const kpis = [
+    {
+      label: "Aktive Catches",
+      value: String(runningCatches.length),
+      hint: "Entwurf, Bereit und Publiziert",
+      icon: Fish,
+    },
+    {
+      label: "Geplante Einkaufsmenge",
+      value: quantityText,
+      hint:
+        totals.quantity_by_unit.length > 1
+          ? "Getrennt je Einheit ausgewiesen"
+          : "Summe aktiver Catches",
+      icon: Boxes,
+    },
+    {
+      label: "Erwarteter Deckungsbeitrag",
+      value: formatCurrency(totals.contribution_margin),
+      hint: "Maximaler DB der aktiven Catches",
+      icon: TrendingUp,
+    },
+    {
+      label: "Durchschnittliche geplante Rohmarge",
+      value:
+        totals.weighted_margin === null ? "—" : formatPercentValue(totals.weighted_margin),
+      hint: "Gewichtet über den maximalen Umsatz",
+      icon: Percent,
+    },
+  ];
+
 
   return (
     <>
