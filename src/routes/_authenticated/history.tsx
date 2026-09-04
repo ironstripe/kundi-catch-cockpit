@@ -377,7 +377,7 @@ function HistoryPage() {
       ) : (
         <>
           <Card className="hidden overflow-hidden py-0 lg:block">
-            <CardContent className="p-0">
+            <CardContent className="overflow-x-auto p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
