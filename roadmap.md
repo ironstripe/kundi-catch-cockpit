@@ -33,21 +33,28 @@
 - [x] Dashboard: Ergebniswerte, Durchschnittlicher Abverkauf, Effektiver Gesamt-DB
 - [x] Unit-Tests für Nachkalkulation, Aggregation und Historien-Filter
 
-## Schritt 6: Authentifizierung, Rollen und Einstellungen (in Arbeit)
-- [ ] Anmeldung ohne Selbstregistrierung, Passwort-Reset per E-Mail
-- [ ] Datenmodell: profiles, product_categories, application_settings, erweitertes Audit
-- [ ] Rollen Admin/Editor/Viewer über RLS und UI-Guards, Schutz des letzten Admins
-- [ ] Einstellungen: Standorte, Lieferanten, Produktkategorien, Kalkulationsregeln, WhatsApp-Vorlage, Marke, Nutzer und Rollen, Änderungsprotokoll
-- [ ] Profilmenü mit Name, E-Mail, Rolle, Abmelden
-- [ ] Tests für Authentifizierung, Rollen, Stammdaten, Einstellungen und Audit
+## Schritt 6: Authentifizierung, Rollen und Einstellungen (abgeschlossen)
+- [x] Anmeldung ohne Selbstregistrierung, Passwort-Reset per E-Mail
+- [x] Datenmodell: profiles, product_categories, application_settings, erweitertes Audit
+- [x] Rollen Admin/Editor/Viewer über RLS und UI-Guards, Schutz des letzten Admins
+- [x] Einstellungen: Standorte, Lieferanten, Produktkategorien, Kalkulationsregeln, WhatsApp-Vorlage, Marke, Nutzer und Rollen, Änderungsprotokoll
+- [x] Profilmenü mit Name, E-Mail, Rolle, Abmelden
+- [x] Tests für Authentifizierung, Rollen, Stammdaten, Einstellungen und Audit
 
 ## Schritt 7: Produktionsreife, PWA, Backup und finale Qualitätssicherung
 - [x] Statusübergänge zentral über Datenbank-Trigger erzwungen (inkl. Audit mit Vorher/Nachher)
 - [x] Beispieldaten und Platzhalter-Kennzeichnungen entfernt
-- [x] PWA: Manifest, Icons, Service Worker, Update-Hinweis «Eine neue Version ist verfügbar.» / «Jetzt aktualisieren»
+- [x] PWA: Manifest, Icons, Service Worker, Update-Hinweis «Eine neue Version ist verfügbar.» / «Jetzt aktualisieren"
 - [x] Offline: Indikator im Header, Meldungen «Du bist offline …» und «Verbindung wiederhergestellt.»
 - [x] Excel-Export (Catches, Lieferanten, Standorte, Kategorien, Nutzer, Audit) mit Audit-Eintrag
 - [x] Backup-Webhook mit kurzlebiger signierter URL und Statusanzeige
 - [x] Historie lädt schrittweise (25 Einträge, «Mehr anzeigen»)
-- [x] Automatisierte Tests: 63 grün (Kalkulation, Nachkalkulation, Post, Historienfilter)
-- [ ] Backup-Adresse (BACKUP_WEBHOOK_URL) hinterlegen, sobald das Make.com-Szenario steht
+- [x] Automatisierte Tests: 80 grün (Kalkulation, Nachkalkulation, Post, Instagram-Caption, Historienfilter)
+
+## Instagram-Publikations-Workflow (abgeschlossen)
+- [x] Datenbankfelder für Instagram in `catches`, Statusmaschine, Trigger gegen Manipulation von Ergebnisfeldern
+- [x] Deterministische Caption-Generierung ohne Mengen/Preise/Abholorte, Portrait-Bildzuschnitt im Client
+- [x] Instagram-Workspace auf der Catch-Detailseite (selektieren, Caption editieren, freigeben, publizieren, retry)
+- [x] Einstellungs-Tab «Instagram» für Aktivierung, Default-Publikationszeit und Call-to-Action
+- [x] Sicherer Webhook-Callback unter `/api/public/instagram/callback` mit HMAC-Signatur, Idempotenzschlüssel und Audit-Logging
+- [ ] Make.com-Webhook-URL (`MAKE_INSTAGRAM_WEBHOOK_URL`) hinterlegen, sobald das Szenario steht (vom Benutzer zeitweise übersprungen)
