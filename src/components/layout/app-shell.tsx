@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { KeyRound, LogOut, UserRound } from "lucide-react";
+import { KeyRound, LogOut, UserRound, WifiOff } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { ROLE_LABELS, useRoles } from "@/hooks/use-role";
+import { useOnlineStatus, useServiceWorker } from "@/hooks/use-pwa";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -79,6 +80,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             <SidebarTrigger />
             <Separator orientation="vertical" className="mr-1 h-4" />
             <span className="text-xs font-medium text-muted-foreground">Kundi Catch Cockpit</span>
+            {!online ? (
+              <Badge variant="destructive" className="ml-2 gap-1 text-[10px]">
+                <WifiOff className="size-3" />
+                Offline – Änderungen können nicht gespeichert werden
+              </Badge>
+            ) : null}
             <span className="ml-auto hidden text-xs text-muted-foreground lg:inline">
               Schnell sein. Gut essen. Food Waste vermeiden.
             </span>
