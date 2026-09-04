@@ -40,3 +40,19 @@
 - [ ] Einstellungen: Standorte, Lieferanten, Produktkategorien, Kalkulationsregeln, WhatsApp-Vorlage, Marke, Nutzer und Rollen, Änderungsprotokoll
 - [ ] Profilmenü mit Name, E-Mail, Rolle, Abmelden
 - [ ] Tests für Authentifizierung, Rollen, Stammdaten, Einstellungen und Audit
+
+## Schritt 7: Produktionsreife, PWA, Backup und finale Qualitätssicherung (in Arbeit)
+- [ ] Statusübergänge zentral und serverseitig erzwingen (inkl. Audit mit Vorher/Nachher)
+- [ ] Platzhalter, Beispieldaten und sichtbare technische IDs entfernen
+- [ ] PWA: Manifest, Icons, Service Worker, Update-Hinweis «Eine neue Version ist verfügbar.»
+- [ ] Offline: Indikator, schreibgeschützter Modus, Meldungen
+- [ ] Excel-Export (Catches, Lieferanten, Standorte, Kategorien, Nutzer, Audit) mit Audit-Eintrag
+- [ ] Externes Backup über Webhook-Secret mit kurzlebiger signierter URL und Statusanzeige
+- [ ] Fehlerbehandlung, Bestätigungsdialoge, Doppelklick-/Duplikatschutz
+- [ ] Sicherheits-, Performance-, Responsive- und Accessibility-Review
+- [ ] Rollentests Admin/Editor/Viewer, Felchenfilets-End-to-End-Test
+
+- [x] Excel-Export (Catches, Stammdaten, Nutzer, Audit) im Einstellungen-Tab
+- [x] Backup-Webhook mit kurzlebiger Download-URL und backup_runs-Protokoll
+- [x] PWA: Service Worker, Update-Hinweis, Offline-Indikator
+- [ ] Backup-Adresse (BACKUP_WEBHOOK_URL) hinterlegen

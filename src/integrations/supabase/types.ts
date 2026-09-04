@@ -74,6 +74,39 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_runs: {
+        Row: {
+          actor_id: string | null
+          attempted_at: string
+          created_at: string
+          error_summary: string | null
+          file_name: string
+          id: string
+          status: string
+          succeeded_at: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          attempted_at?: string
+          created_at?: string
+          error_summary?: string | null
+          file_name: string
+          id?: string
+          status?: string
+          succeeded_at?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          attempted_at?: string
+          created_at?: string
+          error_summary?: string | null
+          file_name?: string
+          id?: string
+          status?: string
+          succeeded_at?: string | null
+        }
+        Relationships: []
+      }
       catch_images: {
         Row: {
           caption: string | null
