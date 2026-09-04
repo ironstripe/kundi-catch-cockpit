@@ -24,7 +24,19 @@
 - [x] Warnung bei veralteten Posts, Publikationsbestätigung, Publikationsindikator im Dashboard
 - [x] Unit-Tests für Postgenerierung und Kopier-Fallbacks
 
-## Spätere Schritte (nicht implementiert)
-- Abverkaufs-Rückmeldung, Nachkalkulation und Auswertung
-- Historien-Analysen und Learning
-- Nutzer- und Rollenverwaltung
+## Schritt 5: Nachkalkulation, Abschluss und Historie (abgeschlossen)
+- [x] Datenmodell: Restmenge, Zählzeitpunkt, Learning, Abschluss-, Wiederöffnungs- und Abbruchfelder, Snapshot
+- [x] Nachkalkulation mit Live-Vorschau, Plan/Ist-Vergleich und Break-even-Bewertung
+- [x] Abschluss, Wiederöffnung mit Grund, Abbruch mit Grund, Audit-Einträge
+- [x] Ergebnisansicht auf der Detailseite (fixierte Werte, Learning)
+- [x] Historie mit echten Daten, KPIs, Filtern, Suche und klickbaren Zeilen
+- [x] Dashboard: Ergebniswerte, Durchschnittlicher Abverkauf, Effektiver Gesamt-DB
+- [x] Unit-Tests für Nachkalkulation, Aggregation und Historien-Filter
+
+## Schritt 6: Authentifizierung, Rollen und Einstellungen (in Arbeit)
+- [ ] Anmeldung ohne Selbstregistrierung, Passwort-Reset per E-Mail
+- [ ] Datenmodell: profiles, product_categories, application_settings, erweitertes Audit
+- [ ] Rollen Admin/Editor/Viewer über RLS und UI-Guards, Schutz des letzten Admins
+- [ ] Einstellungen: Standorte, Lieferanten, Produktkategorien, Kalkulationsregeln, WhatsApp-Vorlage, Marke, Nutzer und Rollen, Änderungsprotokoll
+- [ ] Profilmenü mit Name, E-Mail, Rolle, Abmelden
+- [ ] Tests für Authentifizierung, Rollen, Stammdaten, Einstellungen und Audit

@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      application_settings: {
+        Row: {
+          created_at: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+          version?: number
+        }
+        Relationships: []
+      }
       audit_events: {
         Row: {
           action: string
@@ -23,6 +50,7 @@ export type Database = {
           entity_type: string
           id: string
           payload: Json | null
+          reason: string | null
         }
         Insert: {
           action: string
@@ -32,6 +60,7 @@ export type Database = {
           entity_type: string
           id?: string
           payload?: Json | null
+          reason?: string | null
         }
         Update: {
           action?: string
@@ -41,6 +70,7 @@ export type Database = {
           entity_type?: string
           id?: string
           payload?: Json | null
+          reason?: string | null
         }
         Relationships: []
       }
@@ -156,6 +186,7 @@ export type Database = {
           catch_number: string | null
           catch_price: number | null
           category: string | null
+          category_id: string | null
           closed_at: string | null
           closed_by: string | null
           created_at: string
@@ -206,6 +237,7 @@ export type Database = {
           catch_number?: string | null
           catch_price?: number | null
           category?: string | null
+          category_id?: string | null
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
@@ -256,6 +288,7 @@ export type Database = {
           catch_number?: string | null
           catch_price?: number | null
           category?: string | null
+          category_id?: string | null
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
@@ -297,6 +330,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "catches_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "catches_supplier_id_fkey"
             columns: ["supplier_id"]
@@ -392,11 +432,69 @@ export type Database = {
           },
         ]
       }
+      product_categories: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          active: boolean
+          created_at: string
+          email: string | null
+          id: string
+          last_login_at: string | null
+          name: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          email?: string | null
+          id: string
+          last_login_at?: string | null
+          name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_login_at?: string | null
+          name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           contact_note: string | null
           created_at: string
           id: string
+          internal_note: string | null
           is_active: boolean
           name: string
           updated_at: string
@@ -405,6 +503,7 @@ export type Database = {
           contact_note?: string | null
           created_at?: string
           id?: string
+          internal_note?: string | null
           is_active?: boolean
           name: string
           updated_at?: string
@@ -413,6 +512,7 @@ export type Database = {
           contact_note?: string | null
           created_at?: string
           id?: string
+          internal_note?: string | null
           is_active?: boolean
           name?: string
           updated_at?: string
@@ -445,6 +545,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_edit: { Args: never; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -452,6 +553,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_active_user: { Args: never; Returns: boolean }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "editor" | "viewer"

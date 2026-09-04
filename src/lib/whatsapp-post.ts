@@ -5,6 +5,10 @@
  * Nur die beiden freigegebenen Markentexte werden verwendet.
  */
 
+import {
+  DEFAULT_TEMPLATE_SETTINGS,
+  type TemplateSettings,
+} from "@/lib/app-settings";
 import { QUANTITY_UNIT_LABELS } from "@/lib/catch-domain";
 import { APP_LOCALE, APP_TIMEZONE, formatDate } from "@/lib/format";
 
@@ -69,7 +73,10 @@ function clean(value: string | null | undefined): string | null {
  * Erzeugt den vollständigen WhatsApp-Text.
  * Optionale Zeilen ohne Wert entfallen restlos.
  */
-export function generatePostText(source: PostSource): string {
+export function generatePostText(
+  source: PostSource,
+  template: TemplateSettings = DEFAULT_TEMPLATE_SETTINGS,
+): string {
   const blocks: string[] = [];
 
   blocks.push("🐟 *KUNDI CATCH*");
@@ -80,10 +87,16 @@ export function generatePostText(source: PostSource): string {
 
   const productLines: string[] = [`*${source.product_name.trim()}*`];
   const description = clean(source.description);
-  if (description) productLines.push(description);
   const packaging = clean(source.packaging);
-  if (packaging && !(description && normalise(description).includes(normalise(packaging)))) {
-    productLines.push(packaging);
+  for (const field of template.detail_order) {
+    if (field === "description" && description) productLines.push(description);
+    if (
+      field === "packaging" &&
+      packaging &&
+      !(description && normalise(description).includes(normalise(packaging)))
+    ) {
+      productLines.push(packaging);
+    }
   }
   blocks.push(productLines.join("\n"));
 
@@ -93,8 +106,11 @@ export function generatePostText(source: PostSource): string {
     const hasComparison = regular !== null && Number.isFinite(regular) && regular > catchPrice;
     if (hasComparison) {
       const discount = ((regular - catchPrice) / regular) * 100;
+      const priceLine = `~${postPrice(regular, source.quantity_unit)}~ → *${postPrice(catchPrice, source.quantity_unit)}* 🔥`;
       blocks.push(
-        `~${postPrice(regular, source.quantity_unit)}~ → *${postPrice(catchPrice, source.quantity_unit)}* 🔥\n${postPercent(discount)} günstiger`,
+        template.show_discount && discount > 0
+          ? `${priceLine}\n${postPercent(discount)} günstiger`
+          : priceLine,
       );
     } else {
       blocks.push(`*KUNDI CATCH ${postPrice(catchPrice, source.quantity_unit)}* 🔥`);
@@ -102,21 +118,21 @@ export function generatePostText(source: PostSource): string {
   }
 
   const stockLines: string[] = [];
-  if (source.expiry_date) stockLines.push(`MHD: ${formatDate(source.expiry_date)}`);
+  if (template.show_expiry && source.expiry_date) stockLines.push(`MHD: ${formatDate(source.expiry_date)}`);
   stockLines.push("*Nur solange Vorrat.*");
   blocks.push(stockLines.join("\n"));
 
   const actionLines: string[] = [];
   const locations = source.location_names.filter((name) => clean(name));
   if (locations.length === 1) {
-    actionLines.push(`📍 Abholung: ${locations[0]}`);
+    actionLines.push(`${template.pickup_label} ${locations[0]}`);
   } else if (locations.length > 1) {
-    actionLines.push(`📍 Abholung:\n${locations.map((name) => `• ${name}`).join("\n")}`);
+    actionLines.push(`${template.pickup_label}\n${locations.map((name) => `• ${name}`).join("\n")}`);
   }
   if (source.available_from) {
-    actionLines.push(`📅 Ab: ${postDateTime(source.available_from, "ab")}`);
+    actionLines.push(`${template.available_from_label} ${postDateTime(source.available_from, "ab")}`);
   }
-  if (source.available_until) {
+  if (template.show_available_until && source.available_until) {
     actionLines.push(`📅 Verfügbar bis: ${postDateTime(source.available_until, "bis")}`);
   }
   if (actionLines.length > 0) blocks.push(actionLines.join("\n"));
