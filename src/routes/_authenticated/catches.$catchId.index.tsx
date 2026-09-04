@@ -17,7 +17,7 @@ import {
 import { fetchCatch } from "@/lib/catches";
 import { formatCurrency, formatDate, formatDateTime, formatQuantity } from "@/lib/format";
 
-export const Route = createFileRoute("/_authenticated/catches/$catchId")({
+export const Route = createFileRoute("/_authenticated/catches/$catchId/")({
   head: () => ({
     meta: [
       { title: "Catch-Detail — Kundi Catch Cockpit" },
