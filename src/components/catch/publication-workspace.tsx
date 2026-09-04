@@ -47,7 +47,11 @@ import {
   optimizedFileName,
   supportsTextClipboard,
 } from "@/lib/whatsapp-image";
-import { generatePostText, postSourceSignature } from "@/lib/whatsapp-post";
+import {
+  generatePostText,
+  isTemplateOnlyChange,
+  postSourceSignature,
+} from "@/lib/whatsapp-post";
 
 const WHATSAPP_WEB_URL = "https://web.whatsapp.com";
 
@@ -101,6 +105,7 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
     item.post_source_signature !== null &&
     item.post_source_signature !== signature &&
     item.post_outdated_decision !== "keep";
+  const templateUpdated = outdated && isTemplateOnlyChange(item.post_source_signature, signature);
 
   const saveText = useMutation({
     mutationFn: async (args: { text: string; reason: "generated" | "edited" | "reset" }) => {
@@ -224,8 +229,9 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
             >
               <p className="flex items-center gap-2 font-medium">
                 <AlertTriangle className="size-4" />
-                Die Catch-Daten wurden geändert. Der WhatsApp-Post ist möglicherweise nicht mehr
-                aktuell.
+                {templateUpdated
+                  ? "Die Kundi-Catch-Vorlage wurde aktualisiert. Der bestehende Post kann neu generiert werden."
+                  : "Die Catch-Daten wurden geändert. Der WhatsApp-Post ist möglicherweise nicht mehr aktuell."}
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button size="sm" onClick={() => applyGenerated("generated")}>
