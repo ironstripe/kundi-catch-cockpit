@@ -1,15 +1,36 @@
 /** PWA-Hilfen: Service-Worker-Registrierung, Update-Hinweis und Online-Status. */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+
+export const OFFLINE_MESSAGE =
+  "Du bist offline. Bereits geladene Daten können angezeigt, aber nicht bearbeitet werden.";
+export const ONLINE_MESSAGE = "Verbindung wiederhergestellt.";
 
 export function useOnlineStatus(): boolean {
   const [online, setOnline] = useState(true);
+  const wasOffline = useRef(false);
 
   useEffect(() => {
     setOnline(navigator.onLine);
-    const goOnline = () => setOnline(true);
-    const goOffline = () => setOnline(false);
+    wasOffline.current = !navigator.onLine;
+    if (!navigator.onLine) {
+      toast.warning(OFFLINE_MESSAGE, { id: "connection-state" });
+    }
+
+    const goOnline = () => {
+      setOnline(true);
+      if (wasOffline.current) {
+        wasOffline.current = false;
+        toast.success(ONLINE_MESSAGE, { id: "connection-state" });
+      }
+    };
+    const goOffline = () => {
+      setOnline(false);
+      wasOffline.current = true;
+      toast.warning(OFFLINE_MESSAGE, { id: "connection-state" });
+    };
+
     window.addEventListener("online", goOnline);
     window.addEventListener("offline", goOffline);
     return () => {
@@ -38,9 +59,10 @@ export function useServiceWorker() {
           worker.addEventListener("statechange", () => {
             if (worker.state === "installed" && navigator.serviceWorker.controller) {
               toast("Eine neue Version ist verfügbar.", {
+                id: "app-update",
                 duration: Infinity,
                 action: {
-                  label: "Neu laden",
+                  label: "Jetzt aktualisieren",
                   onClick: () => {
                     worker.postMessage("SKIP_WAITING");
                     window.location.reload();

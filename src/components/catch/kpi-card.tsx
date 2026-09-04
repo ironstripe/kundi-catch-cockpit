@@ -7,12 +7,10 @@ interface KpiCardProps {
   value: string;
   hint: string;
   icon: LucideIcon;
-  /** Zeigt den Platzhalter-Hinweis, solange keine echten Daten vorliegen. */
-  placeholder?: boolean;
 }
 
 /** Kompakte KPI-Kachel. */
-export function KpiCard({ label, value, hint, icon: Icon, placeholder = false }: KpiCardProps) {
+export function KpiCard({ label, value, hint, icon: Icon }: KpiCardProps) {
   return (
     <Card className="relative overflow-hidden py-0">
       <CardContent className="flex items-start gap-3 p-4">
@@ -23,11 +21,6 @@ export function KpiCard({ label, value, hint, icon: Icon, placeholder = false }:
           <p className="text-xs font-medium leading-tight text-muted-foreground">{label}</p>
           <p className="text-lg font-semibold leading-tight">{value}</p>
           <p className="truncate text-[11px] text-muted-foreground">{hint}</p>
-          {placeholder ? (
-            <span className="mt-1.5 inline-block rounded border px-1 py-px text-[10px] uppercase tracking-wide text-muted-foreground placeholder-hatch">
-              Platzhalter
-            </span>
-          ) : null}
         </div>
       </CardContent>
     </Card>

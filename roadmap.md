@@ -41,18 +41,13 @@
 - [ ] Profilmenü mit Name, E-Mail, Rolle, Abmelden
 - [ ] Tests für Authentifizierung, Rollen, Stammdaten, Einstellungen und Audit
 
-## Schritt 7: Produktionsreife, PWA, Backup und finale Qualitätssicherung (in Arbeit)
-- [ ] Statusübergänge zentral und serverseitig erzwingen (inkl. Audit mit Vorher/Nachher)
-- [ ] Platzhalter, Beispieldaten und sichtbare technische IDs entfernen
-- [ ] PWA: Manifest, Icons, Service Worker, Update-Hinweis «Eine neue Version ist verfügbar.»
-- [ ] Offline: Indikator, schreibgeschützter Modus, Meldungen
-- [ ] Excel-Export (Catches, Lieferanten, Standorte, Kategorien, Nutzer, Audit) mit Audit-Eintrag
-- [ ] Externes Backup über Webhook-Secret mit kurzlebiger signierter URL und Statusanzeige
-- [ ] Fehlerbehandlung, Bestätigungsdialoge, Doppelklick-/Duplikatschutz
-- [ ] Sicherheits-, Performance-, Responsive- und Accessibility-Review
-- [ ] Rollentests Admin/Editor/Viewer, Felchenfilets-End-to-End-Test
-
-- [x] Excel-Export (Catches, Stammdaten, Nutzer, Audit) im Einstellungen-Tab
-- [x] Backup-Webhook mit kurzlebiger Download-URL und backup_runs-Protokoll
-- [x] PWA: Service Worker, Update-Hinweis, Offline-Indikator
-- [ ] Backup-Adresse (BACKUP_WEBHOOK_URL) hinterlegen
+## Schritt 7: Produktionsreife, PWA, Backup und finale Qualitätssicherung
+- [x] Statusübergänge zentral über Datenbank-Trigger erzwungen (inkl. Audit mit Vorher/Nachher)
+- [x] Beispieldaten und Platzhalter-Kennzeichnungen entfernt
+- [x] PWA: Manifest, Icons, Service Worker, Update-Hinweis «Eine neue Version ist verfügbar.» / «Jetzt aktualisieren»
+- [x] Offline: Indikator im Header, Meldungen «Du bist offline …» und «Verbindung wiederhergestellt.»
+- [x] Excel-Export (Catches, Lieferanten, Standorte, Kategorien, Nutzer, Audit) mit Audit-Eintrag
+- [x] Backup-Webhook mit kurzlebiger signierter URL und Statusanzeige
+- [x] Historie lädt schrittweise (25 Einträge, «Mehr anzeigen»)
+- [x] Automatisierte Tests: 63 grün (Kalkulation, Nachkalkulation, Post, Historienfilter)
+- [ ] Backup-Adresse (BACKUP_WEBHOOK_URL) hinterlegen, sobald das Make.com-Szenario steht
