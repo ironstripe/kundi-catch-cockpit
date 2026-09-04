@@ -438,6 +438,10 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
               <div className="space-y-2 border-t pt-3">
                 {item.status === "published" ? (
                   <div className="space-y-1 text-xs text-muted-foreground">
+                    <p className="rounded-md border border-warning/40 bg-warning/5 px-3 py-2 text-xs text-foreground">
+                      Dieser Catch wurde bereits publiziert. Änderungen im Cockpit aktualisieren den
+                      WhatsApp-Post nicht automatisch.
+                    </p>
                     <p className="flex items-center gap-2 text-sm font-medium text-foreground">
                       <CheckCircle2 className="size-4" />
                       Publiziert am{" "}
