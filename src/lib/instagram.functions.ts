@@ -121,9 +121,13 @@ export const saveInstagramCaption = createServerFn({ method: "POST" })
     if (row.instagram_status === "published" || row.instagram_status === "publishing") {
       throw new Error("Der Text kann nach der Freigabe nicht mehr geändert werden.");
     }
-    const update: Record<string, unknown> = { instagram_caption: data.caption };
-    if (data.assetPath !== undefined) update["instagram_asset_path"] = data.assetPath;
-    const { error } = await supabaseAdmin.from("catches").update(update).eq("id", data.catchId);
+    const { error } = await supabaseAdmin
+      .from("catches")
+      .update({
+        instagram_caption: data.caption,
+        ...(data.assetPath === undefined ? {} : { instagram_asset_path: data.assetPath }),
+      })
+      .eq("id", data.catchId);
     if (error) throw error;
     return { status: row.instagram_status, message: "Text gespeichert." };
   });
