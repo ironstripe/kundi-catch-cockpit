@@ -53,7 +53,7 @@ export function postDateTime(value: string, prefix: "ab" | "bis"): string {
 
 /** Prozentwert im Post: "26.5 %". */
 export function postPercent(percent: number): string {
-  return `${percent.toFixed(1).replace(/\.0$/, ".0")} %`;
+  return `${percent.toFixed(1)} %`;
 }
 
 function normalise(value: string): string {
