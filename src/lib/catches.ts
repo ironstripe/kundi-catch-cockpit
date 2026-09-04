@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { parseNumberInput, type CalculationInput } from "@/lib/catch-calculation";
 import { ACTIVE_STATUSES, type CatchStatus, type Temperature } from "@/lib/catch-domain";
 import { zurichLocalToIso } from "@/lib/format";
 
@@ -342,4 +343,28 @@ export async function createSignedImageUrl(path: string, expiresIn = 3600) {
     .createSignedUrl(path, expiresIn);
   if (error) throw error;
   return data.signedUrl;
+}
+
+/** Gespeicherter Catch -> Eingabewerte der Vorkalkulation. */
+export function catchToCalculationInput(item: CatchListItem): CalculationInput {
+  return {
+    purchase_quantity: item.purchase_quantity || null,
+    quantity_unit: item.quantity_unit,
+    purchase_price: item.purchase_price,
+    delivery_cost: item.delivery_included ? 0 : item.delivery_cost,
+    regular_price: item.regular_price,
+    catch_price: item.catch_price,
+  };
+}
+
+/** Formularwerte -> Eingabewerte der Vorkalkulation (Live-Vorschau). */
+export function formValuesToCalculationInput(values: CatchFormValues): CalculationInput {
+  return {
+    purchase_quantity: parseNumberInput(values.purchase_quantity),
+    quantity_unit: values.quantity_unit,
+    purchase_price: parseNumberInput(values.purchase_price),
+    delivery_cost: values.delivery_included ? 0 : parseNumberInput(values.delivery_cost),
+    regular_price: parseNumberInput(values.regular_price),
+    catch_price: parseNumberInput(values.catch_price),
+  };
 }
