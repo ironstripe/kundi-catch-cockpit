@@ -373,7 +373,7 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
 
               <ol className="grid gap-1 rounded-md border border-dashed bg-muted/20 p-3 text-xs text-muted-foreground">
                 {SEQUENCE.map((step, index) => (
-                  <li key={step} className="flex gap-2">
+                  <li key={`${index}-${step}`} className="flex gap-2">
                     <span className="font-mono">{index + 1}.</span>
                     <span>{step}</span>
                   </li>
