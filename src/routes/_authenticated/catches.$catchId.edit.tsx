@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
 
 import { CatchForm } from "@/components/catch/catch-form";
 import { PageHeader } from "@/components/layout/page-header";
@@ -64,11 +64,25 @@ function EditCatchPage() {
         title={`${item.catch_number ?? "Catch"} bearbeiten`}
         description={item.product_name}
       />
+      {item.status === "published" ? (
+        <div
+          role="alert"
+          className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/5 p-3 text-sm"
+        >
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+          <span>
+            Dieser Catch wurde bereits publiziert. Änderungen im Cockpit aktualisieren den
+            WhatsApp-Post nicht automatisch.
+          </span>
+        </div>
+      ) : null}
+
       <CatchForm
         mode="edit"
         catchId={catchId}
         initialValues={catchDetailToForm(item)}
         initialImagePath={item.image_path}
+        currentStatus={item.status}
         onSaved={(id) => {
           void queryClient.invalidateQueries({ queryKey: ["catch", id] });
           void queryClient.invalidateQueries({ queryKey: ["catches"] });
