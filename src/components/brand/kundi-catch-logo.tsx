@@ -21,11 +21,11 @@ export function KundiCatchLogo({ className, src }: { className?: string; src?: s
  * Verwendet das in den Einstellungen hinterlegte Logo, sonst das Standardlogo.
  */
 export function KundiCatchBrand({ collapsed = false }: { collapsed?: boolean }) {
-  const { url } = useBrandLogo();
+  const { iconUrl } = useBrandLogo();
   return (
     <div className="flex items-center gap-2.5">
       <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-card">
-        <KundiCatchLogo className="size-8" src={url} />
+        <KundiCatchLogo className="size-8" src={iconUrl} />
       </span>
       {!collapsed && (
         <span className="min-w-0 leading-tight">
