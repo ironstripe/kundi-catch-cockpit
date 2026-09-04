@@ -66,15 +66,17 @@ function AuthPage() {
         if (signInError) throw signInError;
         void navigate({ to: "/" });
       } else {
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data, error: signUpError } = await supabase.auth.signUp({
           ...parsed.data,
           options: { emailRedirectTo: window.location.origin },
         });
         if (signUpError) throw signUpError;
-        toast.success("Konto erstellt", {
-          description: "Bitte E-Mail bestätigen, danach anmelden.",
-        });
-        setMode("signin");
+        toast.success("Konto erstellt");
+        if (data.session) {
+          void navigate({ to: "/" });
+        } else {
+          setMode("signin");
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Anmeldung fehlgeschlagen.");
