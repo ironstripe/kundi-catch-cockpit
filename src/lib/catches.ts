@@ -58,6 +58,11 @@ export interface CatchListItem {
   purchase_quantity: number;
   quantity_unit: string;
   catch_price: number | null;
+  purchase_price: number | null;
+  delivery_cost: number;
+  delivery_included: boolean;
+  regular_price: number | null;
+  updated_at: string;
   expected_sell_through: number | null;
   image_path: string | null;
   location_names: string[];
@@ -69,22 +74,18 @@ export interface CatchDetail extends CatchListItem {
   expiry_date: string | null;
   supplier_id: string | null;
   supplier_name: string | null;
-  purchase_price: number | null;
-  delivery_cost: number;
-  delivery_included: boolean;
-  regular_price: number | null;
   available_until: string | null;
   handicap_reason: string | null;
   handicap_story: string | null;
   internal_note: string | null;
   location_ids: string[];
   created_at: string;
-  updated_at: string;
 }
 
 const LIST_SELECT = `
   id, catch_number, product_name, temperature, status, available_from,
   purchase_quantity, quantity_unit, catch_price, expected_sell_through,
+  purchase_price, delivery_cost, delivery_included, regular_price, updated_at,
   catch_images ( storage_path, is_primary, sort_order ),
   catch_locations ( location_id, locations ( id, name ) )
 `;
@@ -125,6 +126,11 @@ function mapList(row: any): CatchListItem {
     purchase_quantity: Number(row.purchase_quantity ?? 0),
     quantity_unit: row.quantity_unit,
     catch_price: row.catch_price === null ? null : Number(row.catch_price),
+    purchase_price: row.purchase_price === null ? null : Number(row.purchase_price),
+    delivery_cost: Number(row.delivery_cost ?? 0),
+    delivery_included: Boolean(row.delivery_included),
+    regular_price: row.regular_price === null ? null : Number(row.regular_price),
+    updated_at: row.updated_at,
     expected_sell_through:
       row.expected_sell_through === null ? null : Number(row.expected_sell_through),
     image_path: primaryImagePath(row),
@@ -142,17 +148,12 @@ function mapDetail(row: any): CatchDetail {
     expiry_date: row.expiry_date,
     supplier_id: row.supplier_id,
     supplier_name: row.suppliers?.name ?? null,
-    purchase_price: row.purchase_price === null ? null : Number(row.purchase_price),
-    delivery_cost: Number(row.delivery_cost ?? 0),
-    delivery_included: Boolean(row.delivery_included),
-    regular_price: row.regular_price === null ? null : Number(row.regular_price),
     available_until: row.available_until,
     handicap_reason: row.handicap_reason,
     handicap_story: row.handicap_story,
     internal_note: row.internal_note,
     location_ids: (row.catch_locations ?? []).map((cl: any) => cl.location_id),
     created_at: row.created_at,
-    updated_at: row.updated_at,
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -299,7 +300,7 @@ export async function saveCatch({ id, values, status, audit }: SaveArgs): Promis
     entity_id: catchId,
     action: id ? "updated" : "created",
     actor_id: userId,
-    payload: { status },
+    payload: { status, ...(audit ?? {}) },
   });
 
   return catchId;
