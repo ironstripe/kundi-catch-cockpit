@@ -57,7 +57,7 @@ describe("calculateCatch — Sonderfälle", () => {
 
   it("rechnet ohne Lieferkosten identisch", () => {
     const v = calculateCatch(input({ delivery_cost: 0 })).values!;
-    expect(v.delivery_cost_per_unit).toBeNull();
+    expect(v.delivery_cost_per_unit).toBe(0);
     expect(v.effective_cost_per_unit).toBeCloseTo(6.5, 6);
   });
 
