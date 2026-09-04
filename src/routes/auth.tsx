@@ -102,7 +102,7 @@ function AuthPage() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Anmeldung fehlgeschlagen.");
+      setError(authErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -153,6 +153,11 @@ function AuthPage() {
                   maxLength={72}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                {mode === "signup" ? (
+                  <p className="text-xs text-muted-foreground">
+                    Mindestens 8 Zeichen. Bitte kein gängiges Passwort verwenden.
+                  </p>
+                ) : null}
               </div>
               {error ? (
                 <p role="alert" className="text-xs font-medium text-destructive">
