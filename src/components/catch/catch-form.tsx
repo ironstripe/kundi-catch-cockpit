@@ -157,7 +157,7 @@ export function CatchForm({
       const id = await saveCatch({
         id: catchId,
         values,
-        status: currentStatus === "published" && status === "ready" ? "published" : status,
+        status: currentStatus === "published" ? "published" : status,
         audit: {
           calculation_decision: calculation.level,
           ...(confirmedCritical ? { critical_calculation_confirmed: true } : {}),
