@@ -117,10 +117,10 @@ interface SavePostArgs {
   generatedText: string;
   finalText: string;
   signature: string;
-  generatedAt?: string;
+  generatedAt?: string | undefined;
   reason: "generated" | "edited" | "reset" | "published";
-  imagePath?: string | null;
-  usedForPublication?: boolean;
+  imagePath?: string | null | undefined;
+  usedForPublication?: boolean | undefined;
 }
 
 /** Speichert eine Textversion und den aktuellen Stand am Catch. */
