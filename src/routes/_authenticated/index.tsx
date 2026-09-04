@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Boxes, Fish, Percent, PlusCircle, TrendingUp } from "lucide-react";
+import { Boxes, Fish, Percent, PlusCircle, TrendingUp, Wallet } from "lucide-react";
 
 import { CatchCard } from "@/components/catch/catch-card";
 import { KpiCard } from "@/components/catch/kpi-card";
@@ -9,7 +9,14 @@ import { PageHeader, PageSection } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { aggregateCatches } from "@/lib/catch-calculation";
-import { catchToCalculationInput, fetchClosedCatches, fetchRunningCatches } from "@/lib/catches";
+import { aggregateReconciliations } from "@/lib/catch-reconciliation";
+import {
+  catchToCalculationInput,
+  catchToReconciliationInput,
+  fetchClosedCatches,
+  fetchHistoryCatches,
+  fetchRunningCatches,
+} from "@/lib/catches";
 import { formatCurrency, formatPercentValue, formatQuantity } from "@/lib/format";
 
 
@@ -34,9 +41,25 @@ export const Route = createFileRoute("/_authenticated/")({
 
 function DashboardPage() {
   const running = useQuery({ queryKey: ["catches", "running"], queryFn: fetchRunningCatches });
-  const closed = useQuery({ queryKey: ["catches", "closed"], queryFn: fetchClosedCatches });
+  const closed = useQuery({ queryKey: ["catches", "closed"], queryFn: () => fetchClosedCatches(5) });
   const runningCatches = running.data ?? [];
   const closedCatches = closed.data ?? [];
+  const history = useQuery({ queryKey: ["history"], queryFn: fetchHistoryCatches });
+  const historyTotals = aggregateReconciliations(
+    (history.data ?? [])
+      .filter((item) => item.status === "closed")
+      .map(catchToReconciliationInput),
+  );
+  const sellThroughText =
+    historyTotals.by_unit.length === 0
+      ? "—"
+      : historyTotals.by_unit
+          .map((entry) =>
+            entry.sell_through === null
+              ? `— ${entry.unit}`
+              : `${formatPercentValue(entry.sell_through)} (${entry.unit})`,
+          )
+          .join(" · ");
 
   const totals = aggregateCatches(runningCatches.map(catchToCalculationInput));
   const quantityText =
@@ -69,11 +92,19 @@ function DashboardPage() {
       icon: TrendingUp,
     },
     {
-      label: "Durchschnittliche geplante Rohmarge",
-      value:
-        totals.weighted_margin === null ? "—" : formatPercentValue(totals.weighted_margin),
-      hint: "Gewichtet über den maximalen Umsatz",
+      label: "Durchschnittlicher Abverkauf",
+      value: sellThroughText,
+      hint:
+        historyTotals.by_unit.length > 1
+          ? "Getrennt je Einheit ausgewiesen"
+          : "Abgeschlossene Catches, gewichtet",
       icon: Percent,
+    },
+    {
+      label: "Effektiver Gesamt-DB",
+      value: formatCurrency(historyTotals.contribution_margin),
+      hint: "Alle abgeschlossenen Catches",
+      icon: Wallet,
     },
   ];
 
