@@ -11,7 +11,7 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { KpiCard } from "@/components/catch/kpi-card";
 import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-badge";
@@ -49,6 +49,7 @@ import { catchToReconciliationInput, fetchHistoryCatches, type CatchListItem } f
 import { formatCurrency, formatDateTime, formatPercentValue, formatQuantity } from "@/lib/format";
 
 const ALL = "alle";
+const PAGE_SIZE = 25;
 
 interface HistorySearch {
   q?: string;
@@ -154,6 +155,9 @@ function HistoryPage() {
   const rows = useMemo(() => query.data ?? [], [query.data]);
 
   const filtered = useMemo(() => filterHistory(rows, search), [rows, search]);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  useEffect(() => setVisibleCount(PAGE_SIZE), [search]);
+  const visible = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
   const closedOnly = useMemo(
     () => filtered.filter((row) => row.status === "closed"),
     [filtered],
@@ -399,7 +403,7 @@ function HistoryPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((row) => (
+                  {visible.map((row) => (
                     <HistoryRow key={row.id} row={row} />
                   ))}
                 </TableBody>
@@ -408,10 +412,25 @@ function HistoryPage() {
           </Card>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:hidden">
-            {filtered.map((row) => (
+            {visible.map((row) => (
               <HistoryCard key={row.id} row={row} />
             ))}
           </div>
+
+          {filtered.length > visible.length ? (
+            <div className="flex flex-col items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+              >
+                Mehr anzeigen
+              </Button>
+              <p className="text-[11px] text-muted-foreground">
+                {visible.length} von {filtered.length} Catches
+              </p>
+            </div>
+          ) : null}
         </>
       )}
     </>
