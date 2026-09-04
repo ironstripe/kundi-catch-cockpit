@@ -28,7 +28,7 @@ import { Label } from "@/components/ui/label";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { ROLE_LABELS, useRoles } from "@/hooks/use-role";
-import { useOnlineStatus, useServiceWorker } from "@/hooks/use-pwa";
+import { OFFLINE_MESSAGE, useOnlineStatus, useServiceWorker } from "@/hooks/use-pwa";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
