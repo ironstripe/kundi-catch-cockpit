@@ -9,104 +9,185 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as HistoryRouteImport } from './routes/history'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as CatchesNewRouteImport } from './routes/catches.new'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedCatchesCatchIdRouteImport } from './routes/_authenticated/catches.$catchId'
+import { Route as AuthenticatedCatchesNewRouteImport } from './routes/_authenticated/catches.new'
 
-const IndexRoute = IndexRouteImport.update({
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const HistoryRoute = HistoryRouteImport.update({
+const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   id: '/history',
   path: '/history',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const SettingsRoute = SettingsRouteImport.update({
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const CatchesNewRoute = CatchesNewRouteImport.update({
+const AuthenticatedCatchesCatchIdRoute =
+  AuthenticatedCatchesCatchIdRouteImport.update({
+    id: '/catches/$catchId',
+    path: '/catches/$catchId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCatchesNewRoute = AuthenticatedCatchesNewRouteImport.update({
   id: '/catches/new',
   path: '/catches/new',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/history': typeof HistoryRoute
-  '/settings': typeof SettingsRoute
-  '/catches/new': typeof CatchesNewRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/auth': typeof AuthRoute
+  '/history': typeof AuthenticatedHistoryRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/catches/$catchId': typeof AuthenticatedCatchesCatchIdRoute
+  '/catches/new': typeof AuthenticatedCatchesNewRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/history': typeof HistoryRoute
-  '/settings': typeof SettingsRoute
-  '/catches/new': typeof CatchesNewRoute
+  '/auth': typeof AuthRoute
+  '/history': typeof AuthenticatedHistoryRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/catches/$catchId': typeof AuthenticatedCatchesCatchIdRoute
+  '/catches/new': typeof AuthenticatedCatchesNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/history': typeof HistoryRoute
-  '/settings': typeof SettingsRoute
-  '/catches/new': typeof CatchesNewRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/history': typeof AuthenticatedHistoryRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/catches/$catchId': typeof AuthenticatedCatchesCatchIdRoute
+  '/_authenticated/catches/new': typeof AuthenticatedCatchesNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/history' | '/settings' | '/catches/new'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/history'
+    | '/settings'
+    | '/catches/$catchId'
+    | '/catches/new'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/history' | '/settings' | '/catches/new'
-  id: '__root__' | '/' | '/history' | '/settings' | '/catches/new'
+  to:
+    | '/auth'
+    | '/history'
+    | '/settings'
+    | '/'
+    | '/catches/$catchId'
+    | '/catches/new'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/history'
+    | '/_authenticated/settings'
+    | '/_authenticated/'
+    | '/_authenticated/catches/$catchId'
+    | '/_authenticated/catches/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  HistoryRoute: typeof HistoryRoute
-  SettingsRoute: typeof SettingsRoute
-  CatchesNewRoute: typeof CatchesNewRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/history': {
-      id: '/history'
+    '/_authenticated/history': {
+      id: '/_authenticated/history'
       path: '/history'
       fullPath: '/history'
-      preLoaderRoute: typeof HistoryRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/settings': {
-      id: '/settings'
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
       path: '/settings'
       fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/catches/new': {
-      id: '/catches/new'
+    '/_authenticated/catches/$catchId': {
+      id: '/_authenticated/catches/$catchId'
+      path: '/catches/$catchId'
+      fullPath: '/catches/$catchId'
+      preLoaderRoute: typeof AuthenticatedCatchesCatchIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/catches/new': {
+      id: '/_authenticated/catches/new'
       path: '/catches/new'
       fullPath: '/catches/new'
-      preLoaderRoute: typeof CatchesNewRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedCatchesNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedCatchesCatchIdRoute: typeof AuthenticatedCatchesCatchIdRoute
+  AuthenticatedCatchesNewRoute: typeof AuthenticatedCatchesNewRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedCatchesCatchIdRoute: AuthenticatedCatchesCatchIdRoute,
+  AuthenticatedCatchesNewRoute: AuthenticatedCatchesNewRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  HistoryRoute: HistoryRoute,
-  SettingsRoute: SettingsRoute,
-  CatchesNewRoute: CatchesNewRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

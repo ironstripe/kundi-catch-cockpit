@@ -124,21 +124,41 @@ export type Database = {
           },
         ]
       }
+      catch_number_sequences: {
+        Row: {
+          last_value: number
+          year: number
+        }
+        Insert: {
+          last_value?: number
+          year: number
+        }
+        Update: {
+          last_value?: number
+          year?: number
+        }
+        Relationships: []
+      }
       catches: {
         Row: {
           actual_sell_through: number | null
           available_from: string | null
           available_until: string | null
-          catch_number: string
+          catch_number: string | null
           catch_price: number | null
           category: string | null
           created_at: string
           created_by: string | null
+          delivery_cost: number
+          delivery_included: boolean
           description: string | null
           expected_sell_through: number | null
+          expiry_date: string | null
+          handicap_reason: string | null
           handicap_story: string | null
           id: string
           internal_note: string | null
+          packaging: string | null
           product_name: string
           purchase_price: number | null
           purchase_quantity: number
@@ -153,16 +173,21 @@ export type Database = {
           actual_sell_through?: number | null
           available_from?: string | null
           available_until?: string | null
-          catch_number: string
+          catch_number?: string | null
           catch_price?: number | null
           category?: string | null
           created_at?: string
           created_by?: string | null
+          delivery_cost?: number
+          delivery_included?: boolean
           description?: string | null
           expected_sell_through?: number | null
+          expiry_date?: string | null
+          handicap_reason?: string | null
           handicap_story?: string | null
           id?: string
           internal_note?: string | null
+          packaging?: string | null
           product_name: string
           purchase_price?: number | null
           purchase_quantity?: number
@@ -177,16 +202,21 @@ export type Database = {
           actual_sell_through?: number | null
           available_from?: string | null
           available_until?: string | null
-          catch_number?: string
+          catch_number?: string | null
           catch_price?: number | null
           category?: string | null
           created_at?: string
           created_by?: string | null
+          delivery_cost?: number
+          delivery_included?: boolean
           description?: string | null
           expected_sell_through?: number | null
+          expiry_date?: string | null
+          handicap_reason?: string | null
           handicap_story?: string | null
           id?: string
           internal_note?: string | null
+          packaging?: string | null
           product_name?: string
           purchase_price?: number | null
           purchase_quantity?: number
