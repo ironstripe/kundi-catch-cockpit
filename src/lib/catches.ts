@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { parseNumberInput, type CalculationInput } from "@/lib/catch-calculation";
+import type { ReconciliationInput } from "@/lib/catch-reconciliation";
 import { ACTIVE_STATUSES, type CatchStatus, type Temperature } from "@/lib/catch-domain";
 import { zurichLocalToIso } from "@/lib/format";
 
@@ -67,21 +68,33 @@ export interface CatchListItem {
   expected_sell_through: number | null;
   image_path: string | null;
   location_names: string[];
+  location_ids: string[];
+  supplier_id: string | null;
+  supplier_name: string | null;
   published_at: string | null;
+  remaining_quantity: number | null;
+  inventory_counted_at: string | null;
+  learning: string | null;
+  closed_at: string | null;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
 }
 
 export interface CatchDetail extends CatchListItem {
   description: string | null;
   packaging: string | null;
   expiry_date: string | null;
-  supplier_id: string | null;
-  supplier_name: string | null;
   available_until: string | null;
   handicap_reason: string | null;
   handicap_story: string | null;
   internal_note: string | null;
-  location_ids: string[];
   created_at: string;
+  closed_by: string | null;
+  reopened_at: string | null;
+  reopened_by: string | null;
+  reopen_reason: string | null;
+  cancelled_by: string | null;
+  reconciliation_snapshot: Record<string, unknown> | null;
   published_by: string | null;
   published_text: string | null;
   published_image_path: string | null;
@@ -96,6 +109,9 @@ const LIST_SELECT = `
   id, catch_number, product_name, temperature, status, available_from,
   purchase_quantity, quantity_unit, catch_price, expected_sell_through,
   purchase_price, delivery_cost, delivery_included, regular_price, updated_at, published_at,
+  supplier_id, remaining_quantity, inventory_counted_at, learning,
+  closed_at, cancelled_at, cancellation_reason,
+  suppliers ( id, name ),
   catch_images ( storage_path, is_primary, sort_order ),
   catch_locations ( location_id, locations ( id, name ) )
 `;
@@ -109,6 +125,10 @@ const DETAIL_SELECT = `
   published_at, published_by, published_text, published_image_path,
   post_generated_text, post_final_text, post_generated_at,
   post_source_signature, post_outdated_decision,
+  remaining_quantity, inventory_counted_at, learning,
+  closed_at, closed_by, reopened_at, reopened_by, reopen_reason,
+  cancelled_at, cancelled_by, cancellation_reason,
+  reconciliation_snapshot,
   suppliers ( id, name ),
   catch_images ( storage_path, is_primary, sort_order ),
   catch_locations ( location_id, locations ( id, name ) )
@@ -147,10 +167,22 @@ function mapList(row: any): CatchListItem {
     expected_sell_through:
       row.expected_sell_through === null ? null : Number(row.expected_sell_through),
     published_at: row.published_at ?? null,
+    supplier_id: row.supplier_id ?? null,
+    supplier_name: row.suppliers?.name ?? null,
+    remaining_quantity:
+      row.remaining_quantity === null || row.remaining_quantity === undefined
+        ? null
+        : Number(row.remaining_quantity),
+    inventory_counted_at: row.inventory_counted_at ?? null,
+    learning: row.learning ?? null,
+    closed_at: row.closed_at ?? null,
+    cancelled_at: row.cancelled_at ?? null,
+    cancellation_reason: row.cancellation_reason ?? null,
     image_path: primaryImagePath(row),
     location_names: (row.catch_locations ?? [])
       .map((cl: any) => cl.locations?.name)
       .filter(Boolean),
+    location_ids: (row.catch_locations ?? []).map((cl: any) => cl.location_id),
   };
 }
 
@@ -160,14 +192,17 @@ function mapDetail(row: any): CatchDetail {
     description: row.description,
     packaging: row.packaging,
     expiry_date: row.expiry_date,
-    supplier_id: row.supplier_id,
-    supplier_name: row.suppliers?.name ?? null,
     available_until: row.available_until,
     handicap_reason: row.handicap_reason,
     handicap_story: row.handicap_story,
     internal_note: row.internal_note,
-    location_ids: (row.catch_locations ?? []).map((cl: any) => cl.location_id),
     created_at: row.created_at,
+    closed_by: row.closed_by ?? null,
+    reopened_at: row.reopened_at ?? null,
+    reopened_by: row.reopened_by ?? null,
+    reopen_reason: row.reopen_reason ?? null,
+    cancelled_by: row.cancelled_by ?? null,
+    reconciliation_snapshot: row.reconciliation_snapshot ?? null,
     published_by: row.published_by ?? null,
     published_text: row.published_text ?? null,
     published_image_path: row.published_image_path ?? null,
@@ -190,13 +225,26 @@ export async function fetchRunningCatches(): Promise<CatchListItem[]> {
   return (data ?? []).map(mapList);
 }
 
-export async function fetchClosedCatches(): Promise<CatchListItem[]> {
+export async function fetchClosedCatches(limit = 20): Promise<CatchListItem[]> {
   const { data, error } = await supabase
     .from("catches")
     .select(LIST_SELECT)
     .in("status", ["closed", "cancelled"])
+    .order("closed_at", { ascending: false, nullsFirst: false })
     .order("updated_at", { ascending: false })
-    .limit(20);
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []).map(mapList);
+}
+
+/** Vollständige Historie (abgeschlossen und abgebrochen) für Suche und Filter. */
+export async function fetchHistoryCatches(): Promise<CatchListItem[]> {
+  const { data, error } = await supabase
+    .from("catches")
+    .select(LIST_SELECT)
+    .in("status", ["closed", "cancelled"])
+    .order("closed_at", { ascending: false, nullsFirst: false })
+    .order("updated_at", { ascending: false });
   if (error) throw error;
   return (data ?? []).map(mapList);
 }
@@ -364,6 +412,16 @@ export async function createSignedImageUrl(path: string, expiresIn = 3600) {
     .createSignedUrl(path, expiresIn);
   if (error) throw error;
   return data.signedUrl;
+}
+
+/** Gespeicherter Catch -> Eingabewerte der Nachkalkulation. */
+export function catchToReconciliationInput(item: CatchListItem): ReconciliationInput {
+  return {
+    ...catchToCalculationInput(item),
+    remaining_quantity: item.remaining_quantity,
+    published_at: item.published_at,
+    inventory_counted_at: item.inventory_counted_at,
+  };
 }
 
 /** Gespeicherter Catch -> Eingabewerte der Vorkalkulation. */

@@ -4,6 +4,8 @@ import { ArrowLeft, Pencil, Scale } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { CalculationCard } from "@/components/catch/calculation-card";
+import { CompletedSummary } from "@/components/catch/completed-summary";
+import { ReconciliationWorkspace } from "@/components/catch/reconciliation-workspace";
 import { PublicationWorkspace } from "@/components/catch/publication-workspace";
 import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-badge";
 import { PageHeader, PageSection } from "@/components/layout/page-header";
@@ -73,6 +75,12 @@ function CatchDetailPage() {
 
   const calculation = calculateCatch(catchToCalculationInput(item));
 
+  const invalidate = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["catch", catchId] });
+    await queryClient.invalidateQueries({ queryKey: ["catches"] });
+    await queryClient.invalidateQueries({ queryKey: ["history"] });
+  };
+
   const deliveryText = item.delivery_included
     ? "Im Einkaufspreis enthalten"
     : formatCurrency(item.delivery_cost);
@@ -90,12 +98,20 @@ function CatchDetailPage() {
                 Zurück zum Dashboard
               </Link>
             </Button>
-            <Button asChild>
+            <Button variant="outline" asChild>
               <Link to="/catches/$catchId/edit" params={{ catchId }}>
                 <Pencil />
                 Bearbeiten
               </Link>
             </Button>
+            {item.status === "published" ? (
+              <Button asChild>
+                <a href="#nachkalkulation">
+                  <Scale />
+                  Catch abschliessen
+                </a>
+              </Button>
+            ) : null}
           </>
         }
       />
@@ -234,12 +250,30 @@ function CatchDetailPage() {
             </CardContent>
           </Card>
 
-          <div className="space-y-2">
-            <Reserved icon={<Scale className="size-4" />} title="Nachkalkulation" />
-          </div>
         </div>
       </div>
 
+      {item.status === "closed" || item.status === "cancelled" ? (
+        <PageSection
+          id="ergebnis"
+          title="Ergebnis"
+          description="Fixierte Nachkalkulation dieses Catches."
+        >
+          <CompletedSummary item={item} onChanged={invalidate} />
+        </PageSection>
+      ) : null}
+
+      {item.status === "published" ? (
+        <PageSection
+          id="nachkalkulation"
+          title="Nachkalkulation"
+          description="Effektive Restmenge erfassen, Ergebnis prüfen und den Catch abschliessen."
+        >
+          <ReconciliationWorkspace item={item} onChanged={invalidate} />
+        </PageSection>
+      ) : null}
+
+      {item.status === "closed" || item.status === "cancelled" ? null : (
       <PageSection
         id="publikation"
         title="WhatsApp-Post"
@@ -248,10 +282,7 @@ function CatchDetailPage() {
         {item.status === "ready" || item.status === "published" ? (
           <PublicationWorkspace
             item={item}
-            onChanged={async () => {
-              await queryClient.invalidateQueries({ queryKey: ["catch", catchId] });
-              await queryClient.invalidateQueries({ queryKey: ["catches"] });
-            }}
+            onChanged={invalidate}
           />
         ) : (
           <Card>
@@ -270,6 +301,7 @@ function CatchDetailPage() {
           </Card>
         )}
       </PageSection>
+      )}
     </>
   );
 }
@@ -296,12 +328,3 @@ function Row({ label, value }: { label: string; value: string | null | undefined
   );
 }
 
-function Reserved({ icon, title }: { icon: ReactNode; title: string }) {
-  return (
-    <div className="flex items-center gap-2 rounded-md border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground placeholder-hatch">
-      {icon}
-      <span className="font-medium">{title}</span>
-      <span className="ml-auto text-[10px] uppercase tracking-wide">folgt</span>
-    </div>
-  );
-}

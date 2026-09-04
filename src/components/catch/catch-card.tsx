@@ -8,7 +8,16 @@ import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-ba
 import { Card, CardContent } from "@/components/ui/card";
 import { useSignedImage } from "@/hooks/use-signed-image";
 import { calculateCatch } from "@/lib/catch-calculation";
-import { catchToCalculationInput, type CatchListItem } from "@/lib/catches";
+import {
+  durationMs,
+  formatDuration,
+  reconcileCatch,
+} from "@/lib/catch-reconciliation";
+import {
+  catchToCalculationInput,
+  catchToReconciliationInput,
+  type CatchListItem,
+} from "@/lib/catches";
 import {
   formatCurrency,
   formatDateTime,
@@ -29,6 +38,10 @@ export function CatchCard({ item }: { item: CatchListItem }) {
   const image = useSignedImage(item.image_path);
   const calculation = calculateCatch(catchToCalculationInput(item));
   const v = calculation.values;
+  const finished = item.status === "closed" || item.status === "cancelled";
+  const reconciliation = finished ? reconcileCatch(catchToReconciliationInput(item)) : null;
+  const r = reconciliation?.values ?? null;
+  const duration = durationMs(item.published_at, item.inventory_counted_at);
 
   return (
     <Card className="overflow-hidden py-0 transition-colors hover:border-ring/50">
@@ -86,44 +99,73 @@ export function CatchCard({ item }: { item: CatchListItem }) {
               ) : null}
             </div>
 
+            {finished ? (
+              <dl className="grid grid-cols-2 gap-3 border-t pt-3 sm:grid-cols-3 xl:grid-cols-5">
+                <Field
+                  label="Einkaufsmenge"
+                  value={formatQuantity(item.purchase_quantity, item.quantity_unit)}
+                />
+                <Field
+                  label="Verkaufte Menge"
+                  value={r ? formatQuantity(r.sold_quantity, r.quantity_unit) : "—"}
+                />
+                <Field
+                  label="Abverkaufsquote"
+                  value={
+                    r?.sell_through_percentage != null
+                      ? formatPercentValue(r.sell_through_percentage)
+                      : "—"
+                  }
+                />
+                <Field
+                  label="Effektiver DB"
+                  value={r ? formatCurrency(r.effective_contribution_margin) : "—"}
+                />
+                <Field
+                  label="Aktionsdauer"
+                  value={duration === null ? "—" : formatDuration(duration)}
+                />
+              </dl>
+            ) : (
             <dl className="grid grid-cols-2 gap-3 border-t pt-3 sm:grid-cols-3 xl:grid-cols-5">
-              <Field
-                label="Einkaufsmenge"
-                value={
-                  item.purchase_quantity
-                    ? formatQuantity(item.purchase_quantity, item.quantity_unit)
-                    : "—"
-                }
-              />
-              <Field
-                label="Catch-Preis"
-                value={
-                  item.catch_price === null
-                    ? "—"
-                    : `${formatCurrency(item.catch_price)} / ${item.quantity_unit}`
-                }
-              />
-              <Field
-                label="Maximaler DB"
-                value={v ? formatCurrency(v.maximum_contribution_margin) : "—"}
-              />
-              <Field
-                label="Rohmarge"
-                value={
-                  v?.gross_margin_percentage !== null && v?.gross_margin_percentage !== undefined
-                    ? formatPercentValue(v.gross_margin_percentage)
-                    : "—"
-                }
-              />
-              <Field
-                label="Break-even-Abverkauf"
-                value={
-                  v?.break_even_sell_through !== null && v?.break_even_sell_through !== undefined
-                    ? formatPercentValue(v.break_even_sell_through)
-                    : "—"
-                }
-              />
-            </dl>
+                <Field
+                  label="Einkaufsmenge"
+                  value={
+                    item.purchase_quantity
+                      ? formatQuantity(item.purchase_quantity, item.quantity_unit)
+                      : "—"
+                  }
+                />
+                <Field
+                  label="Catch-Preis"
+                  value={
+                    item.catch_price === null
+                      ? "—"
+                      : `${formatCurrency(item.catch_price)} / ${item.quantity_unit}`
+                  }
+                />
+                <Field
+                  label="Maximaler DB"
+                  value={v ? formatCurrency(v.maximum_contribution_margin) : "—"}
+                />
+                <Field
+                  label="Rohmarge"
+                  value={
+                    v?.gross_margin_percentage !== null && v?.gross_margin_percentage !== undefined
+                      ? formatPercentValue(v.gross_margin_percentage)
+                      : "—"
+                  }
+                />
+                <Field
+                  label="Break-even-Abverkauf"
+                  value={
+                    v?.break_even_sell_through !== null && v?.break_even_sell_through !== undefined
+                      ? formatPercentValue(v.break_even_sell_through)
+                      : "—"
+                  }
+                />
+              </dl>
+            )}
           </div>
         </CardContent>
       </Link>
