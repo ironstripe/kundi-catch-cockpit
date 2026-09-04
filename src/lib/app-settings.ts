@@ -50,10 +50,16 @@ export const DEFAULT_BRAND_SETTINGS: BrandSettings = {
 /** Freigegebene Markentexte — nicht über Einstellungen änderbar. */
 export const PROTECTED_BRAND_TEXTS = [
   "KUNDI CATCH",
+  "Kundelfingerhof",
   "Guter Fisch. Kleines Handicap. Grosser Fang.",
   "Nur solange Vorrat.",
-  "Schnell sein. Gut essen. Food Waste vermeiden.",
+  "Gut essen. Food Waste vermeiden.",
 ] as const;
+
+/** Einziger freigegebener Markenclaim. */
+export const BRAND_CLAIM_TEXT = "Guter Fisch. Kleines Handicap. Grosser Fang.";
+/** Kommunikationsabschluss — bewusst zurückhaltender als der Claim. */
+export const BRAND_PURPOSE_TEXT = "Gut essen. Food Waste vermeiden.";
 
 export interface AppSettings {
   thresholds: CatchThresholds;

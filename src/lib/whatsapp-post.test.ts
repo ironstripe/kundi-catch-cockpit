@@ -50,7 +50,7 @@ MHD: 19.01.2027
 📍 Abholung: Stadtladen Schaffhausen
 📅 Ab: 04.09.2026 ab 14:00 Uhr
 
-*Schnell sein. Gut essen. Food Waste vermeiden.*`;
+*Gut essen. Food Waste vermeiden.*`;
 
 describe("generatePostText", () => {
   it("erzeugt den Referenzpost mit allen Feldern", () => {
