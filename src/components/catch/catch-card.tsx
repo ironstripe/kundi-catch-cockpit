@@ -1,14 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import { Fish, MapPin, CalendarDays } from "lucide-react";
 
+import { DecisionBadge } from "@/components/catch/decision-badge";
 import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSignedImage } from "@/hooks/use-signed-image";
-import type { CatchListItem } from "@/lib/catches";
+import { calculateCatch } from "@/lib/catch-calculation";
+import { catchToCalculationInput, type CatchListItem } from "@/lib/catches";
 import {
   formatCurrency,
   formatDateTime,
-  formatPercent,
+  formatPercentValue,
   formatQuantity,
 } from "@/lib/format";
 
@@ -23,6 +25,8 @@ function Field({ label, value }: { label: string; value: string }) {
 
 export function CatchCard({ item }: { item: CatchListItem }) {
   const image = useSignedImage(item.image_path);
+  const calculation = calculateCatch(catchToCalculationInput(item));
+  const v = calculation.values;
 
   return (
     <Card className="overflow-hidden py-0 transition-colors hover:border-ring/50">
@@ -59,6 +63,7 @@ export function CatchCard({ item }: { item: CatchListItem }) {
               <div className="flex flex-wrap items-center gap-1.5">
                 <TemperatureBadge temperature={item.temperature} />
                 <CatchStatusBadge status={item.status} />
+                <DecisionBadge level={calculation.level} label={calculation.label} />
               </div>
             </div>
 
@@ -73,7 +78,7 @@ export function CatchCard({ item }: { item: CatchListItem }) {
               </span>
             </div>
 
-            <dl className="grid grid-cols-2 gap-3 border-t pt-3 sm:grid-cols-3">
+            <dl className="grid grid-cols-2 gap-3 border-t pt-3 sm:grid-cols-3 xl:grid-cols-5">
               <Field
                 label="Einkaufsmenge"
                 value={
@@ -91,11 +96,23 @@ export function CatchCard({ item }: { item: CatchListItem }) {
                 }
               />
               <Field
-                label="Erw. Abverkauf"
+                label="Maximaler DB"
+                value={v ? formatCurrency(v.maximum_contribution_margin) : "—"}
+              />
+              <Field
+                label="Rohmarge"
                 value={
-                  item.expected_sell_through === null
-                    ? "—"
-                    : formatPercent(item.expected_sell_through / 100)
+                  v?.gross_margin_percentage !== null && v?.gross_margin_percentage !== undefined
+                    ? formatPercentValue(v.gross_margin_percentage)
+                    : "—"
+                }
+              />
+              <Field
+                label="Break-even-Abverkauf"
+                value={
+                  v?.break_even_sell_through !== null && v?.break_even_sell_through !== undefined
+                    ? formatPercentValue(v.break_even_sell_through)
+                    : "—"
                 }
               />
             </dl>
