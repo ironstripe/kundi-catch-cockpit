@@ -51,3 +51,8 @@
 - [ ] Fehlerbehandlung, Bestätigungsdialoge, Doppelklick-/Duplikatschutz
 - [ ] Sicherheits-, Performance-, Responsive- und Accessibility-Review
 - [ ] Rollentests Admin/Editor/Viewer, Felchenfilets-End-to-End-Test
+
+- [x] Excel-Export (Catches, Stammdaten, Nutzer, Audit) im Einstellungen-Tab
+- [x] Backup-Webhook mit kurzlebiger Download-URL und backup_runs-Protokoll
+- [x] PWA: Service Worker, Update-Hinweis, Offline-Indikator
+- [ ] Backup-Adresse (BACKUP_WEBHOOK_URL) hinterlegen
