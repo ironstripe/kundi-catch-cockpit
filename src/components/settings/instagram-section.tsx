@@ -52,7 +52,7 @@ export function InstagramSection() {
         entityType: "settings",
         entityId: SETTING_AUDIT_IDS[SETTING_KEYS.instagram]!,
         action: "instagram_settings_updated",
-        payload: { enabled: values.enabled },
+        next: { enabled: values.enabled },
       });
     },
     onSuccess: async () => {
