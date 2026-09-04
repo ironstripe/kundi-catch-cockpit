@@ -103,6 +103,16 @@ export interface CatchDetail extends CatchListItem {
   post_generated_at: string | null;
   post_source_signature: string | null;
   post_outdated_decision: string | null;
+  instagram_selected: boolean;
+  instagram_caption: string | null;
+  instagram_asset_path: string | null;
+  instagram_status: string;
+  instagram_approved_by: string | null;
+  instagram_approved_at: string | null;
+  instagram_publish_at: string | null;
+  instagram_published_at: string | null;
+  instagram_permalink: string | null;
+  instagram_error: string | null;
 }
 
 const LIST_SELECT = `
@@ -125,6 +135,9 @@ const DETAIL_SELECT = `
   published_at, published_by, published_text, published_image_path,
   post_generated_text, post_final_text, post_generated_at,
   post_source_signature, post_outdated_decision,
+  instagram_selected, instagram_caption, instagram_asset_path, instagram_status,
+  instagram_approved_by, instagram_approved_at, instagram_publish_at,
+  instagram_published_at, instagram_permalink, instagram_error,
   remaining_quantity, inventory_counted_at, learning,
   closed_at, closed_by, reopened_at, reopened_by, reopen_reason,
   cancelled_at, cancelled_by, cancellation_reason,
@@ -211,6 +224,16 @@ function mapDetail(row: any): CatchDetail {
     post_generated_at: row.post_generated_at ?? null,
     post_source_signature: row.post_source_signature ?? null,
     post_outdated_decision: row.post_outdated_decision ?? null,
+    instagram_selected: Boolean(row.instagram_selected),
+    instagram_caption: row.instagram_caption ?? null,
+    instagram_asset_path: row.instagram_asset_path ?? null,
+    instagram_status: row.instagram_status ?? "not_selected",
+    instagram_approved_by: row.instagram_approved_by ?? null,
+    instagram_approved_at: row.instagram_approved_at ?? null,
+    instagram_publish_at: row.instagram_publish_at ?? null,
+    instagram_published_at: row.instagram_published_at ?? null,
+    instagram_permalink: row.instagram_permalink ?? null,
+    instagram_error: row.instagram_error ?? null,
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
