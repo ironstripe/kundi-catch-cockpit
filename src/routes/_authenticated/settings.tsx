@@ -90,7 +90,9 @@ function SettingsPage() {
           <TabsContent value="export">
             <ExportSection />
           </TabsContent>
+        ) : null}
 
+        {isAdmin ? (
           <TabsContent value="audit">
             <AuditSection />
           </TabsContent>
