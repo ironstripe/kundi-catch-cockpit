@@ -20,7 +20,13 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRoles } from "@/hooks/use-role";
 import { recordAudit } from "@/lib/audit";
-import { fetchAppSettings, SETTING_KEYS, saveSetting, validateThresholds } from "@/lib/app-settings";
+import {
+  fetchAppSettings,
+  SETTING_AUDIT_IDS,
+  SETTING_KEYS,
+  saveSetting,
+  validateThresholds,
+} from "@/lib/app-settings";
 import { DEFAULT_CATCH_THRESHOLDS, type CatchThresholds } from "@/lib/catch-thresholds";
 
 const FIELDS: { key: keyof CatchThresholds; label: string }[] = [
