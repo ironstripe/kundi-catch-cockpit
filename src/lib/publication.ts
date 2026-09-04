@@ -165,7 +165,7 @@ export async function savePostVersion({
       post_final_text: finalText,
       post_source_signature: signature,
       post_outdated_decision: null,
-      ...(generatedAt ? { post_generated_at: generatedAt } : {}),
+      post_generated_at: generatedAt ?? new Date().toISOString(),
     })
     .eq("id", catchId);
   if (updateError) throw updateError;
