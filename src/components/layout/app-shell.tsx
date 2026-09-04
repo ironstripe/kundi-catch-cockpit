@@ -83,9 +83,13 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Separator orientation="vertical" className="mr-1 h-4" />
             <span className="text-xs font-medium text-muted-foreground">Kundi Catch Cockpit</span>
             {!online ? (
-              <Badge variant="destructive" className="ml-2 gap-1 text-[10px]">
-                <WifiOff className="size-3" />
-                Offline – Änderungen können nicht gespeichert werden
+              <Badge
+                variant="destructive"
+                className="ml-2 gap-1 text-[10px]"
+                title={OFFLINE_MESSAGE}
+              >
+                <WifiOff className="size-3" aria-hidden />
+                Offline – nur Lesemodus
               </Badge>
             ) : null}
             <span className="ml-auto" />
