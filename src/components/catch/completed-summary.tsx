@@ -111,8 +111,9 @@ export function CompletedSummary({ item, onChanged }: Props) {
             </Button>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Wiederöffnen ist Editor- und Admin-Rollen vorbehalten.
+              Wiederöffnen ist Administratoren vorbehalten.
             </p>
+
           )}
         </CardContent>
       </Card>

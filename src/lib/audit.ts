@@ -23,6 +23,8 @@ export type AuditAction =
   | "user_activated"
   | "user_deactivated"
   | "password_reset_sent"
+  | "user_deleted"
+  | "initial_password_set"
   | "supplier_created"
   | "supplier_updated"
   | "location_created"
@@ -56,6 +58,9 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   user_activated: "Nutzer aktiviert",
   user_deactivated: "Nutzer deaktiviert",
   password_reset_sent: "Passwort-Reset gesendet",
+  user_deleted: "Nutzer gelöscht",
+  initial_password_set: "Startpasswort gesetzt",
+
   supplier_created: "Lieferant erstellt",
   supplier_updated: "Lieferant geändert",
   location_created: "Standort erstellt",
@@ -107,19 +112,19 @@ export async function recordAudit(args: {
   reason?: string | null;
   summary?: string;
 }): Promise<void> {
-  const { data: userData } = await supabase.auth.getUser();
   const payload: Record<string, unknown> = {};
   if (args.previous !== undefined) payload["previous"] = args.previous;
   if (args.next !== undefined) payload["next"] = args.next;
   if (args.summary) payload["summary"] = args.summary;
+  // Die handelnde Person wird serverseitig aus der Anmeldung gesetzt (Trigger).
   const { error } = await supabase.from("audit_events").insert({
     entity_type: args.entityType,
     entity_id: args.entityId,
     action: args.action,
     reason: args.reason ?? null,
     payload: payload as never,
-    actor_id: userData.user?.id ?? null,
   });
+
   if (error) console.error("Audit-Eintrag fehlgeschlagen", error);
 }
 
@@ -137,7 +142,9 @@ export async function fetchAuditEvents(filters: AuditFilters = {}): Promise<Audi
   const { data, error } = await query;
   if (error) throw error;
 
-  const actorIds = [...new Set((data ?? []).map((row) => row.actor_id).filter(Boolean))] as string[];
+  const actorIds = [
+    ...new Set((data ?? []).map((row) => row.actor_id).filter(Boolean)),
+  ] as string[];
   const names = new Map<string, string>();
   if (actorIds.length > 0) {
     const { data: profiles } = await supabase
