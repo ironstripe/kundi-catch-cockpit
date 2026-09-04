@@ -245,10 +245,13 @@ interface SaveArgs {
   id?: string | undefined;
   values: CatchFormValues;
   status: CatchStatus;
+  /** Zusatzangaben fürs Audit-Log, z. B. bestätigte kritische Kalkulation. */
+  audit?: Record<string, unknown> | undefined;
 }
 
 /** Legt einen Catch an oder aktualisiert ihn inkl. Standortzuordnung. */
-export async function saveCatch({ id, values, status }: SaveArgs): Promise<string> {
+export async function saveCatch({ id, values, status, audit }: SaveArgs): Promise<string> {
+
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id ?? null;
 
