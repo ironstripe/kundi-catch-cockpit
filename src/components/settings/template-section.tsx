@@ -228,7 +228,7 @@ export function TemplateSection() {
 
         <div className="space-y-2">
           <Label>Vorschau mit Beispieldaten</Label>
-          <WhatsappPreview text={preview} />
+          <WhatsappPreview text={preview} imageAlt="Beispielbild" status="ready" />
         </div>
       </div>
     </SectionShell>
