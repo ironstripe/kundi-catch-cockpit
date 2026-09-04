@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Fish, MapPin, CalendarDays } from "lucide-react";
+import { Fish, MapPin, CalendarDays, Send } from "lucide-react";
 
 import { DecisionBadge } from "@/components/catch/decision-badge";
 import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-badge";
@@ -76,6 +76,12 @@ export function CatchCard({ item }: { item: CatchListItem }) {
                 <CalendarDays className="size-3.5" />
                 {item.available_from ? `ab ${formatDateTime(item.available_from)}` : "Kein Datum"}
               </span>
+              {item.published_at ? (
+                <span className="inline-flex items-center gap-1 text-foreground">
+                  <Send className="size-3.5" />
+                  publiziert {formatDateTime(item.published_at)}
+                </span>
+              ) : null}
             </div>
 
             <dl className="grid grid-cols-2 gap-3 border-t pt-3 sm:grid-cols-3 xl:grid-cols-5">

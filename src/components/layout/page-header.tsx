@@ -29,18 +29,20 @@ export function PageHeader({ title, description, actions, className }: PageHeade
 }
 
 export function PageSection({
+  id,
   title,
   description,
   actions,
   children,
 }: {
+  id?: string;
   title: string;
   description?: string;
   actions?: ReactNode;
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-3">
+    <section id={id} className="scroll-mt-20 space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="space-y-0.5">
           <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
