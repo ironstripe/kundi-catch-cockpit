@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Boxes, Fish, Percent, PlusCircle, TrendingUp } from "lucide-react";
 
@@ -6,9 +7,10 @@ import { KpiCard } from "@/components/catch/kpi-card";
 import { EmptyState } from "@/components/layout/empty-state";
 import { PageHeader, PageSection } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-import { closedCatches, runningCatches } from "@/data/sample-catches";
+import { Skeleton } from "@/components/ui/skeleton";
+import { fetchClosedCatches, fetchRunningCatches } from "@/lib/catches";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "Dashboard — Kundi Catch Cockpit" },
@@ -55,6 +57,11 @@ const kpis = [
 ];
 
 function DashboardPage() {
+  const running = useQuery({ queryKey: ["catches", "running"], queryFn: fetchRunningCatches });
+  const closed = useQuery({ queryKey: ["catches", "closed"], queryFn: fetchClosedCatches });
+  const runningCatches = running.data ?? [];
+  const closedCatches = closed.data ?? [];
+
   return (
     <>
       <PageHeader
@@ -78,9 +85,11 @@ function DashboardPage() {
 
       <PageSection
         title="Laufende Catches"
-        description="Beispielinhalte — die Anbindung an die Datenbank folgt."
+        description="Status Entwurf, Bereit und Publiziert."
       >
-        {runningCatches.length === 0 ? (
+        {running.isLoading ? (
+          <Skeleton className="h-32 w-full" />
+        ) : runningCatches.length === 0 ? (
           <EmptyState
             icon={Fish}
             title="Keine laufenden Catches"
@@ -104,11 +113,21 @@ function DashboardPage() {
         title="Letzte abgeschlossene Catches"
         description="Grundlage für spätere Auswertungen und Learnings."
       >
-        <div className="grid grid-cols-1 gap-3 2xl:grid-cols-2">
-          {closedCatches.map((item) => (
-            <CatchCard key={item.id} item={item} />
-          ))}
-        </div>
+        {closed.isLoading ? (
+          <Skeleton className="h-32 w-full" />
+        ) : closedCatches.length === 0 ? (
+          <EmptyState
+            icon={Fish}
+            title="Noch keine abgeschlossenen Catches"
+            description="Abgeschlossene und abgebrochene Catches erscheinen hier."
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-3 2xl:grid-cols-2">
+            {closedCatches.map((item) => (
+              <CatchCard key={item.id} item={item} />
+            ))}
+          </div>
+        )}
       </PageSection>
     </>
   );
