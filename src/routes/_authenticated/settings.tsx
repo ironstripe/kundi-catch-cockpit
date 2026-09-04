@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { AuditSection } from "@/components/settings/audit-section";
 import { BrandSection } from "@/components/settings/brand-section";
 import { ExportSection } from "@/components/settings/export-section";
+import { InstagramSection } from "@/components/settings/instagram-section";
 import { CategoriesSection } from "@/components/settings/categories-section";
 import { LocationsSection } from "@/components/settings/locations-section";
 import { SuppliersSection } from "@/components/settings/suppliers-section";
@@ -49,6 +50,7 @@ function SettingsPage() {
           <TabsTrigger value="master-data">Stammdaten</TabsTrigger>
           <TabsTrigger value="calculation">Kalkulation</TabsTrigger>
           <TabsTrigger value="template">WhatsApp-Vorlage</TabsTrigger>
+          {isAdmin ? <TabsTrigger value="instagram">Instagram</TabsTrigger> : null}
           {isAdmin ? <TabsTrigger value="users">Nutzer und Rollen</TabsTrigger> : null}
           {isAdmin ? <TabsTrigger value="brand">Marke</TabsTrigger> : null}
           {isAdmin ? <TabsTrigger value="export">Datenexport und Backup</TabsTrigger> : null}
@@ -73,6 +75,12 @@ function SettingsPage() {
         <TabsContent value="template">
           <TemplateSection />
         </TabsContent>
+
+        {isAdmin ? (
+          <TabsContent value="instagram">
+            <InstagramSection />
+          </TabsContent>
+        ) : null}
 
         {isAdmin ? (
           <TabsContent value="users">

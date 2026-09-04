@@ -36,7 +36,13 @@ export type AuditAction =
   | "logo_replaced"
   | "settings_reset"
   | "export_created"
-  | "backup_sent";
+  | "backup_sent"
+  | "instagram_selected"
+  | "instagram_approved"
+  | "instagram_published"
+  | "instagram_failed"
+  | "instagram_retried"
+  | "instagram_settings_updated";
 
 export const AUDIT_ACTION_LABELS: Record<string, string> = {
   created: "Erstellt",
@@ -71,6 +77,12 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   template_updated: "WhatsApp-Vorlage geändert",
   logo_replaced: "Logo ersetzt",
   settings_reset: "Auf Standardwerte zurückgesetzt",
+  instagram_selected: "Für Instagram ausgewählt",
+  instagram_approved: "Instagram freigegeben",
+  instagram_published: "Auf Instagram veröffentlicht",
+  instagram_failed: "Instagram fehlgeschlagen",
+  instagram_retried: "Instagram erneut versucht",
+  instagram_settings_updated: "Instagram-Einstellungen geändert",
 };
 
 export const AUDIT_ENTITY_LABELS: Record<string, string> = {

@@ -7,6 +7,7 @@ import { CalculationCard } from "@/components/catch/calculation-card";
 import { CompletedSummary } from "@/components/catch/completed-summary";
 import { ReconciliationWorkspace } from "@/components/catch/reconciliation-workspace";
 import { PublicationWorkspace } from "@/components/catch/publication-workspace";
+import { InstagramWorkspace } from "@/components/catch/instagram-workspace";
 import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-badge";
 import { PageHeader, PageSection } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -301,6 +302,16 @@ function CatchDetailPage() {
           </Card>
         )}
       </PageSection>
+      )}
+
+      {item.status === "closed" || item.status === "cancelled" ? null : (
+        <PageSection
+          id="instagram"
+          title="Instagram"
+          description="Optionaler Zweitkanal — erst nach der bestätigten WhatsApp-Publikation."
+        >
+          <InstagramWorkspace item={item} onChanged={invalidate} />
+        </PageSection>
       )}
     </>
   );

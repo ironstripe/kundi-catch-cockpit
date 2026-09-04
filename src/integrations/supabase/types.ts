@@ -262,6 +262,19 @@ export type Database = {
           handicap_reason: string | null
           handicap_story: string | null
           id: string
+          instagram_approved_at: string | null
+          instagram_approved_by: string | null
+          instagram_asset_path: string | null
+          instagram_attempt: number
+          instagram_caption: string | null
+          instagram_error: string | null
+          instagram_idempotency_key: string | null
+          instagram_media_id: string | null
+          instagram_permalink: string | null
+          instagram_publish_at: string | null
+          instagram_published_at: string | null
+          instagram_selected: boolean
+          instagram_status: string
           internal_note: string | null
           inventory_counted_at: string | null
           learning: string | null
@@ -313,6 +326,19 @@ export type Database = {
           handicap_reason?: string | null
           handicap_story?: string | null
           id?: string
+          instagram_approved_at?: string | null
+          instagram_approved_by?: string | null
+          instagram_asset_path?: string | null
+          instagram_attempt?: number
+          instagram_caption?: string | null
+          instagram_error?: string | null
+          instagram_idempotency_key?: string | null
+          instagram_media_id?: string | null
+          instagram_permalink?: string | null
+          instagram_publish_at?: string | null
+          instagram_published_at?: string | null
+          instagram_selected?: boolean
+          instagram_status?: string
           internal_note?: string | null
           inventory_counted_at?: string | null
           learning?: string | null
@@ -364,6 +390,19 @@ export type Database = {
           handicap_reason?: string | null
           handicap_story?: string | null
           id?: string
+          instagram_approved_at?: string | null
+          instagram_approved_by?: string | null
+          instagram_asset_path?: string | null
+          instagram_attempt?: number
+          instagram_caption?: string | null
+          instagram_error?: string | null
+          instagram_idempotency_key?: string | null
+          instagram_media_id?: string | null
+          instagram_permalink?: string | null
+          instagram_publish_at?: string | null
+          instagram_published_at?: string | null
+          instagram_selected?: boolean
+          instagram_status?: string
           internal_note?: string | null
           inventory_counted_at?: string | null
           learning?: string | null

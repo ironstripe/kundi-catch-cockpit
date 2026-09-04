@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.protect_instagram_result_fields() FROM PUBLIC, anon, authenticated;
