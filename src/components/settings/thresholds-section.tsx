@@ -48,7 +48,7 @@ export function ThresholdsSection() {
       await saveSetting(SETTING_KEYS.thresholds, { ...next }, current.thresholds_version);
       await recordAudit({
         entityType: "settings",
-        entityId: SETTING_KEYS.thresholds,
+        entityId: SETTING_AUDIT_IDS[SETTING_KEYS.thresholds]!,
         action: "thresholds_updated",
         previous: { ...current.thresholds },
         next: { ...next },
