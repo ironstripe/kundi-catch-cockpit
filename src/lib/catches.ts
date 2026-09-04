@@ -67,6 +67,7 @@ export interface CatchListItem {
   expected_sell_through: number | null;
   image_path: string | null;
   location_names: string[];
+  published_at: string | null;
 }
 
 export interface CatchDetail extends CatchListItem {
@@ -81,12 +82,20 @@ export interface CatchDetail extends CatchListItem {
   internal_note: string | null;
   location_ids: string[];
   created_at: string;
+  published_by: string | null;
+  published_text: string | null;
+  published_image_path: string | null;
+  post_generated_text: string | null;
+  post_final_text: string | null;
+  post_generated_at: string | null;
+  post_source_signature: string | null;
+  post_outdated_decision: string | null;
 }
 
 const LIST_SELECT = `
   id, catch_number, product_name, temperature, status, available_from,
   purchase_quantity, quantity_unit, catch_price, expected_sell_through,
-  purchase_price, delivery_cost, delivery_included, regular_price, updated_at,
+  purchase_price, delivery_cost, delivery_included, regular_price, updated_at, published_at,
   catch_images ( storage_path, is_primary, sort_order ),
   catch_locations ( location_id, locations ( id, name ) )
 `;
@@ -97,6 +106,9 @@ const DETAIL_SELECT = `
   delivery_cost, delivery_included, regular_price, catch_price, available_from,
   available_until, handicap_reason, handicap_story, internal_note,
   expected_sell_through, created_at, updated_at,
+  published_at, published_by, published_text, published_image_path,
+  post_generated_text, post_final_text, post_generated_at,
+  post_source_signature, post_outdated_decision,
   suppliers ( id, name ),
   catch_images ( storage_path, is_primary, sort_order ),
   catch_locations ( location_id, locations ( id, name ) )
@@ -134,6 +146,7 @@ function mapList(row: any): CatchListItem {
     updated_at: row.updated_at,
     expected_sell_through:
       row.expected_sell_through === null ? null : Number(row.expected_sell_through),
+    published_at: row.published_at ?? null,
     image_path: primaryImagePath(row),
     location_names: (row.catch_locations ?? [])
       .map((cl: any) => cl.locations?.name)
@@ -155,6 +168,14 @@ function mapDetail(row: any): CatchDetail {
     internal_note: row.internal_note,
     location_ids: (row.catch_locations ?? []).map((cl: any) => cl.location_id),
     created_at: row.created_at,
+    published_by: row.published_by ?? null,
+    published_text: row.published_text ?? null,
+    published_image_path: row.published_image_path ?? null,
+    post_generated_text: row.post_generated_text ?? null,
+    post_final_text: row.post_final_text ?? null,
+    post_generated_at: row.post_generated_at ?? null,
+    post_source_signature: row.post_source_signature ?? null,
+    post_outdated_decision: row.post_outdated_decision ?? null,
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
