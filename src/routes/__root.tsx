@@ -77,23 +77,33 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Kundi Catch Cockpit" },
+      {
+        name: "description",
+        content:
+          "Internes Cockpit der Kundelfingerhof AG zur Planung und Auswertung von Kundi-Catch-Aktionen.",
+      },
+      { name: "author", content: "Kundelfingerhof AG" },
+      { property: "og:title", content: "Kundi Catch Cockpit" },
+      {
+        property: "og:description",
+        content: "Guter Fisch. Kleines Handicap. Grosser Fang.",
+      },
       { property: "og:type", content: "website" },
+      { name: "theme-color", content: "#0f3a4a" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "apple-touch-icon", href: "/favicon.png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
+
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
