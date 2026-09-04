@@ -8,9 +8,23 @@
 - [x] Leere Seiten: Neuer Catch, Historie, Einstellungen
 - [x] Datenbankschema: catches, catch_images, suppliers, locations, catch_locations, post_versions, audit_events
 
+## Schritt 2: Catch-Erfassung und Bearbeitung (abgeschlossen)
+- [x] Anmeldung, geschützte Routen
+- [x] Formular, Validierung, Entwurf/Bereit, Bildupload, Detailseite
+- [x] Catch-Nummer serverseitig (KC-YYYY-NNN)
+
+## Schritt 3: Vorkalkulation und Entscheidungshilfe (abgeschlossen)
+- [x] Berechnungslogik, Ampel, Schwellenwerte, Live-Kalkulation, Dashboard-KPIs
+- [x] Unit-Tests
+
+## Schritt 4: WhatsApp-Post und manuelle Publikation (abgeschlossen)
+- [x] Deterministische Postgenerierung, Editieren, Zurücksetzen, Neu generieren
+- [x] Bildoptimierung (max. 1080 px, ohne Metadaten) im privaten Bucket
+- [x] Vorschau mit Formatierung, Bild-/Textkopie mit Fallbacks, WhatsApp öffnen
+- [x] Warnung bei veralteten Posts, Publikationsbestätigung, Publikationsindikator im Dashboard
+- [x] Unit-Tests für Postgenerierung und Kopier-Fallbacks
+
 ## Spätere Schritte (nicht implementiert)
-- Catch-Planung und Preislogik
-- Bildverwaltung
-- WhatsApp-Post-Vorbereitung und manuelle Publikation
-- Abverkaufs-Rückmeldung und Auswertung
-- Nutzer, Rollen und Anmeldung
+- Abverkaufs-Rückmeldung, Nachkalkulation und Auswertung
+- Historien-Analysen und Learning
+- Nutzer- und Rollenverwaltung
