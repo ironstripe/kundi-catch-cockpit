@@ -1,11 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, MessageCircle, Pencil, Scale } from "lucide-react";
+import { ArrowLeft, Pencil, Scale } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { CalculationCard } from "@/components/catch/calculation-card";
+import { PublicationWorkspace } from "@/components/catch/publication-workspace";
 import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-badge";
-import { PageHeader } from "@/components/layout/page-header";
+import { PageHeader, PageSection } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,6 +41,7 @@ export const Route = createFileRoute("/_authenticated/catches/$catchId/")({
 
 function CatchDetailPage() {
   const { catchId } = Route.useParams();
+  const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["catch", catchId], queryFn: () => fetchCatch(catchId) });
   const image = useSignedImage(query.data?.image_path);
 
@@ -233,11 +235,41 @@ function CatchDetailPage() {
           </Card>
 
           <div className="space-y-2">
-            <Reserved icon={<MessageCircle className="size-4" />} title="WhatsApp-Vorschau" />
             <Reserved icon={<Scale className="size-4" />} title="Nachkalkulation" />
           </div>
         </div>
       </div>
+
+      <PageSection
+        id="publikation"
+        title="WhatsApp-Post"
+        description="Post vorbereiten, Bild und Text kopieren und den Catch manuell als publiziert markieren."
+      >
+        {item.status === "ready" || item.status === "published" ? (
+          <PublicationWorkspace
+            item={item}
+            onChanged={async () => {
+              await queryClient.invalidateQueries({ queryKey: ["catch", catchId] });
+              await queryClient.invalidateQueries({ queryKey: ["catches"] });
+            }}
+          />
+        ) : (
+          <Card>
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+              <p className="text-sm text-muted-foreground">
+                Der Catch muss vollständig und bereit sein, bevor der WhatsApp-Post vorbereitet
+                werden kann.
+              </p>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/catches/$catchId/edit" params={{ catchId }}>
+                  <Pencil />
+                  Catch vervollständigen
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </PageSection>
     </>
   );
 }

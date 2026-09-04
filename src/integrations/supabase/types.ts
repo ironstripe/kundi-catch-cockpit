@@ -51,6 +51,8 @@ export type Database = {
           created_at: string
           id: string
           is_primary: boolean
+          optimized_path: string | null
+          optimized_source_path: string | null
           sort_order: number
           storage_path: string
           updated_at: string
@@ -61,6 +63,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_primary?: boolean
+          optimized_path?: string | null
+          optimized_source_path?: string | null
           sort_order?: number
           storage_path: string
           updated_at?: string
@@ -71,6 +75,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_primary?: boolean
+          optimized_path?: string | null
+          optimized_source_path?: string | null
           sort_order?: number
           storage_path?: string
           updated_at?: string
@@ -159,7 +165,16 @@ export type Database = {
           id: string
           internal_note: string | null
           packaging: string | null
+          post_final_text: string | null
+          post_generated_at: string | null
+          post_generated_text: string | null
+          post_outdated_decision: string | null
+          post_source_signature: string | null
           product_name: string
+          published_at: string | null
+          published_by: string | null
+          published_image_path: string | null
+          published_text: string | null
           purchase_price: number | null
           purchase_quantity: number
           quantity_unit: string
@@ -188,7 +203,16 @@ export type Database = {
           id?: string
           internal_note?: string | null
           packaging?: string | null
+          post_final_text?: string | null
+          post_generated_at?: string | null
+          post_generated_text?: string | null
+          post_outdated_decision?: string | null
+          post_source_signature?: string | null
           product_name: string
+          published_at?: string | null
+          published_by?: string | null
+          published_image_path?: string | null
+          published_text?: string | null
           purchase_price?: number | null
           purchase_quantity?: number
           quantity_unit?: string
@@ -217,7 +241,16 @@ export type Database = {
           id?: string
           internal_note?: string | null
           packaging?: string | null
+          post_final_text?: string | null
+          post_generated_at?: string | null
+          post_generated_text?: string | null
+          post_outdated_decision?: string | null
+          post_source_signature?: string | null
           product_name?: string
+          published_at?: string | null
+          published_by?: string | null
+          published_image_path?: string | null
+          published_text?: string | null
           purchase_price?: number | null
           purchase_quantity?: number
           quantity_unit?: string
@@ -269,33 +302,48 @@ export type Database = {
       }
       post_versions: {
         Row: {
-          body: string
+          body: string | null
           catch_id: string
           created_at: string
           created_by: string | null
+          final_text: string | null
+          generated_text: string | null
           id: string
+          image_path: string | null
           published_at: string | null
+          reason: string | null
           updated_at: string
+          used_for_publication: boolean
           version: number
         }
         Insert: {
-          body: string
+          body?: string | null
           catch_id: string
           created_at?: string
           created_by?: string | null
+          final_text?: string | null
+          generated_text?: string | null
           id?: string
+          image_path?: string | null
           published_at?: string | null
+          reason?: string | null
           updated_at?: string
+          used_for_publication?: boolean
           version?: number
         }
         Update: {
-          body?: string
+          body?: string | null
           catch_id?: string
           created_at?: string
           created_by?: string | null
+          final_text?: string | null
+          generated_text?: string | null
           id?: string
+          image_path?: string | null
           published_at?: string | null
+          reason?: string | null
           updated_at?: string
+          used_for_publication?: boolean
           version?: number
         }
         Relationships: [

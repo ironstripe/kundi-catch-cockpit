@@ -57,6 +57,8 @@ interface CatchFormProps {
   catchId?: string;
   initialValues: CatchFormValues;
   initialImagePath: string | null;
+  /** Aktueller Status, damit ein publizierter Catch beim Speichern publiziert bleibt. */
+  currentStatus?: "draft" | "ready" | "published" | "closed" | "cancelled";
   onSaved: (catchId: string) => void;
 }
 
@@ -81,6 +83,7 @@ export function CatchForm({
   catchId,
   initialValues,
   initialImagePath,
+  currentStatus,
   onSaved,
 }: CatchFormProps) {
   const navigate = useNavigate();
@@ -154,7 +157,7 @@ export function CatchForm({
       const id = await saveCatch({
         id: catchId,
         values,
-        status,
+        status: currentStatus === "published" ? "published" : status,
         audit: {
           calculation_decision: calculation.level,
           ...(confirmedCritical ? { critical_calculation_confirmed: true } : {}),
