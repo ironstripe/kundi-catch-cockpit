@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowLeft, CheckCircle2, Save } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { CalculationCard } from "@/components/catch/calculation-card";
 import { CatchImageField } from "@/components/catch/catch-image-field";
 import {
   AlertDialog,
@@ -39,8 +40,15 @@ import {
   type HandicapReason,
   type Temperature,
 } from "@/lib/catch-domain";
+import { calculateCatch } from "@/lib/catch-calculation";
 import { validateDraft, validateReady, type FieldIssue } from "@/lib/catch-validation";
-import { fetchLocations, fetchSuppliers, saveCatch, type CatchFormValues } from "@/lib/catches";
+import {
+  fetchLocations,
+  fetchSuppliers,
+  formValuesToCalculationInput,
+  saveCatch,
+  type CatchFormValues,
+} from "@/lib/catches";
 import { isoToZurichLocal } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -92,8 +100,14 @@ export function CatchForm({
   const [issues, setIssues] = useState<FieldIssue[]>([]);
   const [saving, setSaving] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [criticalOpen, setCriticalOpen] = useState(false);
   const [storyTouched, setStoryTouched] = useState(Boolean(initialValues.handicap_story));
   const savedRef = useRef(false);
+
+  const calculation = useMemo(
+    () => calculateCatch(formValuesToCalculationInput(values)),
+    [values],
+  );
 
   const suppliers = useQuery({ queryKey: ["suppliers"], queryFn: fetchSuppliers });
   const locations = useQuery({ queryKey: ["locations"], queryFn: fetchLocations });
@@ -117,7 +131,7 @@ export function CatchForm({
     (element as HTMLElement | null)?.focus?.();
   }
 
-  async function persist(status: "draft" | "ready") {
+  async function persist(status: "draft" | "ready", confirmedCritical = false) {
     const found = status === "draft" ? validateDraft(values) : validateReady(values, Boolean(imagePath));
     setIssues(found);
     if (found.length > 0) {
@@ -130,9 +144,22 @@ export function CatchForm({
       return;
     }
 
+    if (status === "ready" && calculation.level === "red" && !confirmedCritical) {
+      setCriticalOpen(true);
+      return;
+    }
+
     setSaving(true);
     try {
-      const id = await saveCatch({ id: catchId, values, status });
+      const id = await saveCatch({
+        id: catchId,
+        values,
+        status,
+        audit: {
+          calculation_decision: calculation.level,
+          ...(confirmedCritical ? { critical_calculation_confirmed: true } : {}),
+        },
+      });
       await syncImage(id);
       savedRef.current = true;
       toast.success(
@@ -557,6 +584,12 @@ export function CatchForm({
             </div>
           </FormSection>
 
+          <CalculationCard
+            result={calculation}
+            compact
+            description="Aktualisiert sich sofort bei Änderungen an Menge und Preisen."
+          />
+
           <div className="sticky top-16 space-y-2 rounded-md border bg-card p-3">
             <Button
               type="button"
@@ -587,6 +620,23 @@ export function CatchForm({
           </div>
         </div>
       </div>
+
+      <AlertDialog open={criticalOpen} onOpenChange={setCriticalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kritisch kalkulierter Catch</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dieser Catch ist kritisch kalkuliert. Möchtest du ihn trotzdem als bereit markieren?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Zurück zur Kalkulation</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void persist("ready", true)}>
+              Trotzdem als bereit markieren
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={leaveOpen} onOpenChange={setLeaveOpen}>
         <AlertDialogContent>

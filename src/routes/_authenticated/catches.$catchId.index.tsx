@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Calculator, MessageCircle, Pencil, Scale } from "lucide-react";
+import { ArrowLeft, MessageCircle, Pencil, Scale } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { CalculationCard } from "@/components/catch/calculation-card";
 import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-badge";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,8 @@ import {
   QUANTITY_UNIT_LABELS,
   type HandicapReason,
 } from "@/lib/catch-domain";
-import { fetchCatch } from "@/lib/catches";
+import { calculateCatch } from "@/lib/catch-calculation";
+import { catchToCalculationInput, fetchCatch } from "@/lib/catches";
 import { formatCurrency, formatDate, formatDateTime, formatQuantity } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/catches/$catchId/")({
@@ -67,6 +69,8 @@ function CatchDetailPage() {
     );
   }
 
+  const calculation = calculateCatch(catchToCalculationInput(item));
+
   const deliveryText = item.delivery_included
     ? "Im Einkaufspreis enthalten"
     : formatCurrency(item.delivery_cost);
@@ -102,6 +106,19 @@ function CatchDetailPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
+          <CalculationCard
+            result={calculation}
+            description={`Berechnete Werte aus den gespeicherten Eingaben · Stand ${formatDateTime(item.updated_at)}`}
+            footer={
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/catches/$catchId/edit" params={{ catchId }}>
+                  <Pencil />
+                  Catch bearbeiten
+                </Link>
+              </Button>
+            }
+          />
+
           <Section title="Produkt">
             <Row label="Produktname" value={item.product_name} />
             <Row label="Produktart" value={item.temperature === "frozen" ? "TK" : "Frisch"} />
@@ -216,7 +233,6 @@ function CatchDetailPage() {
           </Card>
 
           <div className="space-y-2">
-            <Reserved icon={<Calculator className="size-4" />} title="Vorkalkulation" />
             <Reserved icon={<MessageCircle className="size-4" />} title="WhatsApp-Vorschau" />
             <Reserved icon={<Scale className="size-4" />} title="Nachkalkulation" />
           </div>

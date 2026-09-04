@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { parseNumberInput, type CalculationInput } from "@/lib/catch-calculation";
 import { ACTIVE_STATUSES, type CatchStatus, type Temperature } from "@/lib/catch-domain";
 import { zurichLocalToIso } from "@/lib/format";
 
@@ -58,6 +59,11 @@ export interface CatchListItem {
   purchase_quantity: number;
   quantity_unit: string;
   catch_price: number | null;
+  purchase_price: number | null;
+  delivery_cost: number;
+  delivery_included: boolean;
+  regular_price: number | null;
+  updated_at: string;
   expected_sell_through: number | null;
   image_path: string | null;
   location_names: string[];
@@ -69,22 +75,18 @@ export interface CatchDetail extends CatchListItem {
   expiry_date: string | null;
   supplier_id: string | null;
   supplier_name: string | null;
-  purchase_price: number | null;
-  delivery_cost: number;
-  delivery_included: boolean;
-  regular_price: number | null;
   available_until: string | null;
   handicap_reason: string | null;
   handicap_story: string | null;
   internal_note: string | null;
   location_ids: string[];
   created_at: string;
-  updated_at: string;
 }
 
 const LIST_SELECT = `
   id, catch_number, product_name, temperature, status, available_from,
   purchase_quantity, quantity_unit, catch_price, expected_sell_through,
+  purchase_price, delivery_cost, delivery_included, regular_price, updated_at,
   catch_images ( storage_path, is_primary, sort_order ),
   catch_locations ( location_id, locations ( id, name ) )
 `;
@@ -125,6 +127,11 @@ function mapList(row: any): CatchListItem {
     purchase_quantity: Number(row.purchase_quantity ?? 0),
     quantity_unit: row.quantity_unit,
     catch_price: row.catch_price === null ? null : Number(row.catch_price),
+    purchase_price: row.purchase_price === null ? null : Number(row.purchase_price),
+    delivery_cost: Number(row.delivery_cost ?? 0),
+    delivery_included: Boolean(row.delivery_included),
+    regular_price: row.regular_price === null ? null : Number(row.regular_price),
+    updated_at: row.updated_at,
     expected_sell_through:
       row.expected_sell_through === null ? null : Number(row.expected_sell_through),
     image_path: primaryImagePath(row),
@@ -142,17 +149,12 @@ function mapDetail(row: any): CatchDetail {
     expiry_date: row.expiry_date,
     supplier_id: row.supplier_id,
     supplier_name: row.suppliers?.name ?? null,
-    purchase_price: row.purchase_price === null ? null : Number(row.purchase_price),
-    delivery_cost: Number(row.delivery_cost ?? 0),
-    delivery_included: Boolean(row.delivery_included),
-    regular_price: row.regular_price === null ? null : Number(row.regular_price),
     available_until: row.available_until,
     handicap_reason: row.handicap_reason,
     handicap_story: row.handicap_story,
     internal_note: row.internal_note,
     location_ids: (row.catch_locations ?? []).map((cl: any) => cl.location_id),
     created_at: row.created_at,
-    updated_at: row.updated_at,
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -245,10 +247,13 @@ interface SaveArgs {
   id?: string | undefined;
   values: CatchFormValues;
   status: CatchStatus;
+  /** Zusatzangaben fürs Audit-Log, z. B. bestätigte kritische Kalkulation. */
+  audit?: Record<string, unknown> | undefined;
 }
 
 /** Legt einen Catch an oder aktualisiert ihn inkl. Standortzuordnung. */
-export async function saveCatch({ id, values, status }: SaveArgs): Promise<string> {
+export async function saveCatch({ id, values, status, audit }: SaveArgs): Promise<string> {
+
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id ?? null;
 
@@ -296,7 +301,7 @@ export async function saveCatch({ id, values, status }: SaveArgs): Promise<strin
     entity_id: catchId,
     action: id ? "updated" : "created",
     actor_id: userId,
-    payload: { status },
+    payload: { status, ...(audit ?? {}) },
   });
 
   return catchId;
@@ -338,4 +343,28 @@ export async function createSignedImageUrl(path: string, expiresIn = 3600) {
     .createSignedUrl(path, expiresIn);
   if (error) throw error;
   return data.signedUrl;
+}
+
+/** Gespeicherter Catch -> Eingabewerte der Vorkalkulation. */
+export function catchToCalculationInput(item: CatchListItem): CalculationInput {
+  return {
+    purchase_quantity: item.purchase_quantity || null,
+    quantity_unit: item.quantity_unit,
+    purchase_price: item.purchase_price,
+    delivery_cost: item.delivery_included ? 0 : item.delivery_cost,
+    regular_price: item.regular_price,
+    catch_price: item.catch_price,
+  };
+}
+
+/** Formularwerte -> Eingabewerte der Vorkalkulation (Live-Vorschau). */
+export function formValuesToCalculationInput(values: CatchFormValues): CalculationInput {
+  return {
+    purchase_quantity: parseNumberInput(values.purchase_quantity),
+    quantity_unit: values.quantity_unit,
+    purchase_price: parseNumberInput(values.purchase_price),
+    delivery_cost: values.delivery_included ? 0 : parseNumberInput(values.delivery_cost),
+    regular_price: parseNumberInput(values.regular_price),
+    catch_price: parseNumberInput(values.catch_price),
+  };
 }

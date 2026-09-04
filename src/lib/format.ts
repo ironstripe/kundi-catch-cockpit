@@ -64,7 +64,7 @@ export function formatCurrency(value: number): string {
 
 export function formatQuantity(value: number, unit: string): string {
   const formatted = new Intl.NumberFormat(APP_LOCALE, {
-    maximumFractionDigits: 1,
+    maximumFractionDigits: 2,
   }).format(value);
   return `${formatted} ${unit}`;
 }
@@ -72,6 +72,16 @@ export function formatQuantity(value: number, unit: string): string {
 export function formatPercent(fraction: number): string {
   return percentFormatter.format(fraction);
 }
+
+/** Prozentwert (bereits als Prozent, nicht als Anteil) mit einer Nachkommastelle. */
+export function formatPercentValue(percent: number, fractionDigits = 1): string {
+  const formatted = new Intl.NumberFormat(APP_LOCALE, {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(percent);
+  return `${formatted} %`;
+}
+
 
 /** Offset (ms) zwischen Europe/Zurich-Wanduhr und UTC zum gegebenen Zeitpunkt. */
 function zurichOffsetMs(date: Date): number {
