@@ -1,21 +1,16 @@
 # Kundi Catch Cockpit — Roadmap
 
-## Schritt 1 — Fundament (aktuell)
-
-- [x] Designsystem aus Kundivent übernehmen (Tokens, Radius, Typografie)
-- [x] Kundi-Catch-Logo als Produktlogo + Favicon integrieren
-- [x] App-Shell mit Sidebar-Navigation (Dashboard, Neuer Catch, Historie, Einstellungen)
+## Schritt 1: Fundament (abgeschlossen)
+- [x] Kundivent-Designsystem als Tokenbasis (`src/styles.css`)
+- [x] Logo, Favicon, PWA-Manifest
+- [x] App-Shell mit Sidebar-Navigation (Dashboard / Neuer Catch / Historie / Einstellungen)
 - [x] Dashboard mit KPI-Platzhaltern und Beispiel-Catches
-- [x] Leere, strukturell vollständige Seiten: Neuer Catch, Historie, Einstellungen
-- [x] Datenbankschema (catches, catch_images, suppliers, locations, catch_locations, post_versions, audit_events)
-- [x] PWA-Vorbereitung (Manifest + Icons, kein Service Worker)
-- [x] Schweizer Formatierung (CHF, de-CH, Europe/Zurich)
+- [x] Leere Seiten: Neuer Catch, Historie, Einstellungen
+- [x] Datenbankschema: catches, catch_images, suppliers, locations, catch_locations, post_versions, audit_events
 
-## Später (nicht Teil von Schritt 1)
-
+## Spätere Schritte (nicht implementiert)
 - Catch-Planung und Preislogik
-- Produktbild-Verwaltung
-- WhatsApp-Post-Vorbereitung
-- Manuelle Publikation über WhatsApp Desktop
-- Manuelle Abverkaufs-Abstimmung
-- Catch-Historie und Learnings
+- Bildverwaltung
+- WhatsApp-Post-Vorbereitung und manuelle Publikation
+- Abverkaufs-Rückmeldung und Auswertung
+- Nutzer, Rollen und Anmeldung
