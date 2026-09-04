@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { WhatsAppPreview } from "@/components/catch/whatsapp-preview";
+import { WhatsappPreview } from "@/components/catch/whatsapp-preview";
 import { useRoles } from "@/hooks/use-role";
 import { recordAudit } from "@/lib/audit";
 import {
@@ -228,7 +228,7 @@ export function TemplateSection() {
 
         <div className="space-y-2">
           <Label>Vorschau mit Beispieldaten</Label>
-          <WhatsAppPreview text={preview} />
+          <WhatsappPreview text={preview} />
         </div>
       </div>
     </SectionShell>
