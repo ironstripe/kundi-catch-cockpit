@@ -238,7 +238,7 @@ export async function buildExportWorkbook(
     ],
     categories.map((category) => ({
       name: category.name,
-      active: category.is_active ? "Ja" : "Nein",
+      active: category.active ? "Ja" : "Nein",
       created_at: toDate(category.created_at),
     })),
   );
