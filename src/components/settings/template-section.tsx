@@ -26,6 +26,7 @@ import { recordAudit } from "@/lib/audit";
 import {
   DEFAULT_TEMPLATE_SETTINGS,
   PROTECTED_BRAND_TEXTS,
+  SETTING_AUDIT_IDS,
   SETTING_KEYS,
   fetchAppSettings,
   saveSetting,
@@ -74,7 +75,7 @@ export function TemplateSection() {
       await saveSetting(SETTING_KEYS.template, { ...next }, current.template_version);
       await recordAudit({
         entityType: "settings",
-        entityId: SETTING_KEYS.template,
+        entityId: SETTING_AUDIT_IDS[SETTING_KEYS.template]!,
         action: "template_updated",
         previous: { ...current.template },
         next: { ...next },

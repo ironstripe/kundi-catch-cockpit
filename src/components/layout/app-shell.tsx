@@ -88,9 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 Offline – Änderungen können nicht gespeichert werden
               </Badge>
             ) : null}
-            <span className="ml-auto hidden text-xs text-muted-foreground lg:inline">
-              Schnell sein. Gut essen. Food Waste vermeiden.
-            </span>
+            <span className="ml-auto" />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="ml-2 gap-2 text-xs">

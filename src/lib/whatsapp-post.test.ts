@@ -6,7 +6,13 @@ import {
   supportsImageClipboard,
   supportsTextClipboard,
 } from "@/lib/whatsapp-image";
+import { PROTECTED_BRAND_TEXTS } from "@/lib/app-settings";
 import {
+  BRAND_CLAIM,
+  BRAND_PURPOSE,
+  POST_TEMPLATE_VERSION,
+  isTemplateOnlyChange,
+  signatureTemplateVersion,
   generatePostText,
   parsePostLine,
   postPrice,
@@ -50,7 +56,7 @@ MHD: 19.01.2027
 📍 Abholung: Stadtladen Schaffhausen
 📅 Ab: 04.09.2026 ab 14:00 Uhr
 
-*Schnell sein. Gut essen. Food Waste vermeiden.*`;
+*Gut essen. Food Waste vermeiden.*`;
 
 describe("generatePostText", () => {
   it("erzeugt den Referenzpost mit allen Feldern", () => {
@@ -176,5 +182,45 @@ describe("Zwischenablage und Bild-Fallback", () => {
       "KC-2026-001-felchenfilets-mit-haut.jpg",
     );
     expect(optimizedFileName(null, "Räucherforelle", "png")).toBe("raeucherforelle.png");
+  });
+});
+
+describe("Markenarchitektur", () => {
+  it("verwendet nur den freigegebenen Claim und Purpose", () => {
+    expect(BRAND_CLAIM).toBe("Guter Fisch. Kleines Handicap. Grosser Fang.");
+    expect(BRAND_PURPOSE).toBe("Gut essen. Food Waste vermeiden.");
+  });
+
+  it("beendet den Post mit dem Purpose und ohne «Schnell sein»", () => {
+    const text = generatePostText(felchen);
+    expect(text.endsWith("*Gut essen. Food Waste vermeiden.*")).toBe(true);
+    expect(text).not.toContain("Schnell sein");
+    expect(text).toContain("*Nur solange Vorrat.*");
+  });
+
+  it("schützt die freigegebenen Markentexte ohne alte Purpose-Zeile", () => {
+    expect([...PROTECTED_BRAND_TEXTS]).toEqual([
+      "KUNDI CATCH",
+      "Kundelfingerhof",
+      "Guter Fisch. Kleines Handicap. Grosser Fang.",
+      "Nur solange Vorrat.",
+      "Gut essen. Food Waste vermeiden.",
+    ]);
+    expect(PROTECTED_BRAND_TEXTS.join(" ")).not.toContain("Schnell sein");
+  });
+
+  it("markiert bestehende Posts der alten Vorlagenversion als veraltet", () => {
+    const current = postSourceSignature(felchen);
+    const old = JSON.stringify([...(JSON.parse(current) as unknown[]).slice(0, -1), 1]);
+    expect(old).not.toBe(current);
+    expect(isTemplateOnlyChange(old, current)).toBe(true);
+    expect(signatureTemplateVersion(old)).toBe(1);
+    expect(signatureTemplateVersion(current)).toBe(POST_TEMPLATE_VERSION);
+  });
+
+  it("unterscheidet Datenänderungen von reinen Vorlagenänderungen", () => {
+    const current = postSourceSignature(felchen);
+    const changed = postSourceSignature({ ...felchen, catch_price: 8.4 });
+    expect(isTemplateOnlyChange(changed, current)).toBe(false);
   });
 });

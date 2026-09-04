@@ -10,7 +10,19 @@ export const SETTING_KEYS = {
   thresholds: "calculation_thresholds",
   template: "whatsapp_template",
   brand: "brand_logo",
+  brandIcon: "brand_icon",
 } as const;
+
+/**
+ * Stabile Kennungen für Audit-Einträge zu Einstellungen
+ * (das Audit-Feld erwartet eine UUID, keine Schlüsselbezeichnung).
+ */
+export const SETTING_AUDIT_IDS: Record<string, string> = {
+  calculation_thresholds: "feadc928-d0ce-51a6-7cb8-3372da8ee481",
+  whatsapp_template: "b5bfa745-2936-cd06-683a-47da4f293467",
+  brand_logo: "71584ba9-bd72-aad3-fcef-ece5523cfb9e",
+  brand_icon: "6670d0fb-13c2-aafe-843a-a872fe540e1e",
+};
 
 /** Reihenfolge der optionalen Produktdetailzeilen im Post. */
 export type TemplateDetailField = "description" | "packaging";
@@ -50,10 +62,16 @@ export const DEFAULT_BRAND_SETTINGS: BrandSettings = {
 /** Freigegebene Markentexte — nicht über Einstellungen änderbar. */
 export const PROTECTED_BRAND_TEXTS = [
   "KUNDI CATCH",
+  "Kundelfingerhof",
   "Guter Fisch. Kleines Handicap. Grosser Fang.",
   "Nur solange Vorrat.",
-  "Schnell sein. Gut essen. Food Waste vermeiden.",
+  "Gut essen. Food Waste vermeiden.",
 ] as const;
+
+/** Einziger freigegebener Markenclaim. */
+export const BRAND_CLAIM_TEXT = "Guter Fisch. Kleines Handicap. Grosser Fang.";
+/** Kommunikationsabschluss — bewusst zurückhaltender als der Claim. */
+export const BRAND_PURPOSE_TEXT = "Gut essen. Food Waste vermeiden.";
 
 export interface AppSettings {
   thresholds: CatchThresholds;
@@ -61,6 +79,9 @@ export interface AppSettings {
   template: TemplateSettings;
   template_version: number;
   brand: BrandSettings;
+  brand_version: number;
+  brand_icon: BrandSettings;
+  brand_icon_version: number;
 }
 
 function merge<T extends object>(fallback: T, value: unknown): T {
@@ -77,12 +98,16 @@ export async function fetchAppSettings(): Promise<AppSettings> {
   const thresholdRow = rows.get(SETTING_KEYS.thresholds);
   const templateRow = rows.get(SETTING_KEYS.template);
   const brandRow = rows.get(SETTING_KEYS.brand);
+  const iconRow = rows.get(SETTING_KEYS.brandIcon);
   return {
     thresholds: merge(DEFAULT_CATCH_THRESHOLDS, thresholdRow?.value),
     thresholds_version: thresholdRow?.version ?? 1,
     template: merge(DEFAULT_TEMPLATE_SETTINGS, templateRow?.value),
     template_version: templateRow?.version ?? 1,
     brand: merge(DEFAULT_BRAND_SETTINGS, brandRow?.value),
+    brand_version: brandRow?.version ?? 1,
+    brand_icon: merge(DEFAULT_BRAND_SETTINGS, iconRow?.value),
+    brand_icon_version: iconRow?.version ?? 1,
   };
 }
 

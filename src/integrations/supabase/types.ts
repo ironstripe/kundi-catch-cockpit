@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      application_setting_versions: {
+        Row: {
+          archived_at: string
+          archived_by: string | null
+          id: string
+          key: string
+          summary: string | null
+          value: Json
+          version: number
+        }
+        Insert: {
+          archived_at?: string
+          archived_by?: string | null
+          id?: string
+          key: string
+          summary?: string | null
+          value: Json
+          version: number
+        }
+        Update: {
+          archived_at?: string
+          archived_by?: string | null
+          id?: string
+          key?: string
+          summary?: string | null
+          value?: Json
+          version?: number
+        }
+        Relationships: []
+      }
       application_settings: {
         Row: {
           created_at: string

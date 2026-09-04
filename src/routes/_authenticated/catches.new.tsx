@@ -30,7 +30,7 @@ function NewCatchPage() {
     <>
       <PageHeader
         title="Neuer Catch"
-        description="Schnell sein. Gut essen. Food Waste vermeiden."
+        description="Produkt, Bild, Beschaffung und Aktionsrahmen erfassen."
       />
       <CatchForm
         mode="create"

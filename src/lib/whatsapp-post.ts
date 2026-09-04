@@ -13,7 +13,10 @@ import { QUANTITY_UNIT_LABELS } from "@/lib/catch-domain";
 import { APP_LOCALE, APP_TIMEZONE, formatDate } from "@/lib/format";
 
 export const BRAND_CLAIM = "Guter Fisch. Kleines Handicap. Grosser Fang.";
-export const BRAND_CALL = "Schnell sein. Gut essen. Food Waste vermeiden.";
+export const BRAND_PURPOSE = "Gut essen. Food Waste vermeiden.";
+
+/** Version der deterministischen Vorlage. Erhöhen, wenn sich der Aufbau ändert. */
+export const POST_TEMPLATE_VERSION = 2;
 
 export interface PostSource {
   product_name: string;
@@ -137,7 +140,7 @@ export function generatePostText(
   }
   if (actionLines.length > 0) blocks.push(actionLines.join("\n"));
 
-  blocks.push(`*${BRAND_CALL}*`);
+  blocks.push(`*${BRAND_PURPOSE}*`);
 
   return blocks.join("\n\n");
 }
@@ -160,7 +163,37 @@ export function postSourceSignature(source: PostSource): string {
     source.available_until,
     clean(source.handicap_story),
     source.image_path,
+    POST_TEMPLATE_VERSION,
   ]);
+}
+
+/** Vorlagenversion aus einer gespeicherten Signatur; null bei unbekanntem Format. */
+export function signatureTemplateVersion(signature: string | null): number | null {
+  if (!signature) return null;
+  try {
+    const parsed: unknown = JSON.parse(signature);
+    if (!Array.isArray(parsed)) return null;
+    const last = parsed[parsed.length - 1];
+    return typeof last === "number" ? last : null;
+  } catch {
+    return null;
+  }
+}
+
+/** True, wenn sich gegenüber der Signatur nur die Vorlagenversion geändert hat. */
+export function isTemplateOnlyChange(signature: string | null, current: string): boolean {
+  if (!signature) return false;
+  try {
+    const a = JSON.parse(signature) as unknown[];
+    const b = JSON.parse(current) as unknown[];
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    return (
+      JSON.stringify(a.slice(0, -1)) === JSON.stringify(b.slice(0, -1)) &&
+      a[a.length - 1] !== b[b.length - 1]
+    );
+  } catch {
+    return false;
+  }
 }
 
 export interface PreviewSegment {
