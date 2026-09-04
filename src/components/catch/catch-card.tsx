@@ -1,4 +1,6 @@
 import { Link } from "@tanstack/react-router";
+
+import { Button } from "@/components/ui/button";
 import { Fish, MapPin, CalendarDays, Send } from "lucide-react";
 
 import { DecisionBadge } from "@/components/catch/decision-badge";
@@ -125,6 +127,20 @@ export function CatchCard({ item }: { item: CatchListItem }) {
           </div>
         </CardContent>
       </Link>
+      {item.status === "published" ? (
+        <div className="flex items-center justify-end border-t px-4 py-2">
+          <Button size="sm" variant="ghost" asChild>
+            <Link
+              to="/catches/$catchId"
+              params={{ catchId: item.id }}
+              hash="publikation"
+            >
+              <Send />
+              Post anzeigen
+            </Link>
+          </Button>
+        </div>
+      ) : null}
     </Card>
   );
 }
