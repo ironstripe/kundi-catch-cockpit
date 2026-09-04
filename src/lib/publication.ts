@@ -158,15 +158,16 @@ export async function savePostVersion({
   });
   if (error) throw error;
 
-  const patch: Record<string, unknown> = {
-    post_generated_text: generatedText,
-    post_final_text: finalText,
-    post_source_signature: signature,
-    post_outdated_decision: null,
-  };
-  if (generatedAt) patch["post_generated_at"] = generatedAt;
-
-  const { error: updateError } = await supabase.from("catches").update(patch).eq("id", catchId);
+  const { error: updateError } = await supabase
+    .from("catches")
+    .update({
+      post_generated_text: generatedText,
+      post_final_text: finalText,
+      post_source_signature: signature,
+      post_outdated_decision: null,
+      ...(generatedAt ? { post_generated_at: generatedAt } : {}),
+    })
+    .eq("id", catchId);
   if (updateError) throw updateError;
 }
 
