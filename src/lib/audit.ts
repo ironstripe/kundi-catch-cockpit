@@ -32,12 +32,16 @@ export type AuditAction =
   | "thresholds_updated"
   | "template_updated"
   | "logo_replaced"
-  | "settings_reset";
+  | "settings_reset"
+  | "export_created"
+  | "backup_sent";
 
 export const AUDIT_ACTION_LABELS: Record<string, string> = {
   created: "Erstellt",
   updated: "Geändert",
   status_changed: "Status geändert",
+  export_created: "Export erstellt",
+  backup_sent: "Backup übermittelt",
   published: "Publiziert",
   deleted: "Gelöscht",
   closed: "Abgeschlossen",
