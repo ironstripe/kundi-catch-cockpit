@@ -35,6 +35,29 @@ const credentialsSchema = z.object({
   password: z.string().min(8, { message: "Das Passwort muss mindestens 8 Zeichen haben." }).max(72),
 });
 
+/** Supabase-Fehlermeldungen auf Deutsch, damit die Ursache klar wird. */
+function authErrorMessage(err: unknown): string {
+  const code = (err as { code?: string } | null)?.code;
+  const raw = err instanceof Error ? err.message : "";
+  switch (code) {
+    case "weak_password":
+      return "Dieses Passwort gilt als unsicher (es taucht in bekannten Datenlecks auf). Bitte ein anderes Passwort mit mindestens 8 Zeichen wählen.";
+    case "invalid_credentials":
+      return "E-Mail oder Passwort stimmen nicht. Falls noch kein Konto besteht, zuerst ein Konto erstellen.";
+    case "user_already_exists":
+    case "email_exists":
+      return "Für diese E-Mail-Adresse besteht bereits ein Konto. Bitte anmelden.";
+    case "email_address_invalid":
+      return "Diese E-Mail-Adresse wird nicht akzeptiert.";
+    case "over_email_send_rate_limit":
+      return "Zu viele Versuche. Bitte in einigen Minuten erneut versuchen.";
+    case "signup_disabled":
+      return "Die Registrierung ist derzeit deaktiviert.";
+    default:
+      return raw || "Anmeldung fehlgeschlagen.";
+  }
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
