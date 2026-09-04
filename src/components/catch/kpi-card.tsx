@@ -20,7 +20,7 @@ export function KpiCard({ label, value, hint, icon: Icon, placeholder = false }:
           <Icon className="size-4" />
         </span>
         <div className="min-w-0 flex-1 space-y-0.5">
-          <p className="truncate text-xs font-medium text-muted-foreground">{label}</p>
+          <p className="text-xs font-medium leading-tight text-muted-foreground">{label}</p>
           <p className="text-lg font-semibold leading-tight">{value}</p>
           <p className="truncate text-[11px] text-muted-foreground">{hint}</p>
           {placeholder ? (
