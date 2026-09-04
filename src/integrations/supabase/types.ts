@@ -14,7 +14,297 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          payload: Json | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          payload?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          payload?: Json | null
+        }
+        Relationships: []
+      }
+      catch_images: {
+        Row: {
+          caption: string | null
+          catch_id: string
+          created_at: string
+          id: string
+          is_primary: boolean
+          sort_order: number
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          caption?: string | null
+          catch_id: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          sort_order?: number
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          caption?: string | null
+          catch_id?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          sort_order?: number
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catch_images_catch_id_fkey"
+            columns: ["catch_id"]
+            isOneToOne: false
+            referencedRelation: "catches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catch_locations: {
+        Row: {
+          allocated_quantity: number | null
+          catch_id: string
+          created_at: string
+          id: string
+          location_id: string
+        }
+        Insert: {
+          allocated_quantity?: number | null
+          catch_id: string
+          created_at?: string
+          id?: string
+          location_id: string
+        }
+        Update: {
+          allocated_quantity?: number | null
+          catch_id?: string
+          created_at?: string
+          id?: string
+          location_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catch_locations_catch_id_fkey"
+            columns: ["catch_id"]
+            isOneToOne: false
+            referencedRelation: "catches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catch_locations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catches: {
+        Row: {
+          actual_sell_through: number | null
+          available_from: string | null
+          available_until: string | null
+          catch_number: string
+          catch_price: number | null
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          expected_sell_through: number | null
+          handicap_story: string | null
+          id: string
+          internal_note: string | null
+          product_name: string
+          purchase_price: number | null
+          purchase_quantity: number
+          quantity_unit: string
+          regular_price: number | null
+          status: string
+          supplier_id: string | null
+          temperature: string
+          updated_at: string
+        }
+        Insert: {
+          actual_sell_through?: number | null
+          available_from?: string | null
+          available_until?: string | null
+          catch_number: string
+          catch_price?: number | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expected_sell_through?: number | null
+          handicap_story?: string | null
+          id?: string
+          internal_note?: string | null
+          product_name: string
+          purchase_price?: number | null
+          purchase_quantity?: number
+          quantity_unit?: string
+          regular_price?: number | null
+          status?: string
+          supplier_id?: string | null
+          temperature?: string
+          updated_at?: string
+        }
+        Update: {
+          actual_sell_through?: number | null
+          available_from?: string | null
+          available_until?: string | null
+          catch_number?: string
+          catch_price?: number | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expected_sell_through?: number | null
+          handicap_story?: string | null
+          id?: string
+          internal_note?: string | null
+          product_name?: string
+          purchase_price?: number | null
+          purchase_quantity?: number
+          quantity_unit?: string
+          regular_price?: number | null
+          status?: string
+          supplier_id?: string | null
+          temperature?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catches_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          pickup_note: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          pickup_note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          pickup_note?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      post_versions: {
+        Row: {
+          body: string
+          catch_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          published_at: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          body: string
+          catch_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          published_at?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          body?: string
+          catch_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          published_at?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_versions_catch_id_fkey"
+            columns: ["catch_id"]
+            isOneToOne: false
+            referencedRelation: "catches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          contact_note: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          contact_note?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          contact_note?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
