@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout/page-header";
 import { AuditSection } from "@/components/settings/audit-section";
 import { BrandSection } from "@/components/settings/brand-section";
+import { ExportSection } from "@/components/settings/export-section";
 import { CategoriesSection } from "@/components/settings/categories-section";
 import { LocationsSection } from "@/components/settings/locations-section";
 import { SuppliersSection } from "@/components/settings/suppliers-section";
@@ -50,6 +51,7 @@ function SettingsPage() {
           <TabsTrigger value="template">WhatsApp-Vorlage</TabsTrigger>
           {isAdmin ? <TabsTrigger value="users">Nutzer und Rollen</TabsTrigger> : null}
           {isAdmin ? <TabsTrigger value="brand">Marke</TabsTrigger> : null}
+          {isAdmin ? <TabsTrigger value="export">Datenexport und Backup</TabsTrigger> : null}
           {isAdmin ? <TabsTrigger value="audit">Änderungsprotokoll</TabsTrigger> : null}
         </TabsList>
 
@@ -85,6 +87,10 @@ function SettingsPage() {
         ) : null}
 
         {isAdmin ? (
+          <TabsContent value="export">
+            <ExportSection />
+          </TabsContent>
+
           <TabsContent value="audit">
             <AuditSection />
           </TabsContent>
