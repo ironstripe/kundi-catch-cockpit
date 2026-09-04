@@ -16,6 +16,7 @@ import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedCatchesCatchIdRouteImport } from './routes/_authenticated/catches.$catchId'
 import { Route as AuthenticatedCatchesNewRouteImport } from './routes/_authenticated/catches.new'
+import { Route as AuthenticatedCatchesCatchIdEditRouteImport } from './routes/_authenticated/catches.$catchId.edit'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -52,22 +53,30 @@ const AuthenticatedCatchesNewRoute = AuthenticatedCatchesNewRouteImport.update({
   path: '/catches/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCatchesCatchIdEditRoute =
+  AuthenticatedCatchesCatchIdEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () => AuthenticatedCatchesCatchIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/catches/$catchId': typeof AuthenticatedCatchesCatchIdRoute
+  '/catches/$catchId': typeof AuthenticatedCatchesCatchIdRouteWithChildren
   '/catches/new': typeof AuthenticatedCatchesNewRoute
+  '/catches/$catchId/edit': typeof AuthenticatedCatchesCatchIdEditRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/': typeof AuthenticatedIndexRoute
-  '/catches/$catchId': typeof AuthenticatedCatchesCatchIdRoute
+  '/catches/$catchId': typeof AuthenticatedCatchesCatchIdRouteWithChildren
   '/catches/new': typeof AuthenticatedCatchesNewRoute
+  '/catches/$catchId/edit': typeof AuthenticatedCatchesCatchIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -76,8 +85,9 @@ export interface FileRoutesById {
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
-  '/_authenticated/catches/$catchId': typeof AuthenticatedCatchesCatchIdRoute
+  '/_authenticated/catches/$catchId': typeof AuthenticatedCatchesCatchIdRouteWithChildren
   '/_authenticated/catches/new': typeof AuthenticatedCatchesNewRoute
+  '/_authenticated/catches/$catchId/edit': typeof AuthenticatedCatchesCatchIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -88,6 +98,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/catches/$catchId'
     | '/catches/new'
+    | '/catches/$catchId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -96,6 +107,7 @@ export interface FileRouteTypes {
     | '/'
     | '/catches/$catchId'
     | '/catches/new'
+    | '/catches/$catchId/edit'
   id:
     | '__root__'
     | '/_authenticated'
@@ -105,6 +117,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/catches/$catchId'
     | '/_authenticated/catches/new'
+    | '/_authenticated/catches/$catchId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -163,14 +176,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCatchesNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/catches/$catchId/edit': {
+      id: '/_authenticated/catches/$catchId/edit'
+      path: '/edit'
+      fullPath: '/catches/$catchId/edit'
+      preLoaderRoute: typeof AuthenticatedCatchesCatchIdEditRouteImport
+      parentRoute: typeof AuthenticatedCatchesCatchIdRoute
+    }
   }
 }
+
+interface AuthenticatedCatchesCatchIdRouteChildren {
+  AuthenticatedCatchesCatchIdEditRoute: typeof AuthenticatedCatchesCatchIdEditRoute
+}
+
+const AuthenticatedCatchesCatchIdRouteChildren: AuthenticatedCatchesCatchIdRouteChildren =
+  {
+    AuthenticatedCatchesCatchIdEditRoute: AuthenticatedCatchesCatchIdEditRoute,
+  }
+
+const AuthenticatedCatchesCatchIdRouteWithChildren =
+  AuthenticatedCatchesCatchIdRoute._addFileChildren(
+    AuthenticatedCatchesCatchIdRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
-  AuthenticatedCatchesCatchIdRoute: typeof AuthenticatedCatchesCatchIdRoute
+  AuthenticatedCatchesCatchIdRoute: typeof AuthenticatedCatchesCatchIdRouteWithChildren
   AuthenticatedCatchesNewRoute: typeof AuthenticatedCatchesNewRoute
 }
 
@@ -178,7 +212,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
-  AuthenticatedCatchesCatchIdRoute: AuthenticatedCatchesCatchIdRoute,
+  AuthenticatedCatchesCatchIdRoute:
+    AuthenticatedCatchesCatchIdRouteWithChildren,
   AuthenticatedCatchesNewRoute: AuthenticatedCatchesNewRoute,
 }
 

@@ -8,7 +8,7 @@ import { PageHeader, PageSection } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { closedCatches, runningCatches } from "@/data/sample-catches";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "Dashboard — Kundi Catch Cockpit" },

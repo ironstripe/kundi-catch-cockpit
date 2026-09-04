@@ -18,7 +18,7 @@ import {
 import { closedCatches } from "@/data/sample-catches";
 import { formatCurrency, formatDate, formatPercent, formatQuantity } from "@/lib/format";
 
-export const Route = createFileRoute("/history")({
+export const Route = createFileRoute("/_authenticated/history")({
   head: () => ({
     meta: [
       { title: "Historie — Kundi Catch Cockpit" },
