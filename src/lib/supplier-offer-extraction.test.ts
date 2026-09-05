@@ -19,10 +19,7 @@ import {
   isDecorativeImage,
   needsResendLookup,
 } from "@/lib/supplier-offer-attachments.server";
-import {
-  addressOf,
-  matchesInboundAddress,
-} from "@/routes/api/public/webhooks/resend";
+import { addressOf, matchesInboundAddress } from "@/routes/api/public/webhooks/resend";
 
 describe("Zahlen und Datumsangaben", () => {
   it("liest Schweizer und internationale Schreibweisen", () => {
@@ -49,7 +46,12 @@ describe("Zahlen und Datumsangaben", () => {
 describe("Auswertungsschema", () => {
   it("füllt fehlende Felder mit null statt zu raten", () => {
     const result = normaliseExtraction({
-      product_name: { value: "Lachsfilet", unit: null, confidence: 0.9, source_excerpt: "Lachsfilet" },
+      product_name: {
+        value: "Lachsfilet",
+        unit: null,
+        confidence: 0.9,
+        source_excerpt: "Lachsfilet",
+      },
     });
     expect(fieldValue(result, "product_name")).toBe("Lachsfilet");
     expect(fieldValue(result, "purchase_price")).toBeNull();
@@ -105,9 +107,21 @@ describe("Weiterleitung und Original-Absender", () => {
 
 describe("Webhook-Filter", () => {
   it("nimmt nur exakt die zentrale Adresse an", () => {
-    expect(matchesInboundAddress(["kundi-catch@rinueeldii.resend.app"], "kundi-catch@rinueeldii.resend.app")).toBe(true);
-    expect(matchesInboundAddress(["Kundi-Catch@Rinueeldii.Resend.App"], "kundi-catch@rinueeldii.resend.app")).toBe(true);
-    expect(matchesInboundAddress(["info@example.com"], "kundi-catch@rinueeldii.resend.app")).toBe(false);
+    expect(
+      matchesInboundAddress(
+        ["kundi-catch@rinueeldii.resend.app"],
+        "kundi-catch@rinueeldii.resend.app",
+      ),
+    ).toBe(true);
+    expect(
+      matchesInboundAddress(
+        ["Kundi-Catch@Rinueeldii.Resend.App"],
+        "kundi-catch@rinueeldii.resend.app",
+      ),
+    ).toBe(true);
+    expect(matchesInboundAddress(["info@example.com"], "kundi-catch@rinueeldii.resend.app")).toBe(
+      false,
+    );
     expect(matchesInboundAddress([], "kundi-catch@rinueeldii.resend.app")).toBe(false);
   });
 

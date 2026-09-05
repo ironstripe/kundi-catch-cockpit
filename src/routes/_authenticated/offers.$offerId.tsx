@@ -79,7 +79,11 @@ function OfferDetailPage() {
   const navigate = useNavigate();
   const { canEdit } = useRoles();
 
-  const { data: offer, isLoading, refetch } = useQuery({
+  const {
+    data: offer,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["supplier-offer", offerId],
     queryFn: () => fetchOffer(offerId),
   });
@@ -106,7 +110,8 @@ function OfferDetailPage() {
   const editable = canEdit && !locked;
 
   const liveExtraction = useMemo(
-    () => (offer ? normaliseExtraction(formValuesToExtraction(values, offer.extracted_data)) : null),
+    () =>
+      offer ? normaliseExtraction(formValuesToExtraction(values, offer.extracted_data)) : null,
     [offer, values],
   );
   const warnings = liveExtraction ? extractionWarnings(liveExtraction) : [];
@@ -308,12 +313,12 @@ function OfferDetailPage() {
                 ) : null}
                 <p>
                   Hauptbild:{" "}
-                  {primaryImage ? primaryImage.file_name : "keines gewählt — der Catch bleibt ohne Bild."}
+                  {primaryImage
+                    ? primaryImage.file_name
+                    : "keines gewählt — der Catch bleibt ohne Bild."}
                 </p>
                 {missing.length ? (
-                  <p>
-                    Es fehlen noch: {missing.map((key) => OFFER_FIELD_LABELS[key]).join(", ")}.
-                  </p>
+                  <p>Es fehlen noch: {missing.map((key) => OFFER_FIELD_LABELS[key]).join(", ")}.</p>
                 ) : null}
               </div>
             </AlertDialogDescription>

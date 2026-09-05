@@ -14,7 +14,7 @@ import {
 } from "@/lib/supplier-offer-extraction";
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-2.5-flash";
+const MODEL = "google/gemini-3.7-flash";
 const MAX_BODY_CHARS = 24_000;
 
 /** Entfernt Markup, damit nur der lesbare Text ausgewertet wird. */
@@ -31,6 +31,7 @@ export function htmlToText(html: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/[ \t]+/g, " ")
+    .replace(/ *\n */g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
@@ -135,7 +136,11 @@ export async function extractOfferFields(args: {
     choices?: { message?: { content?: string } }[];
   };
   const content = payload.choices?.[0]?.message?.content ?? "";
-  const jsonText = content.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+  const jsonText = content
+    .trim()
+    .replace(/^```(?:json)?/i, "")
+    .replace(/```$/, "")
+    .trim();
   let parsed: unknown;
   try {
     parsed = JSON.parse(jsonText);

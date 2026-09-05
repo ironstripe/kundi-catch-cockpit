@@ -142,7 +142,7 @@ export function parseOfferNumber(value: unknown): number | null {
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
   const raw = textOrNull(value);
   if (!raw) return null;
-  const match = raw.match(/-?[\d'’.,\s]+/);
+  const match = raw.match(/-?\d[\d'’.,\s]*/);
   if (!match) return null;
   let cleaned = match[0].replace(/[\s'’]/g, "");
   const lastComma = cleaned.lastIndexOf(",");
@@ -162,7 +162,7 @@ export function parseOfferDate(value: unknown): string | null {
   if (!raw) return null;
   const iso = raw.match(/(\d{4})-(\d{2})-(\d{2})/);
   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
-  const swiss = raw.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{2,4})/);
+  const swiss = raw.match(/(\d{1,2})[./](\d{1,2})[./](\d{2,4})/);
   if (swiss) {
     const year = swiss[3]!.length === 2 ? `20${swiss[3]}` : swiss[3];
     return `${year}-${swiss[2]!.padStart(2, "0")}-${swiss[1]!.padStart(2, "0")}`;
@@ -279,9 +279,10 @@ export function looksLikeForward(subject: string | null, body: string | null): b
 }
 
 /** Liest den ursprünglichen Absender aus dem Weiterleitungskopf. */
-export function originalSenderFromBody(
-  body: string | null,
-): { email: string | null; name: string | null } {
+export function originalSenderFromBody(body: string | null): {
+  email: string | null;
+  name: string | null;
+} {
   if (!body) return { email: null, name: null };
   const header = body.match(/(?:^|\n)\s*(?:From|Von)\s*:\s*(.+)/i);
   if (!header) return { email: null, name: null };

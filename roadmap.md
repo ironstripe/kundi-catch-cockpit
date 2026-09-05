@@ -58,3 +58,15 @@
 - [x] Einstellungs-Tab «Instagram» für Aktivierung, Default-Publikationszeit und Call-to-Action
 - [x] Sicherer Webhook-Callback unter `/api/public/instagram/callback` mit HMAC-Signatur, Idempotenzschlüssel und Audit-Logging
 - [ ] Make.com-Webhook-URL (`MAKE_INSTAGRAM_WEBHOOK_URL`) hinterlegen, sobald das Szenario steht (vom Benutzer zeitweise übersprungen)
+
+## Angebotseingang für Lieferantenangebote (Resend)
+- [x] Tabellen `supplier_offer_emails`, `supplier_offer_attachments`, `inbound_email_log` inkl. RLS und Grants
+- [x] Privater Ablagebereich `supplier-offers` (25 MB Limit) mit Zugriffsregeln
+- [x] Webhook `/api/public/webhooks/resend` mit Signaturprüfung, Zeitfenster, Adressfilter, Idempotenz und Zustellprotokoll
+- [x] Nachladen der vollständigen E-Mail und der Anhänge über die Resend-API, Logos und Signaturbilder werden ausgelassen
+- [x] Serverseitige strukturierte Auswertung (25 Felder mit Wert, Einheit, Sicherheit, Textstelle) — keine erfundenen Werte
+- [x] Seite «Angebotseingang» mit Filtern Offen/Übernommen/Fehlerhaft/Alle
+- [x] Detailseite: Original-E-Mail, editierbares Prüfformular mit Herkunftsangaben, Anhänge, Hauptbildwahl
+- [x] Einmalige Übernahme als Catch-Entwurf inkl. Bildübernahme, Verweis auf das Angebot und Audit
+- [x] Admin-Diagnose in den Einstellungen: Einrichtung und Zustellprotokoll
+- [ ] `RESEND_WEBHOOK_SECRET` und `RESEND_API_KEY` hinterlegen, Webhook in Resend auf `email.received` einrichten

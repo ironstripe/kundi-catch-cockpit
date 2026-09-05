@@ -26,11 +26,7 @@ export const ALLOWED_MIME_TYPES = [
 ] as const;
 
 export type AttachmentKind =
-  | "product_image"
-  | "product_label"
-  | "specification"
-  | "price_list"
-  | "other";
+  "product_image" | "product_label" | "specification" | "price_list" | "other";
 
 export type ResendAttachment = {
   id?: string;
@@ -62,9 +58,7 @@ export type InboundEmailPayload = {
   attachments?: ResendAttachment[];
 };
 
-type AdminClient = Awaited<
-  typeof import("@/integrations/supabase/client.server")
->["supabaseAdmin"];
+type AdminClient = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 
 export function base64ToBytes(value: string): Uint8Array {
   const binary = atob(value.replace(/\s+/g, ""));
@@ -129,7 +123,7 @@ export function classifyAttachment(attachment: ResendAttachment): AttachmentKind
 }
 
 function safeName(name: string) {
-  return name.replace(/[^\w.\-]+/g, "_").slice(-120);
+  return name.replace(/[^\w.-]+/g, "_").slice(-120);
 }
 
 function hasContent(attachment: ResendAttachment) {
@@ -189,10 +183,7 @@ async function downloadBytes(url: string, apiKey: string | undefined) {
   return new Uint8Array(await response.arrayBuffer());
 }
 
-async function attachmentBytes(
-  emailId: string,
-  attachment: ResendAttachment,
-): Promise<Uint8Array> {
+async function attachmentBytes(emailId: string, attachment: ResendAttachment): Promise<Uint8Array> {
   if (attachment.content) return base64ToBytes(attachment.content);
 
   const apiKey = process.env["RESEND_API_KEY"];

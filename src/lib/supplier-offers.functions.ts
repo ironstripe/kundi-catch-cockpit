@@ -54,7 +54,12 @@ async function loadOffer(offerId: string) {
 
 async function audit(
   supabaseAdmin: Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"],
-  args: { offerId: string; action: string; actorId: string | null; payload?: Record<string, unknown> },
+  args: {
+    offerId: string;
+    action: string;
+    actorId: string | null;
+    payload?: Record<string, unknown>;
+  },
 ) {
   await supabaseAdmin.from("audit_events").insert({
     entity_type: "supplier_offer",
@@ -275,8 +280,11 @@ function numberOrNull(value: unknown): number | null {
 export const convertOfferToCatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { offerId: string; values?: Record<string, unknown>; imageAttachmentId?: string | null }) =>
-      input,
+    (input: {
+      offerId: string;
+      values?: Record<string, unknown>;
+      imageAttachmentId?: string | null;
+    }) => input,
   )
   .handler(async ({ data, context }): Promise<OfferActionResult & { catchId: string }> => {
     await assertEditor(context.supabase as unknown as Supa, context.userId);
@@ -376,7 +384,7 @@ export const convertOfferToCatch = createServerFn({ method: "POST" })
             .download(attachment.storage_path);
           if (download.data) {
             const bytes = new Uint8Array(await download.data.arrayBuffer());
-            const target = `${created.id}/${crypto.randomUUID()}-${attachment.file_name.replace(/[^\w.\-]+/g, "_")}`;
+            const target = `${created.id}/${crypto.randomUUID()}-${attachment.file_name.replace(/[^\w.-]+/g, "_")}`;
             const upload = await supabaseAdmin.storage
               .from("catch-images")
               .upload(target, bytes as unknown as ArrayBuffer, {
@@ -447,8 +455,7 @@ export const getInboundConfigStatus = createServerFn({ method: "GET" })
     return {
       webhook_secret_configured: Boolean(process.env["RESEND_WEBHOOK_SECRET"]),
       api_key_configured: Boolean(process.env["RESEND_API_KEY"]),
-      inbound_address:
-        process.env["RESEND_INBOUND_ADDRESS"] ?? "kundi-catch@rinueeldii.resend.app",
+      inbound_address: process.env["RESEND_INBOUND_ADDRESS"] ?? "kundi-catch@rinueeldii.resend.app",
       webhook_url: `${origin}/api/public/webhooks/resend`,
     };
   });

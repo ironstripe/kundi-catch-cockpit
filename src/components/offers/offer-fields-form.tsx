@@ -130,8 +130,7 @@ export function OfferFieldsForm({
 
       {missing.length ? (
         <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-          Für die Übernahme fehlen noch:{" "}
-          {missing.map((key) => OFFER_FIELD_LABELS[key]).join(", ")}.
+          Für die Übernahme fehlen noch: {missing.map((key) => OFFER_FIELD_LABELS[key]).join(", ")}.
         </p>
       ) : null}
 

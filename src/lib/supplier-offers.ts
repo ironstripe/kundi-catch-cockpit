@@ -204,7 +204,9 @@ export const OUTCOME_LABELS: Record<string, string> = {
 export async function fetchInboundLog(limit = 50): Promise<InboundLogEntry[]> {
   const { data, error } = await supabase
     .from("inbound_email_log")
-    .select("id, received_at, resend_email_id, recipients, from_address, subject, outcome, detail, offer_id")
+    .select(
+      "id, received_at, resend_email_id, recipients, from_address, subject, outcome, detail, offer_id",
+    )
     .order("received_at", { ascending: false })
     .limit(limit);
   if (error) throw error;

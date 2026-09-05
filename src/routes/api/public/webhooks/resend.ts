@@ -15,10 +15,7 @@ import {
   type InboundEmailPayload,
 } from "@/lib/supplier-offer-attachments.server";
 import { emailPlainText, extractOfferFields } from "@/lib/supplier-offer-ai.server";
-import {
-  extractionWarnings,
-  originalSenderFromBody,
-} from "@/lib/supplier-offer-extraction";
+import { extractionWarnings, originalSenderFromBody } from "@/lib/supplier-offer-extraction";
 
 export const DEFAULT_INBOUND_ADDRESS = "kundi-catch@rinueeldii.resend.app";
 
@@ -200,7 +197,11 @@ export const Route = createFileRoute("/api/public/webhooks/resend")({
         };
 
         if (!resendEmailId) {
-          await logDelivery(supabaseAdmin, { ...base, outcome: "error", detail: "Keine E-Mail-ID." });
+          await logDelivery(supabaseAdmin, {
+            ...base,
+            outcome: "error",
+            detail: "Keine E-Mail-ID.",
+          });
           return ok("ignored");
         }
 
