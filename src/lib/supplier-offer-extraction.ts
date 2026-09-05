@@ -5,6 +5,9 @@
  * Fehlt eine Angabe, bleibt das Feld `null` — es wird nie geraten oder ergänzt.
  */
 
+/** Privater Ablagebereich für Anhänge weitergeleiteter Angebote. */
+export const SUPPLIER_OFFER_BUCKET = "supplier-offers";
+
 export type OfferFieldKey =
   | "supplier_name"
   | "supplier_contact_name"

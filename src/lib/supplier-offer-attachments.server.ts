@@ -6,7 +6,8 @@
  * Bucket `supplier-offers`.
  */
 
-export const SUPPLIER_OFFER_BUCKET = "supplier-offers";
+export { SUPPLIER_OFFER_BUCKET } from "@/lib/supplier-offer-extraction";
+import { SUPPLIER_OFFER_BUCKET } from "@/lib/supplier-offer-extraction";
 
 /** Grösster akzeptierter Anhang (Bucket-Limit). */
 export const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;

@@ -4,8 +4,11 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
-import { SUPPLIER_OFFER_BUCKET } from "@/lib/supplier-offer-attachments.server";
-import { normaliseExtraction, type ExtractedOffer } from "@/lib/supplier-offer-extraction";
+import {
+  normaliseExtraction,
+  SUPPLIER_OFFER_BUCKET,
+  type ExtractedOffer,
+} from "@/lib/supplier-offer-extraction";
 
 export { SUPPLIER_OFFER_BUCKET };
 
