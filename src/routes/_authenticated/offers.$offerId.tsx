@@ -349,7 +349,6 @@ function OfferDetailPage() {
               Entwurf erstellen
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>
