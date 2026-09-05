@@ -123,7 +123,7 @@ export function classifyAttachment(attachment: ResendAttachment): AttachmentKind
 }
 
 function safeName(name: string) {
-  return name.replace(/[^\w.\-]+/g, "_").slice(-120);
+  return name.replace(/[^\w.-]+/g, "_").slice(-120);
 }
 
 function hasContent(attachment: ResendAttachment) {

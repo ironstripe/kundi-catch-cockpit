@@ -162,7 +162,7 @@ export function parseOfferDate(value: unknown): string | null {
   if (!raw) return null;
   const iso = raw.match(/(\d{4})-(\d{2})-(\d{2})/);
   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
-  const swiss = raw.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{2,4})/);
+  const swiss = raw.match(/(\d{1,2})[./](\d{1,2})[./](\d{2,4})/);
   if (swiss) {
     const year = swiss[3]!.length === 2 ? `20${swiss[3]}` : swiss[3];
     return `${year}-${swiss[2]!.padStart(2, "0")}-${swiss[1]!.padStart(2, "0")}`;
