@@ -74,7 +74,9 @@ export function InboundDiagnosticsSection() {
         {log.isLoading ? (
           <Skeleton className="m-4 h-24" />
         ) : (log.data ?? []).length === 0 ? (
-          <p className="p-4 text-sm text-muted-foreground">Es sind noch keine Zustellungen eingegangen.</p>
+          <p className="p-4 text-sm text-muted-foreground">
+            Es sind noch keine Zustellungen eingegangen.
+          </p>
         ) : (
           <Table>
             <TableHeader>

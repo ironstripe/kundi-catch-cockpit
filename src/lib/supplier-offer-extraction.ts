@@ -279,9 +279,10 @@ export function looksLikeForward(subject: string | null, body: string | null): b
 }
 
 /** Liest den ursprünglichen Absender aus dem Weiterleitungskopf. */
-export function originalSenderFromBody(
-  body: string | null,
-): { email: string | null; name: string | null } {
+export function originalSenderFromBody(body: string | null): {
+  email: string | null;
+  name: string | null;
+} {
   if (!body) return { email: null, name: null };
   const header = body.match(/(?:^|\n)\s*(?:From|Von)\s*:\s*(.+)/i);
   if (!header) return { email: null, name: null };

@@ -64,7 +64,8 @@ export function OfferSourceEmail({ offer }: { offer: OfferDetail }) {
           </pre>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Es ist kein Text vorhanden. Über «E-Mail neu laden» kann der Inhalt erneut geholt werden.
+            Es ist kein Text vorhanden. Über «E-Mail neu laden» kann der Inhalt erneut geholt
+            werden.
           </p>
         )}
       </CardContent>

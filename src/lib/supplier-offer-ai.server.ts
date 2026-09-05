@@ -136,7 +136,11 @@ export async function extractOfferFields(args: {
     choices?: { message?: { content?: string } }[];
   };
   const content = payload.choices?.[0]?.message?.content ?? "";
-  const jsonText = content.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+  const jsonText = content
+    .trim()
+    .replace(/^```(?:json)?/i, "")
+    .replace(/```$/, "")
+    .trim();
   let parsed: unknown;
   try {
     parsed = JSON.parse(jsonText);

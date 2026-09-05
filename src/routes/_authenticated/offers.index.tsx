@@ -137,8 +137,7 @@ function OffersPage() {
                       </span>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {EXTRACTION_STATUS_LABELS[offer.extraction_status] ??
-                        offer.extraction_status}
+                      {EXTRACTION_STATUS_LABELS[offer.extraction_status] ?? offer.extraction_status}
                     </TableCell>
                     <TableCell className="space-x-1 whitespace-nowrap">
                       <OfferStatusBadge status={offer.status} />
