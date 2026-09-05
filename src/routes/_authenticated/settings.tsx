@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { AuditSection } from "@/components/settings/audit-section";
 import { BrandSection } from "@/components/settings/brand-section";
 import { ExportSection } from "@/components/settings/export-section";
+import { InboundDiagnosticsSection } from "@/components/settings/inbound-diagnostics-section";
 import { InstagramSection } from "@/components/settings/instagram-section";
 import { CategoriesSection } from "@/components/settings/categories-section";
 import { LocationsSection } from "@/components/settings/locations-section";
@@ -53,6 +54,7 @@ function SettingsPage() {
           {isAdmin ? <TabsTrigger value="instagram">Instagram</TabsTrigger> : null}
           {isAdmin ? <TabsTrigger value="users">Nutzer und Rollen</TabsTrigger> : null}
           {isAdmin ? <TabsTrigger value="brand">Marke</TabsTrigger> : null}
+          {isAdmin ? <TabsTrigger value="inbound">Angebotseingang</TabsTrigger> : null}
           {isAdmin ? <TabsTrigger value="export">Datenexport und Backup</TabsTrigger> : null}
           {isAdmin ? <TabsTrigger value="audit">Änderungsprotokoll</TabsTrigger> : null}
         </TabsList>
@@ -91,6 +93,12 @@ function SettingsPage() {
         {isAdmin ? (
           <TabsContent value="brand">
             <BrandSection />
+          </TabsContent>
+        ) : null}
+
+        {isAdmin ? (
+          <TabsContent value="inbound">
+            <InboundDiagnosticsSection />
           </TabsContent>
         ) : null}
 

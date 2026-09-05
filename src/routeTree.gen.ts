@@ -15,9 +15,12 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedCatchesNewRouteImport } from './routes/_authenticated/catches.new'
+import { Route as AuthenticatedOffersIndexRouteImport } from './routes/_authenticated/offers.index'
+import { Route as AuthenticatedOffersOfferIdRouteImport } from './routes/_authenticated/offers.$offerId'
 import { Route as AuthenticatedCatchesCatchIdIndexRouteImport } from './routes/_authenticated/catches.$catchId.index'
 import { Route as AuthenticatedCatchesCatchIdEditRouteImport } from './routes/_authenticated/catches.$catchId.edit'
 import { Route as ApiPublicInstagramCallbackRouteImport } from './routes/api/public/instagram/callback'
+import { Route as ApiPublicWebhooksResendRouteImport } from './routes/api/public/webhooks/resend'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -48,6 +51,18 @@ const AuthenticatedCatchesNewRoute = AuthenticatedCatchesNewRouteImport.update({
   path: '/catches/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOffersIndexRoute =
+  AuthenticatedOffersIndexRouteImport.update({
+    id: '/offers/',
+    path: '/offers/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOffersOfferIdRoute =
+  AuthenticatedOffersOfferIdRouteImport.update({
+    id: '/offers/$offerId',
+    path: '/offers/$offerId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCatchesCatchIdIndexRoute =
   AuthenticatedCatchesCatchIdIndexRouteImport.update({
     id: '/catches/$catchId/',
@@ -66,6 +81,11 @@ const ApiPublicInstagramCallbackRoute =
     path: '/api/public/instagram/callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicWebhooksResendRoute = ApiPublicWebhooksResendRouteImport.update({
+  id: '/api/public/webhooks/resend',
+  path: '/api/public/webhooks/resend',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -73,8 +93,11 @@ export interface FileRoutesByFullPath {
   '/history': typeof AuthenticatedHistoryRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/catches/new': typeof AuthenticatedCatchesNewRoute
+  '/offers/$offerId': typeof AuthenticatedOffersOfferIdRoute
+  '/offers/': typeof AuthenticatedOffersIndexRoute
   '/catches/$catchId/edit': typeof AuthenticatedCatchesCatchIdEditRoute
   '/api/public/instagram/callback': typeof ApiPublicInstagramCallbackRoute
+  '/api/public/webhooks/resend': typeof ApiPublicWebhooksResendRoute
   '/catches/$catchId/': typeof AuthenticatedCatchesCatchIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -83,8 +106,11 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/': typeof AuthenticatedIndexRoute
   '/catches/new': typeof AuthenticatedCatchesNewRoute
+  '/offers/$offerId': typeof AuthenticatedOffersOfferIdRoute
+  '/offers': typeof AuthenticatedOffersIndexRoute
   '/catches/$catchId/edit': typeof AuthenticatedCatchesCatchIdEditRoute
   '/api/public/instagram/callback': typeof ApiPublicInstagramCallbackRoute
+  '/api/public/webhooks/resend': typeof ApiPublicWebhooksResendRoute
   '/catches/$catchId': typeof AuthenticatedCatchesCatchIdIndexRoute
 }
 export interface FileRoutesById {
@@ -95,8 +121,11 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/catches/new': typeof AuthenticatedCatchesNewRoute
+  '/_authenticated/offers/$offerId': typeof AuthenticatedOffersOfferIdRoute
+  '/_authenticated/offers/': typeof AuthenticatedOffersIndexRoute
   '/_authenticated/catches/$catchId/edit': typeof AuthenticatedCatchesCatchIdEditRoute
   '/api/public/instagram/callback': typeof ApiPublicInstagramCallbackRoute
+  '/api/public/webhooks/resend': typeof ApiPublicWebhooksResendRoute
   '/_authenticated/catches/$catchId/': typeof AuthenticatedCatchesCatchIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -107,8 +136,11 @@ export interface FileRouteTypes {
     | '/history'
     | '/settings'
     | '/catches/new'
+    | '/offers/$offerId'
+    | '/offers/'
     | '/catches/$catchId/edit'
     | '/api/public/instagram/callback'
+    | '/api/public/webhooks/resend'
     | '/catches/$catchId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -117,8 +149,11 @@ export interface FileRouteTypes {
     | '/settings'
     | '/'
     | '/catches/new'
+    | '/offers/$offerId'
+    | '/offers'
     | '/catches/$catchId/edit'
     | '/api/public/instagram/callback'
+    | '/api/public/webhooks/resend'
     | '/catches/$catchId'
   id:
     | '__root__'
@@ -128,8 +163,11 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/'
     | '/_authenticated/catches/new'
+    | '/_authenticated/offers/$offerId'
+    | '/_authenticated/offers/'
     | '/_authenticated/catches/$catchId/edit'
     | '/api/public/instagram/callback'
+    | '/api/public/webhooks/resend'
     | '/_authenticated/catches/$catchId/'
   fileRoutesById: FileRoutesById
 }
@@ -137,6 +175,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiPublicInstagramCallbackRoute: typeof ApiPublicInstagramCallbackRoute
+  ApiPublicWebhooksResendRoute: typeof ApiPublicWebhooksResendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -183,6 +222,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCatchesNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/offers/': {
+      id: '/_authenticated/offers/'
+      path: '/offers'
+      fullPath: '/offers/'
+      preLoaderRoute: typeof AuthenticatedOffersIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/offers/$offerId': {
+      id: '/_authenticated/offers/$offerId'
+      path: '/offers/$offerId'
+      fullPath: '/offers/$offerId'
+      preLoaderRoute: typeof AuthenticatedOffersOfferIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/catches/$catchId/': {
       id: '/_authenticated/catches/$catchId/'
       path: '/catches/$catchId'
@@ -204,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicInstagramCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/webhooks/resend': {
+      id: '/api/public/webhooks/resend'
+      path: '/api/public/webhooks/resend'
+      fullPath: '/api/public/webhooks/resend'
+      preLoaderRoute: typeof ApiPublicWebhooksResendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -212,6 +272,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedCatchesNewRoute: typeof AuthenticatedCatchesNewRoute
+  AuthenticatedOffersOfferIdRoute: typeof AuthenticatedOffersOfferIdRoute
+  AuthenticatedOffersIndexRoute: typeof AuthenticatedOffersIndexRoute
   AuthenticatedCatchesCatchIdEditRoute: typeof AuthenticatedCatchesCatchIdEditRoute
   AuthenticatedCatchesCatchIdIndexRoute: typeof AuthenticatedCatchesCatchIdIndexRoute
 }
@@ -221,6 +283,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCatchesNewRoute: AuthenticatedCatchesNewRoute,
+  AuthenticatedOffersOfferIdRoute: AuthenticatedOffersOfferIdRoute,
+  AuthenticatedOffersIndexRoute: AuthenticatedOffersIndexRoute,
   AuthenticatedCatchesCatchIdEditRoute: AuthenticatedCatchesCatchIdEditRoute,
   AuthenticatedCatchesCatchIdIndexRoute: AuthenticatedCatchesCatchIdIndexRoute,
 }
@@ -232,6 +296,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiPublicInstagramCallbackRoute: ApiPublicInstagramCallbackRoute,
+  ApiPublicWebhooksResendRoute: ApiPublicWebhooksResendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

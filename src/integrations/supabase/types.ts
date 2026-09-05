@@ -298,6 +298,7 @@ export type Database = {
           reopen_reason: string | null
           reopened_at: string | null
           reopened_by: string | null
+          source_offer_id: string | null
           status: string
           supplier_id: string | null
           temperature: string
@@ -362,6 +363,7 @@ export type Database = {
           reopen_reason?: string | null
           reopened_at?: string | null
           reopened_by?: string | null
+          source_offer_id?: string | null
           status?: string
           supplier_id?: string | null
           temperature?: string
@@ -426,6 +428,7 @@ export type Database = {
           reopen_reason?: string | null
           reopened_at?: string | null
           reopened_by?: string | null
+          source_offer_id?: string | null
           status?: string
           supplier_id?: string | null
           temperature?: string
@@ -440,10 +443,61 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "catches_source_offer_id_fkey"
+            columns: ["source_offer_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_offer_emails"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "catches_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inbound_email_log: {
+        Row: {
+          detail: string | null
+          from_address: string | null
+          id: string
+          offer_id: string | null
+          outcome: string
+          received_at: string
+          recipients: string | null
+          resend_email_id: string | null
+          subject: string | null
+        }
+        Insert: {
+          detail?: string | null
+          from_address?: string | null
+          id?: string
+          offer_id?: string | null
+          outcome: string
+          received_at?: string
+          recipients?: string | null
+          resend_email_id?: string | null
+          subject?: string | null
+        }
+        Update: {
+          detail?: string | null
+          from_address?: string | null
+          id?: string
+          offer_id?: string | null
+          outcome?: string
+          received_at?: string
+          recipients?: string | null
+          resend_email_id?: string | null
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbound_email_log_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_offer_emails"
             referencedColumns: ["id"]
           },
         ]
@@ -593,6 +647,142 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      supplier_offer_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number
+          id: string
+          is_primary_image: boolean
+          kind: string
+          mime_type: string
+          offer_id: string
+          source_reference: string | null
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size?: number
+          id?: string
+          is_primary_image?: boolean
+          kind?: string
+          mime_type?: string
+          offer_id: string
+          source_reference?: string | null
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number
+          id?: string
+          is_primary_image?: boolean
+          kind?: string
+          mime_type?: string
+          offer_id?: string
+          source_reference?: string | null
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_offer_attachments_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_offer_emails"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_offer_emails: {
+        Row: {
+          converted_at: string | null
+          converted_by: string | null
+          converted_catch_id: string | null
+          created_at: string
+          extracted_data: Json | null
+          extraction_error: string | null
+          extraction_status: string
+          extraction_warnings: Json | null
+          forwarded_by_email: string | null
+          forwarded_by_name: string | null
+          html_body: string | null
+          id: string
+          message_id: string | null
+          original_sender_email: string | null
+          original_sender_name: string | null
+          raw_source: string | null
+          received_at: string
+          resend_email_id: string
+          status: string
+          subject: string | null
+          text_body: string | null
+          to_address: string | null
+          updated_at: string
+        }
+        Insert: {
+          converted_at?: string | null
+          converted_by?: string | null
+          converted_catch_id?: string | null
+          created_at?: string
+          extracted_data?: Json | null
+          extraction_error?: string | null
+          extraction_status?: string
+          extraction_warnings?: Json | null
+          forwarded_by_email?: string | null
+          forwarded_by_name?: string | null
+          html_body?: string | null
+          id?: string
+          message_id?: string | null
+          original_sender_email?: string | null
+          original_sender_name?: string | null
+          raw_source?: string | null
+          received_at?: string
+          resend_email_id: string
+          status?: string
+          subject?: string | null
+          text_body?: string | null
+          to_address?: string | null
+          updated_at?: string
+        }
+        Update: {
+          converted_at?: string | null
+          converted_by?: string | null
+          converted_catch_id?: string | null
+          created_at?: string
+          extracted_data?: Json | null
+          extraction_error?: string | null
+          extraction_status?: string
+          extraction_warnings?: Json | null
+          forwarded_by_email?: string | null
+          forwarded_by_name?: string | null
+          html_body?: string | null
+          id?: string
+          message_id?: string | null
+          original_sender_email?: string | null
+          original_sender_name?: string | null
+          raw_source?: string | null
+          received_at?: string
+          resend_email_id?: string
+          status?: string
+          subject?: string | null
+          text_body?: string | null
+          to_address?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_offer_emails_converted_catch_id_fkey"
+            columns: ["converted_catch_id"]
+            isOneToOne: false
+            referencedRelation: "catches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suppliers: {
         Row: {
