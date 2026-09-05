@@ -132,12 +132,10 @@ export const retryOfferRetrieval = createServerFn({ method: "POST" })
     await assertEditor(context.supabase as unknown as Supa, context.userId);
     const { row, supabaseAdmin } = await loadOffer(data.offerId);
 
-    const payload: InboundEmailPayload = {
-      email_id: row.resend_email_id,
-      subject: row.subject ?? undefined,
-      text: row.text_body ?? undefined,
-      html: row.html_body ?? undefined,
-    };
+    const payload: InboundEmailPayload = { email_id: row.resend_email_id };
+    if (row.subject) payload.subject = row.subject;
+    if (row.text_body) payload.text = row.text_body;
+    if (row.html_body) payload.html = row.html_body;
     const full = await fetchFullEmail(row.resend_email_id, payload);
 
     await supabaseAdmin
