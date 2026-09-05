@@ -14,7 +14,7 @@ import {
 } from "@/lib/supplier-offer-extraction";
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-2.5-flash";
+const MODEL = "google/gemini-3.7-flash";
 const MAX_BODY_CHARS = 24_000;
 
 /** Entfernt Markup, damit nur der lesbare Text ausgewertet wird. */
