@@ -142,7 +142,7 @@ export function parseOfferNumber(value: unknown): number | null {
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
   const raw = textOrNull(value);
   if (!raw) return null;
-  const match = raw.match(/-?[\d'’.,\s]+/);
+  const match = raw.match(/-?\d[\d'’.,\s]*/);
   if (!match) return null;
   let cleaned = match[0].replace(/[\s'’]/g, "");
   const lastComma = cleaned.lastIndexOf(",");
