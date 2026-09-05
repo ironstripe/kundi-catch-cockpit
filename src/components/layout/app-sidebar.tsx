@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Fish, LayoutDashboard, History, Settings, PlusCircle } from "lucide-react";
+import { Fish, Inbox, LayoutDashboard, History, Settings, PlusCircle } from "lucide-react";
 
 import { KundiCatchBrand } from "@/components/brand/kundi-catch-logo";
 import {
@@ -19,6 +19,7 @@ import {
 const navItems = [
   { title: "Dashboard", to: "/", icon: LayoutDashboard, exact: true },
   { title: "Neuer Catch", to: "/catches/new", icon: PlusCircle, exact: false },
+  { title: "Angebotseingang", to: "/offers", icon: Inbox, exact: false },
   { title: "Historie", to: "/history", icon: History, exact: false },
   { title: "Einstellungen", to: "/settings", icon: Settings, exact: false },
 ] as const;

@@ -42,7 +42,15 @@ export type AuditAction =
   | "instagram_published"
   | "instagram_failed"
   | "instagram_retried"
-  | "instagram_settings_updated";
+  | "instagram_settings_updated"
+  | "offer_received"
+  | "offer_extracted"
+  | "offer_extraction_failed"
+  | "offer_edited"
+  | "offer_converted"
+  | "offer_ignored"
+  | "offer_reopened"
+  | "offer_image_selected";
 
 export const AUDIT_ACTION_LABELS: Record<string, string> = {
   created: "Erstellt",
@@ -83,6 +91,14 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   instagram_failed: "Instagram fehlgeschlagen",
   instagram_retried: "Instagram erneut versucht",
   instagram_settings_updated: "Instagram-Einstellungen geändert",
+  offer_received: "Angebot empfangen",
+  offer_extracted: "Angebot ausgewertet",
+  offer_extraction_failed: "Auswertung fehlgeschlagen",
+  offer_edited: "Angebot bearbeitet",
+  offer_converted: "Als Catch übernommen",
+  offer_ignored: "Angebot abgelegt",
+  offer_reopened: "Angebot wieder geöffnet",
+  offer_image_selected: "Angebotsbild gewählt",
 };
 
 export const AUDIT_ENTITY_LABELS: Record<string, string> = {
@@ -92,6 +108,7 @@ export const AUDIT_ENTITY_LABELS: Record<string, string> = {
   location: "Standorte",
   category: "Produktkategorien",
   settings: "Einstellungen",
+  supplier_offer: "Angebotseingang",
 };
 
 export interface AuditEvent {
