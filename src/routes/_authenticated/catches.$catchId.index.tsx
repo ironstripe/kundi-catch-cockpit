@@ -123,6 +123,50 @@ function CatchDetailPage() {
         <span className="font-mono text-xs text-muted-foreground">{item.catch_number}</span>
       </div>
 
+      <PageSection
+        id="publikation"
+        title="WhatsApp-Post"
+        description="Post vorbereiten, Bild und Text kopieren und den Catch manuell als publiziert markieren."
+      >
+        <p className="text-xs text-muted-foreground">
+          WhatsApp-Status:{" "}
+          <span className="font-medium text-foreground">
+            {WHATSAPP_STATUS_LABELS[whatsappStatus(item)]}
+          </span>
+        </p>
+
+        {item.status === "closed" || item.status === "cancelled" ? (
+          <PublishedPostCard item={item} />
+        ) : item.status === "draft" ? (
+          <Card>
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+              <p className="text-sm text-muted-foreground">
+                Sobald der Catch vollständig und auf «Bereit» gesetzt ist, wird hier der
+                WhatsApp-Post erstellt.
+              </p>
+              <Button size="sm" asChild>
+                <Link to="/catches/$catchId/edit" params={{ catchId }}>
+                  <Pencil />
+                  Catch vervollständigen und WhatsApp-Post vorbereiten
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : canEdit ? (
+          <PublicationWorkspace item={item} onChanged={invalidate} />
+        ) : item.published_text ? (
+          <PublishedPostCard item={item} />
+        ) : (
+          <Card>
+            <CardContent className="py-4 text-sm text-muted-foreground">
+              Der WhatsApp-Post wird von der Redaktion vorbereitet. Sobald er publiziert ist, kannst
+              du ihn hier ansehen und kopieren.
+            </CardContent>
+          </Card>
+        )}
+      </PageSection>
+
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
           <CalculationCard
@@ -274,35 +318,6 @@ function CatchDetailPage() {
         </PageSection>
       ) : null}
 
-      {item.status === "closed" || item.status === "cancelled" ? null : (
-      <PageSection
-        id="publikation"
-        title="WhatsApp-Post"
-        description="Post vorbereiten, Bild und Text kopieren und den Catch manuell als publiziert markieren."
-      >
-        {item.status === "ready" || item.status === "published" ? (
-          <PublicationWorkspace
-            item={item}
-            onChanged={invalidate}
-          />
-        ) : (
-          <Card>
-            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
-              <p className="text-sm text-muted-foreground">
-                Der Catch muss vollständig und bereit sein, bevor der WhatsApp-Post vorbereitet
-                werden kann.
-              </p>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/catches/$catchId/edit" params={{ catchId }}>
-                  <Pencil />
-                  Catch vervollständigen
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </PageSection>
-      )}
 
       {item.status === "closed" || item.status === "cancelled" ? null : (
         <PageSection
