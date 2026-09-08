@@ -59,7 +59,7 @@ interface CatchFormProps {
   initialImagePath: string | null;
   /** Aktueller Status, damit ein publizierter Catch beim Speichern publiziert bleibt. */
   currentStatus?: "draft" | "ready" | "published" | "closed" | "cancelled";
-  onSaved: (catchId: string) => void;
+  onSaved: (catchId: string, savedStatus: "draft" | "ready") => void;
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -173,7 +173,7 @@ export function CatchForm({
           : "Catch ist bereit",
         { description: `Zeitstempel und Nutzer wurden erfasst.` },
       );
-      onSaved(id);
+      onSaved(id, status);
     } catch (error) {
       toast.error("Speichern fehlgeschlagen", {
         description: error instanceof Error ? error.message : "Unbekannter Fehler.",
@@ -598,20 +598,20 @@ export function CatchForm({
               type="button"
               className="w-full"
               disabled={saving || uploading}
-              onClick={() => void persist("draft")}
+              onClick={() => void persist("ready")}
             >
-              <Save />
-              {mode === "create" ? "Entwurf speichern" : "Änderungen speichern"}
+              <CheckCircle2 />
+              Speichern und WhatsApp-Post vorbereiten
             </Button>
             <Button
               type="button"
               variant="secondary"
               className="w-full"
               disabled={saving || uploading}
-              onClick={() => void persist("ready")}
+              onClick={() => void persist("draft")}
             >
-              <CheckCircle2 />
-              Als bereit markieren
+              <Save />
+              Als Entwurf speichern
             </Button>
             <Button type="button" variant="ghost" className="w-full" onClick={handleLeave}>
               <ArrowLeft />
