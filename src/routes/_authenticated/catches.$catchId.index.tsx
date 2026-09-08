@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Pencil, Scale } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import { CalculationCard } from "@/components/catch/calculation-card";
 import { CompletedSummary } from "@/components/catch/completed-summary";
@@ -51,6 +51,20 @@ function CatchDetailPage() {
   const query = useQuery({ queryKey: ["catch", catchId], queryFn: () => fetchCatch(catchId) });
   const image = useSignedImage(query.data?.image_path);
   const { canEdit } = useRoles();
+  const loaded = Boolean(query.data);
+
+  /** Springt nach dem Laden zuverlässig zum WhatsApp-Abschnitt. */
+  useEffect(() => {
+    if (!loaded) return;
+    if (typeof window === "undefined" || window.location.hash !== "#publikation") return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(() => {
+      document
+        .getElementById("publikation")
+        ?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+    }, 60);
+    return () => window.clearTimeout(timer);
+  }, [loaded, catchId]);
 
   if (query.isLoading) {
     return <Skeleton className="h-64 w-full" />;
