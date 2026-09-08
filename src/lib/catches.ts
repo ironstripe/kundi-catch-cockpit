@@ -72,6 +72,8 @@ export interface CatchListItem {
   supplier_id: string | null;
   supplier_name: string | null;
   published_at: string | null;
+  published_text: string | null;
+  published_image_path: string | null;
   remaining_quantity: number | null;
   inventory_counted_at: string | null;
   learning: string | null;

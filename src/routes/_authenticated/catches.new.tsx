@@ -36,7 +36,13 @@ function NewCatchPage() {
         mode="create"
         initialValues={EMPTY_CATCH_FORM}
         initialImagePath={null}
-        onSaved={(catchId) => void navigate({ to: "/catches/$catchId", params: { catchId } })}
+        onSaved={(catchId, savedStatus) =>
+          void navigate({
+            to: "/catches/$catchId",
+            params: { catchId },
+            ...(savedStatus === "ready" ? { hash: "publikation" } : {}),
+          })
+        }
       />
     </>
   );
