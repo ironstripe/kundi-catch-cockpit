@@ -83,10 +83,14 @@ function EditCatchPage() {
         initialValues={catchDetailToForm(item)}
         initialImagePath={item.image_path}
         currentStatus={item.status}
-        onSaved={(id) => {
+        onSaved={(id, savedStatus) => {
           void queryClient.invalidateQueries({ queryKey: ["catch", id] });
           void queryClient.invalidateQueries({ queryKey: ["catches"] });
-          void navigate({ to: "/catches/$catchId", params: { catchId: id } });
+          void navigate({
+            to: "/catches/$catchId",
+            params: { catchId: id },
+            ...(savedStatus === "ready" ? { hash: "publikation" } : {}),
+          });
         }}
       />
     </>

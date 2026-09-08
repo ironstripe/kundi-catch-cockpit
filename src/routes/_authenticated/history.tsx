@@ -400,6 +400,7 @@ function HistoryPage() {
                     <TableHead className="text-right">Umsatz</TableHead>
                     <TableHead className="text-right">Effektiver DB</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Post</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -546,6 +547,17 @@ function HistoryRow({ row }: { row: CatchListItem }) {
       <TableCell>
         <CatchStatusBadge status={row.status} />
       </TableCell>
+      <TableCell>
+        {row.published_text ? (
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/catches/$catchId" params={{ catchId: row.id }} hash="publikation">
+              Post ansehen
+            </Link>
+          </Button>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
+      </TableCell>
     </TableRow>
   );
 }
@@ -590,6 +602,13 @@ function HistoryCard({ row }: { row: CatchListItem }) {
             </div>
           </dl>
         </Link>
+        {row.published_text ? (
+          <Button size="sm" variant="outline" className="mt-3" asChild>
+            <Link to="/catches/$catchId" params={{ catchId: row.id }} hash="publikation">
+              Post ansehen
+            </Link>
+          </Button>
+        ) : null}
       </CardContent>
     </Card>
   );

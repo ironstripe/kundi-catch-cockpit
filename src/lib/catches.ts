@@ -72,6 +72,8 @@ export interface CatchListItem {
   supplier_id: string | null;
   supplier_name: string | null;
   published_at: string | null;
+  published_text: string | null;
+  published_image_path: string | null;
   remaining_quantity: number | null;
   inventory_counted_at: string | null;
   learning: string | null;
@@ -118,7 +120,8 @@ export interface CatchDetail extends CatchListItem {
 const LIST_SELECT = `
   id, catch_number, product_name, temperature, status, available_from,
   purchase_quantity, quantity_unit, catch_price, expected_sell_through,
-  purchase_price, delivery_cost, delivery_included, regular_price, updated_at, published_at,
+  purchase_price, delivery_cost, delivery_included, regular_price, updated_at,
+  published_at, published_text, published_image_path,
   supplier_id, remaining_quantity, inventory_counted_at, learning,
   closed_at, cancelled_at, cancellation_reason,
   suppliers ( id, name ),
@@ -180,6 +183,8 @@ function mapList(row: any): CatchListItem {
     expected_sell_through:
       row.expected_sell_through === null ? null : Number(row.expected_sell_through),
     published_at: row.published_at ?? null,
+    published_text: row.published_text ?? null,
+    published_image_path: row.published_image_path ?? null,
     supplier_id: row.supplier_id ?? null,
     supplier_name: row.suppliers?.name ?? null,
     remaining_quantity:
