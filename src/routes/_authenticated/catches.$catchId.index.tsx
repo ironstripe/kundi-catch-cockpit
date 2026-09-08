@@ -7,13 +7,16 @@ import { CalculationCard } from "@/components/catch/calculation-card";
 import { CompletedSummary } from "@/components/catch/completed-summary";
 import { ReconciliationWorkspace } from "@/components/catch/reconciliation-workspace";
 import { PublicationWorkspace } from "@/components/catch/publication-workspace";
+import { PublishedPostCard } from "@/components/catch/published-post-card";
 import { InstagramWorkspace } from "@/components/catch/instagram-workspace";
 import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-badge";
 import { PageHeader, PageSection } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRoles } from "@/hooks/use-role";
 import { useSignedImage } from "@/hooks/use-signed-image";
+import { WHATSAPP_STATUS_LABELS, whatsappStatus } from "@/lib/whatsapp-status";
 import {
   HANDICAP_REASON_LABELS,
   QUANTITY_UNIT_LABELS,
@@ -47,6 +50,7 @@ function CatchDetailPage() {
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["catch", catchId], queryFn: () => fetchCatch(catchId) });
   const image = useSignedImage(query.data?.image_path);
+  const { canEdit } = useRoles();
 
   if (query.isLoading) {
     return <Skeleton className="h-64 w-full" />;
