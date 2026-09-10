@@ -70,6 +70,10 @@ export interface OfferAttachment {
   file_size: number;
   kind: string;
   is_primary_image: boolean;
+  content_extraction_status?: string | null;
+  extraction_error?: string | null;
+  extracted_at?: string | null;
+  extraction_meta?: Record<string, unknown> | null;
 }
 
 export interface OfferDetail extends OfferListItem {
