@@ -193,6 +193,11 @@ export function OfferFieldsForm({
                       <span className="line-clamp-2">{field.source_excerpt}</span>
                     </p>
                   ) : null}
+                  {field?.source_name ? (
+                    <p className="text-[11px] text-muted-foreground">
+                      Quelle: {field.source_name}
+                    </p>
+                  ) : null}
                 </div>
               );
             })}
