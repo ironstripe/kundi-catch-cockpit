@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Fish, Inbox, LayoutDashboard, History, Settings, PlusCircle } from "lucide-react";
 
-import { FoodCatchBrand } from "@/components/brand/kundi-catch-logo";
+import { FoodCatchBrand } from "@/components/brand/food-catch-logo";
 import {
   Sidebar,
   SidebarContent,

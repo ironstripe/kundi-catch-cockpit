@@ -3,7 +3,7 @@ import { Lock, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { FoodCatchLogo } from "@/components/brand/kundi-catch-logo";
+import { FoodCatchLogo } from "@/components/brand/food-catch-logo";
 import { NoAccess, SectionShell } from "@/components/settings/section-shell";
 import { Button } from "@/components/ui/button";
 import { BRAND_BUCKET, useBrandLogo } from "@/hooks/use-brand-logo";
