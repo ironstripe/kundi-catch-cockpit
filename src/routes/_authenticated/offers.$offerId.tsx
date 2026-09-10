@@ -40,6 +40,7 @@ import { useRoles } from "@/hooks/use-role";
 import { formatDateTime } from "@/lib/format";
 import {
   extractionWarnings,
+  MANUAL_EDIT_MARKER,
   missingRequiredFields,
   normaliseExtraction,
   OFFER_FIELD_LABELS,
@@ -250,7 +251,7 @@ function OfferDetailPage() {
               <Button
                 variant="outline"
                 disabled={!editable || busy !== null}
-                onClick={() => run("extract", () => retryOfferExtraction({ data: { offerId } }))}
+                onClick={() => void runExtraction(false)}
               >
                 <Sparkles className="mr-2 size-4" aria-hidden />
                 Auswertung wiederholen
