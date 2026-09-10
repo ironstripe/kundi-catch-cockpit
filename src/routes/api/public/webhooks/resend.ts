@@ -14,8 +14,14 @@ import {
   storeAttachments,
   type InboundEmailPayload,
 } from "@/lib/supplier-offer-attachments.server";
-import { emailPlainText, extractOfferFields } from "@/lib/supplier-offer-ai.server";
-import { extractionWarnings, originalSenderFromBody } from "@/lib/supplier-offer-extraction";
+import { emailPlainText, emailSource, extractOfferFields } from "@/lib/supplier-offer-ai.server";
+import { processOfferAttachmentContents } from "@/lib/supplier-offer-content.server";
+import {
+  combineWarnings,
+  extractionWarnings,
+  findingWarnings,
+  originalSenderFromBody,
+} from "@/lib/supplier-offer-extraction";
 
 export const DEFAULT_INBOUND_ADDRESS = "kundi-catch@rinueeldii.resend.app";
 
