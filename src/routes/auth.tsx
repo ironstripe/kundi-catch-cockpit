@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { KundiCatchLogo } from "@/components/brand/kundi-catch-logo";
+import { FoodCatchLogo } from "@/components/brand/food-catch-logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,16 +14,16 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Anmelden — Kundi Catch Cockpit" },
+      { title: "Anmelden — Food Catch Cockpit" },
       {
         name: "description",
         content:
-          "Interner Zugang zum Kundi Catch Cockpit der Kundelfingerhof AG. Anmeldung für berechtigte Mitarbeitende.",
+          "Interner Zugang zum Food Catch Cockpit der Kundelfingerhof AG. Anmeldung für berechtigte Mitarbeitende.",
       },
-      { property: "og:title", content: "Anmelden — Kundi Catch Cockpit" },
+      { property: "og:title", content: "Anmelden — Food Catch Cockpit" },
       {
         property: "og:description",
-        content: "Interner Zugang zum Kundi Catch Cockpit der Kundelfingerhof AG.",
+        content: "Interner Zugang zum Food Catch Cockpit der Kundelfingerhof AG.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -156,9 +156,9 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-10">
       <div className="w-full max-w-sm space-y-5">
         <div className="flex flex-col items-center gap-3 text-center">
-          <KundiCatchLogo className="size-16" />
+          <FoodCatchLogo className="size-16" />
           <div className="space-y-1">
-            <h1 className="text-lg font-semibold tracking-tight">Kundi Catch Cockpit</h1>
+            <h1 className="text-lg font-semibold tracking-tight">Food Catch Cockpit</h1>
             <p className="text-xs text-muted-foreground">
               Guter Fisch. Kleines Handicap. Grosser Fang.
             </p>

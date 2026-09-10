@@ -1,4 +1,4 @@
-# Kundi Catch Cockpit — Roadmap
+# Food Catch Cockpit — Roadmap
 
 ## Schritt 1: Fundament (abgeschlossen)
 - [x] Kundivent-Designsystem als Tokenbasis (`src/styles.css`)

@@ -14,14 +14,9 @@ import {
   storeAttachments,
   type InboundEmailPayload,
 } from "@/lib/supplier-offer-attachments.server";
-import { emailPlainText, emailSource, extractOfferFields } from "@/lib/supplier-offer-ai.server";
-import { processOfferAttachmentContents } from "@/lib/supplier-offer-content.server";
-import {
-  combineWarnings,
-  extractionWarnings,
-  findingWarnings,
-  originalSenderFromBody,
-} from "@/lib/supplier-offer-extraction";
+import { createCaseForEmail, runCaseExtraction } from "@/lib/offer-case-extraction.server";
+import { emailPlainText } from "@/lib/supplier-offer-ai.server";
+import { originalSenderFromBody } from "@/lib/supplier-offer-extraction";
 
 export const DEFAULT_INBOUND_ADDRESS = "kundi-catch@rinueeldii.resend.app";
 
@@ -301,45 +296,37 @@ export const Route = createFileRoute("/api/public/webhooks/resend")({
         });
         await ensurePrimaryImage(supabaseAdmin, offerId);
 
-        // Auswertung ist «best effort»: ein Fehler verwirft die E-Mail nie.
+        // Jede neue E-Mail bekommt zuerst ihr eigenes Angebotsdossier.
+        // Zusammenlegen geschieht ausschliesslich von Hand.
         let extractionOutcome = "processed";
         try {
+          const caseId = await createCaseForEmail(
+            supabaseAdmin,
+            {
+              id: offerId,
+              subject: full.subject ?? null,
+              original_sender_email: original.email,
+            },
+            null,
+          );
+
           await supabaseAdmin
             .from("supplier_offer_emails")
             .update({ status: "extracting", extraction_status: "running" })
             .eq("id", offerId);
 
-          const { sources: attachmentSources, failed } = await processOfferAttachmentContents(
-            supabaseAdmin,
-            offerId,
-          );
+          const result = await runCaseExtraction(supabaseAdmin, caseId);
 
-          const result = await extractOfferFields({
-            subject: full.subject ?? null,
-            from: forwarder.address || null,
-            sources: [emailSource(full.subject ?? null, bodyText), ...attachmentSources],
-          });
           await supabaseAdmin
             .from("supplier_offer_emails")
             .update({
               status: "review",
               extraction_status: "done",
               extracted_data: result.data as never,
-              extraction_warnings: combineWarnings(
-                extractionWarnings(result.data),
-                findingWarnings(result.findings),
-                failed ? [`${failed} Anhang/Anhänge konnten nicht gelesen werden.`] : [],
-              ) as never,
+              extraction_warnings: result.warnings as never,
               extraction_error: null,
             })
             .eq("id", offerId);
-          await supabaseAdmin.from("audit_events").insert({
-            entity_type: "supplier_offer",
-            entity_id: offerId,
-            action: "offer_extracted",
-            actor_id: null,
-            payload: { model: result.model },
-          });
         } catch (error) {
           extractionOutcome = "extraction_failed";
           const message = error instanceof Error ? error.message : "unbekannter Fehler";
@@ -359,6 +346,7 @@ export const Route = createFileRoute("/api/public/webhooks/resend")({
             payload: { error: message },
           });
         }
+
 
         const outcome = retrievalFailed
           ? "retrieval_failed"

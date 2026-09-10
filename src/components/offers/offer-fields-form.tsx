@@ -80,6 +80,8 @@ export function formValuesToExtraction(
       source_excerpt: source?.source_excerpt ?? null,
       source_name: source?.source_name ?? null,
       source_type: source?.source_type ?? null,
+      source_email_id: source?.source_email_id ?? null,
+      source_received_at: source?.source_received_at ?? null,
     };
   }
   return result;

@@ -160,7 +160,7 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
               }
             />
             <SourceRow
-              label="Kundi-Catch-Preis"
+              label="Food-Catch-Preis"
               value={
                 item.catch_price === null
                   ? "—"

@@ -15,13 +15,13 @@ import { cn } from "@/lib/utils";
 
 const HELP: Record<string, string> = {
   "Maximaler DB":
-    "Der maximale Deckungsbeitrag zeigt, was übrig bleibt, wenn die gesamte Einkaufsmenge zum Kundi-Catch-Preis verkauft wird.",
+    "Der maximale Deckungsbeitrag zeigt, was übrig bleibt, wenn die gesamte Einkaufsmenge zum Food-Catch-Preis verkauft wird.",
   Rohmarge:
     "Die Rohmarge ist der Anteil des maximalen Deckungsbeitrags am maximalen Umsatz.",
   "Break-even-Abverkauf":
     "Der Break-even-Abverkauf zeigt, welcher Anteil der Einkaufsmenge verkauft werden muss, damit der gesamte Wareneinsatz gedeckt ist.",
   Preisvorteil:
-    "Der Preisvorteil zeigt, wie viel günstiger der Kundi-Catch-Preis gegenüber dem hinterlegten Normalpreis ist.",
+    "Der Preisvorteil zeigt, wie viel günstiger der Food-Catch-Preis gegenüber dem hinterlegten Normalpreis ist.",
 };
 
 interface CalculationCardProps {

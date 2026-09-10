@@ -298,6 +298,7 @@ export type Database = {
           reopen_reason: string | null
           reopened_at: string | null
           reopened_by: string | null
+          source_case_id: string | null
           source_offer_id: string | null
           status: string
           supplier_id: string | null
@@ -363,6 +364,7 @@ export type Database = {
           reopen_reason?: string | null
           reopened_at?: string | null
           reopened_by?: string | null
+          source_case_id?: string | null
           source_offer_id?: string | null
           status?: string
           supplier_id?: string | null
@@ -428,6 +430,7 @@ export type Database = {
           reopen_reason?: string | null
           reopened_at?: string | null
           reopened_by?: string | null
+          source_case_id?: string | null
           source_offer_id?: string | null
           status?: string
           supplier_id?: string | null
@@ -440,6 +443,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catches_source_case_id_fkey"
+            columns: ["source_case_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_offer_cases"
             referencedColumns: ["id"]
           },
           {
@@ -713,8 +723,68 @@ export type Database = {
           },
         ]
       }
+      supplier_offer_cases: {
+        Row: {
+          consolidated_data: Json
+          consolidation_warnings: Json
+          converted_at: string | null
+          converted_by: string | null
+          converted_catch_id: string | null
+          created_at: string
+          created_by: string | null
+          extraction_error: string | null
+          extraction_status: string
+          id: string
+          status: string
+          supplier_name: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          consolidated_data?: Json
+          consolidation_warnings?: Json
+          converted_at?: string | null
+          converted_by?: string | null
+          converted_catch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          extraction_error?: string | null
+          extraction_status?: string
+          id?: string
+          status?: string
+          supplier_name?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          consolidated_data?: Json
+          consolidation_warnings?: Json
+          converted_at?: string | null
+          converted_by?: string | null
+          converted_catch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          extraction_error?: string | null
+          extraction_status?: string
+          id?: string
+          status?: string
+          supplier_name?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_offer_cases_converted_catch_id_fkey"
+            columns: ["converted_catch_id"]
+            isOneToOne: false
+            referencedRelation: "catches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_offer_emails: {
         Row: {
+          case_id: string | null
           converted_at: string | null
           converted_by: string | null
           converted_catch_id: string | null
@@ -740,6 +810,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          case_id?: string | null
           converted_at?: string | null
           converted_by?: string | null
           converted_catch_id?: string | null
@@ -765,6 +836,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          case_id?: string | null
           converted_at?: string | null
           converted_by?: string | null
           converted_catch_id?: string | null
@@ -790,6 +862,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "supplier_offer_emails_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_offer_cases"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "supplier_offer_emails_converted_catch_id_fkey"
             columns: ["converted_catch_id"]

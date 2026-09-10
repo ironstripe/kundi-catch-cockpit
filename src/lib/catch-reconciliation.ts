@@ -128,7 +128,7 @@ export function reconcileCatch(input: ReconciliationInput): ReconciliationResult
   const missing: string[] = [];
   if (!finite(purchaseQuantity) || (purchaseQuantity ?? 0) <= 0) missing.push("Einkaufsmenge");
   if (!finite(input.purchase_price)) missing.push("Einkaufspreis pro Einheit");
-  if (!finite(input.catch_price)) missing.push("Kundi-Catch-Preis");
+  if (!finite(input.catch_price)) missing.push("Food-Catch-Preis");
 
   if (errors.length > 0 || missing.length > 0 || !finite(remaining) || !finite(purchaseQuantity)) {
     return {

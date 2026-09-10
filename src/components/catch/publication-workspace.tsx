@@ -230,7 +230,7 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
               <p className="flex items-center gap-2 font-medium">
                 <AlertTriangle className="size-4" />
                 {templateUpdated
-                  ? "Die Kundi-Catch-Vorlage wurde aktualisiert. Der bestehende Post kann neu generiert werden."
+                  ? "Die Food-Catch-Vorlage wurde aktualisiert. Der bestehende Post kann neu generiert werden."
                   : "Die Catch-Daten wurden geändert. Der WhatsApp-Post ist möglicherweise nicht mehr aktuell."}
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -545,7 +545,7 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
           <AlertDialogHeader>
             <AlertDialogTitle>Als publiziert markieren?</AlertDialogTitle>
             <AlertDialogDescription>
-              Wurde dieser Catch in der Kundi Catch WhatsApp-Gruppe veröffentlicht?
+              Wurde dieser Catch in der Food Catch WhatsApp-Gruppe veröffentlicht?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

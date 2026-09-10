@@ -81,13 +81,13 @@ export const Route = createFileRoute("/_authenticated/history")({
   },
   head: () => ({
     meta: [
-      { title: "Historie — Kundi Catch Cockpit" },
+      { title: "Historie — Food Catch Cockpit" },
       {
         name: "description",
         content:
           "Archiv aller abgeschlossenen und abgebrochenen Catches mit Suche, Filtern und Ergebniskennzahlen.",
       },
-      { property: "og:title", content: "Historie — Kundi Catch Cockpit" },
+      { property: "og:title", content: "Historie — Food Catch Cockpit" },
       {
         property: "og:description",
         content: "Alle vergangenen Catches durchsuchen und auswerten.",

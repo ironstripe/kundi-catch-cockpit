@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { CheckCircle2, XCircle } from "lucide-react";
 
 import { SectionShell } from "@/components/settings/section-shell";
@@ -102,17 +101,7 @@ export function InboundDiagnosticsSection() {
                     {entry.recipients ?? "—"}
                   </TableCell>
                   <TableCell className="max-w-48 truncate text-sm">
-                    {entry.offer_id ? (
-                      <Link
-                        to="/offers/$offerId"
-                        params={{ offerId: entry.offer_id }}
-                        className="underline underline-offset-2"
-                      >
-                        {entry.subject ?? "(kein Betreff)"}
-                      </Link>
-                    ) : (
-                      (entry.subject ?? "—")
-                    )}
+                    {entry.subject ?? "—"}
                   </TableCell>
                   <TableCell>
                     <Badge

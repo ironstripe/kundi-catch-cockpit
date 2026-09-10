@@ -70,7 +70,7 @@ const FIELD_LABELS: Record<string, string> = {
   purchase_price: "Einkaufspreis pro Einheit",
   delivery_cost: "Lieferkosten",
   regular_price: "Normalpreis",
-  catch_price: "Kundi-Catch-Preis",
+  catch_price: "Food-Catch-Preis",
   location_ids: "Abholort",
   available_from: "Verfügbar ab",
   available_until: "Verfügbar bis",
@@ -432,7 +432,7 @@ export function CatchForm({
                   onChange={(event) => set("regular_price", event.target.value)}
                 />
               </Field>
-              <Field label="Kundi-Catch-Preis" required error={issueFor("catch_price")} hint="CHF">
+              <Field label="Food-Catch-Preis" required error={issueFor("catch_price")} hint="CHF">
                 <Input
                   id="catch_price"
                   type="number"

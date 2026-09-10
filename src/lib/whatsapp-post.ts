@@ -82,7 +82,7 @@ export function generatePostText(
 ): string {
   const blocks: string[] = [];
 
-  blocks.push("🐟 *KUNDI CATCH*");
+  blocks.push("🐟 *FOOD CATCH*");
   blocks.push(`*${BRAND_CLAIM}*`);
 
   const story = clean(source.handicap_story);
@@ -116,7 +116,7 @@ export function generatePostText(
           : priceLine,
       );
     } else {
-      blocks.push(`*KUNDI CATCH ${postPrice(catchPrice, source.quantity_unit)}* 🔥`);
+      blocks.push(`*FOOD CATCH ${postPrice(catchPrice, source.quantity_unit)}* 🔥`);
     }
   }
 

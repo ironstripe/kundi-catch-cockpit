@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
-  ArrowLeft,
   Archive,
   ArchiveRestore,
+  ArrowLeft,
   FileDown,
+  FolderInput,
+  Pencil,
   RefreshCw,
   Save,
   Sparkles,
@@ -13,7 +15,9 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/layout/page-header";
-import { OfferAttachments } from "@/components/offers/offer-attachments";
+import { CaseAssignDialog } from "@/components/offers/case-assign-dialog";
+import { CaseEmailPanel } from "@/components/offers/case-email-panel";
+import { CaseStatusBadge } from "@/components/offers/case-status-badge";
 import {
   OfferFieldsForm,
   formValuesToExtraction,
@@ -21,8 +25,6 @@ import {
   useUnsavedGuard,
   type OfferFormValues,
 } from "@/components/offers/offer-fields-form";
-import { OfferSourceEmail } from "@/components/offers/offer-source-email";
-import { OfferStatusBadge } from "@/components/offers/offer-status-badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,9 +37,28 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRoles } from "@/hooks/use-role";
 import { formatDateTime } from "@/lib/format";
+import { fetchCase } from "@/lib/offer-cases";
+import {
+  assignEmailToCase,
+  convertCaseToCatch,
+  createCaseFromEmail,
+  mergeCases,
+  renameCase,
+  retryCaseExtraction,
+  saveCaseFields,
+  setCaseIgnored,
+} from "@/lib/offer-cases.functions";
 import {
   extractionWarnings,
   MANUAL_EDIT_MARKER,
@@ -45,82 +66,55 @@ import {
   normaliseExtraction,
   OFFER_FIELD_LABELS,
 } from "@/lib/supplier-offer-extraction";
-import { fetchOffer } from "@/lib/supplier-offers";
-import {
-  convertOfferToCatch,
-  retryOfferExtraction,
-  retryOfferRetrieval,
-  saveOfferFields,
-  setOfferIgnored,
-} from "@/lib/supplier-offers.functions";
+import { retryOfferRetrieval } from "@/lib/supplier-offers.functions";
 
-export const Route = createFileRoute("/_authenticated/offers/$offerId")({
+export const Route = createFileRoute("/_authenticated/offers/$caseId")({
   head: () => ({
     meta: [
-      { title: "Angebot prüfen — Kundi Catch Cockpit" },
+      { title: "Angebotsdossier prüfen — Food Catch Cockpit" },
       {
         name: "description",
         content:
-          "Weitergeleitetes Lieferantenangebot prüfen: Original-E-Mail, ausgelesene Angaben, Anhänge und Übernahme als Catch-Entwurf.",
+          "Angebotsdossier prüfen: alle Lieferanten-E-Mails, Anhänge, konsolidierte Angaben mit Quellenangabe und Übernahme als Catch-Entwurf.",
       },
-      { property: "og:title", content: "Angebot prüfen — Kundi Catch Cockpit" },
+      { property: "og:title", content: "Angebotsdossier prüfen — Food Catch Cockpit" },
       {
         property: "og:description",
-        content: "Angaben aus einem Lieferantenangebot prüfen und als Catch-Entwurf übernehmen.",
+        content: "Mehrere Lieferanten-E-Mails gemeinsam prüfen und als Catch-Entwurf übernehmen.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: OfferDetailPage,
+  component: OfferCaseDetailPage,
 });
 
-function OfferDetailPage() {
-  const { offerId } = Route.useParams();
+function OfferCaseDetailPage() {
+  const { caseId } = Route.useParams();
   const navigate = useNavigate();
   const { canEdit } = useRoles();
 
   const {
-    data: offer,
+    data: dossier,
     isLoading,
     refetch,
-  } = useQuery({
-    queryKey: ["supplier-offer", offerId],
-    queryFn: () => fetchOffer(offerId),
-  });
+  } = useQuery({ queryKey: ["offer-case", caseId], queryFn: () => fetchCase(caseId) });
 
   const [values, setValues] = useState<OfferFormValues>({});
   const [initial, setInitial] = useState<OfferFormValues>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmConvert, setConfirmConvert] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState(false);
-
-  async function runExtraction(overwrite: boolean) {
-    setBusy("extract");
-    try {
-      const result = await retryOfferExtraction({
-        data: { offerId, confirmOverwrite: overwrite },
-      });
-      toast.success(result.message);
-      await refetch();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Aktion fehlgeschlagen.";
-      if (message.includes(MANUAL_EDIT_MARKER)) {
-        setConfirmOverwrite(true);
-      } else {
-        toast.error(message);
-      }
-    } finally {
-      setBusy(null);
-    }
-  }
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const [titleDraft, setTitleDraft] = useState<string | null>(null);
+  const [imageId, setImageId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!offer) return;
-    const next = offerToFormValues(offer.extracted_data);
+    if (!dossier) return;
+    const next = offerToFormValues(dossier.consolidated_data);
     setValues(next);
     setInitial(next);
-  }, [offer]);
+  }, [dossier]);
 
   const dirty = useMemo(
     () => JSON.stringify(values) !== JSON.stringify(initial),
@@ -128,18 +122,34 @@ function OfferDetailPage() {
   );
   useUnsavedGuard(dirty);
 
-  const locked = offer?.status === "converted";
+  const locked = dossier?.status === "converted";
   const editable = canEdit && !locked;
 
   const liveExtraction = useMemo(
     () =>
-      offer ? normaliseExtraction(formValuesToExtraction(values, offer.extracted_data)) : null,
-    [offer, values],
+      dossier
+        ? normaliseExtraction(formValuesToExtraction(values, dossier.consolidated_data))
+        : null,
+    [dossier, values],
   );
-  const warnings = liveExtraction ? extractionWarnings(liveExtraction) : [];
+  const fieldWarnings = liveExtraction ? extractionWarnings(liveExtraction) : [];
+  const warnings = useMemo(
+    () => Array.from(new Set([...(dossier?.warnings ?? []), ...fieldWarnings])),
+    [dossier?.warnings, fieldWarnings],
+  );
   const missing = liveExtraction ? missingRequiredFields(liveExtraction) : [];
 
-  const primaryImage = offer?.attachments.find((item) => item.is_primary_image) ?? null;
+  const images = useMemo(
+    () =>
+      (dossier?.emails ?? []).flatMap((email) =>
+        email.attachments.filter((attachment) => attachment.mime_type.startsWith("image/")),
+      ),
+    [dossier],
+  );
+  const chosenImage =
+    images.find((image) => image.id === imageId) ??
+    images.find((image) => image.is_primary_image) ??
+    null;
 
   async function run(key: string, action: () => Promise<{ message: string }>) {
     setBusy(key);
@@ -154,6 +164,21 @@ function OfferDetailPage() {
     }
   }
 
+  async function runExtraction(overwrite: boolean) {
+    setBusy("extract");
+    try {
+      const result = await retryCaseExtraction({ data: { caseId, confirmOverwrite: overwrite } });
+      toast.success(result.message);
+      await refetch();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Aktion fehlgeschlagen.";
+      if (message.includes(MANUAL_EDIT_MARKER)) setConfirmOverwrite(true);
+      else toast.error(message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -163,11 +188,11 @@ function OfferDetailPage() {
     );
   }
 
-  if (!offer) {
+  if (!dossier) {
     return (
       <Card>
         <CardContent className="space-y-3 p-6 text-sm">
-          <p>Dieses Angebot existiert nicht mehr.</p>
+          <p>Dieses Angebotsdossier existiert nicht mehr.</p>
           <Button asChild variant="outline">
             <Link to="/offers">Zurück zum Angebotseingang</Link>
           </Button>
@@ -188,14 +213,14 @@ function OfferDetailPage() {
       </div>
 
       <PageHeader
-        title={offer.subject ?? "Angebot ohne Betreff"}
-        description={`Empfangen am ${formatDateTime(offer.received_at)} · weitergeleitet von ${offer.forwarded_by_email ?? "unbekannt"}`}
+        title={dossier.title}
+        description={`${dossier.emails.length} E-Mail(s) · Lieferant: ${dossier.supplier_name ?? "unbekannt"}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <OfferStatusBadge status={offer.status} />
-            {offer.converted_catch_id ? (
+            <CaseStatusBadge status={dossier.status} />
+            {dossier.converted_catch_id ? (
               <Button asChild size="sm" variant="outline">
-                <Link to="/catches/$catchId" params={{ catchId: offer.converted_catch_id }}>
+                <Link to="/catches/$catchId" params={{ catchId: dossier.converted_catch_id }}>
                   Zum Catch-Entwurf
                 </Link>
               </Button>
@@ -204,16 +229,16 @@ function OfferDetailPage() {
         }
       />
 
-      {offer.extraction_error ? (
+      {dossier.extraction_error ? (
         <p className="mb-4 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
-          Die Auswertung ist fehlgeschlagen: {offer.extraction_error}
+          Die Auswertung ist fehlgeschlagen: {dossier.extraction_error}
         </p>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-4">
           <OfferFieldsForm
-            offer={offer.extracted_data}
+            offer={dossier.consolidated_data}
             values={values}
             onChange={setValues}
             disabled={!editable}
@@ -224,14 +249,47 @@ function OfferDetailPage() {
         <div className="space-y-4">
           <Card>
             <CardContent className="flex flex-col gap-2 p-4">
+              {editable ? (
+                titleDraft === null ? (
+                  <Button variant="ghost" size="sm" onClick={() => setTitleDraft(dossier.title)}>
+                    <Pencil className="mr-2 size-4" aria-hidden />
+                    Titel ändern
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <Input
+                      value={titleDraft}
+                      aria-label="Titel des Angebotsdossiers"
+                      onChange={(event) => setTitleDraft(event.target.value)}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        disabled={busy !== null}
+                        onClick={async () => {
+                          const title = titleDraft;
+                          setTitleDraft(null);
+                          await run("rename", () => renameCase({ data: { caseId, title } }));
+                        }}
+                      >
+                        Speichern
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setTitleDraft(null)}>
+                        Abbrechen
+                      </Button>
+                    </div>
+                  </div>
+                )
+              ) : null}
+
               <Button
                 disabled={!editable || !dirty || busy !== null}
                 onClick={() =>
                   run("save", () =>
-                    saveOfferFields({
+                    saveCaseFields({
                       data: {
-                        offerId,
-                        values: formValuesToExtraction(values, offer.extracted_data),
+                        caseId,
+                        values: formValuesToExtraction(values, dossier.consolidated_data),
                       },
                     }),
                   )
@@ -240,8 +298,8 @@ function OfferDetailPage() {
                 <Save className="mr-2 size-4" aria-hidden />
                 Änderungen speichern
               </Button>
+
               <Button
-                variant="default"
                 disabled={!editable || busy !== null || missing.length > 0}
                 onClick={() => setConfirmConvert(true)}
               >
@@ -270,6 +328,30 @@ function OfferDetailPage() {
                   . Werte eintragen und speichern, dann wird die Übernahme aktiv.
                 </p>
               ) : null}
+
+              {images.length ? (
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Hauptbild für den Catch</span>
+                  <Select
+                    value={chosenImage?.id ?? "none"}
+                    disabled={!editable}
+                    onValueChange={(value) => setImageId(value === "none" ? null : value)}
+                  >
+                    <SelectTrigger aria-label="Hauptbild wählen">
+                      <SelectValue placeholder="Kein Bild" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Kein Bild</SelectItem>
+                      {images.map((image) => (
+                        <SelectItem key={image.id} value={image.id}>
+                          {image.file_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
+
               <Button
                 variant="outline"
                 disabled={!editable || busy !== null}
@@ -278,20 +360,40 @@ function OfferDetailPage() {
                 <Sparkles className="mr-2 size-4" aria-hidden />
                 Auswertung wiederholen
               </Button>
+
               <Button
                 variant="outline"
                 disabled={!canEdit || busy !== null}
-                onClick={() => run("retrieve", () => retryOfferRetrieval({ data: { offerId } }))}
+                onClick={() =>
+                  run("retrieve", async () => {
+                    const results = await Promise.all(
+                      dossier.emails.map((email) =>
+                        retryOfferRetrieval({ data: { offerId: email.id } }),
+                      ),
+                    );
+                    return { message: results[results.length - 1]?.message ?? "Neu geladen." };
+                  })
+                }
               >
                 <RefreshCw className="mr-2 size-4" aria-hidden />
-                E-Mail und Anhänge neu laden
+                E-Mails und Anhänge neu laden
               </Button>
-              {offer.status === "ignored" ? (
+
+              <Button
+                variant="outline"
+                disabled={!editable || busy !== null}
+                onClick={() => setMergeOpen(true)}
+              >
+                <FolderInput className="mr-2 size-4" aria-hidden />
+                Mit anderem Angebotsdossier zusammenführen
+              </Button>
+
+              {dossier.status === "ignored" ? (
                 <Button
                   variant="ghost"
                   disabled={!canEdit || busy !== null}
                   onClick={() =>
-                    run("reopen", () => setOfferIgnored({ data: { offerId, ignored: false } }))
+                    run("reopen", () => setCaseIgnored({ data: { caseId, ignored: false } }))
                   }
                 >
                   <ArchiveRestore className="mr-2 size-4" aria-hidden />
@@ -302,49 +404,76 @@ function OfferDetailPage() {
                   variant="ghost"
                   disabled={!editable || busy !== null}
                   onClick={() =>
-                    run("ignore", () => setOfferIgnored({ data: { offerId, ignored: true } }))
+                    run("ignore", () => setCaseIgnored({ data: { caseId, ignored: true } }))
                   }
                 >
                   <Archive className="mr-2 size-4" aria-hidden />
-                  Angebot ablegen
+                  Dossier ablegen
                 </Button>
               )}
+
               {locked ? (
                 <p className="text-xs text-muted-foreground">
-                  Dieses Angebot wurde am{" "}
-                  {offer.converted_at ? formatDateTime(offer.converted_at) : "—"} übernommen und ist
-                  schreibgeschützt.
+                  Dieses Dossier wurde am{" "}
+                  {dossier.converted_at ? formatDateTime(dossier.converted_at) : "—"} übernommen und
+                  ist schreibgeschützt.
                 </p>
               ) : null}
               {!canEdit ? (
                 <p className="text-xs text-muted-foreground">
-                  Als Viewer siehst du das Angebot nur lesend.
+                  Als Viewer siehst du das Dossier nur lesend.
                 </p>
               ) : null}
             </CardContent>
           </Card>
-
-          <OfferSourceEmail offer={offer} />
         </div>
       </div>
 
       <div className="mt-4">
-        <OfferAttachments
-          offerId={offerId}
-          attachments={offer.attachments}
+        <CaseEmailPanel
+          caseId={caseId}
+          emails={dossier.emails}
           canEdit={canEdit}
           locked={Boolean(locked)}
+          busy={busy !== null}
           onChanged={() => void refetch()}
+          onAssign={(emailId, targetCaseId) =>
+            void run("assign", () => assignEmailToCase({ data: { emailId, targetCaseId } }))
+          }
+          onSplit={(emailId) => void run("split", () => createCaseFromEmail({ data: { emailId } }))}
         />
       </div>
+
+      <CaseAssignDialog
+        open={mergeOpen}
+        onOpenChange={setMergeOpen}
+        title="Dossiers zusammenführen"
+        description={`Alle ${dossier.emails.length} E-Mail(s) dieses Dossiers werden in das gewählte Dossier verschoben. Quellen und Anhänge bleiben erhalten.`}
+        excludeCaseId={caseId}
+        confirmLabel="Zusammenführen"
+        busy={busy !== null}
+        onConfirm={async (targetCaseId) => {
+          setMergeOpen(false);
+          setBusy("merge");
+          try {
+            const result = await mergeCases({ data: { sourceCaseId: caseId, targetCaseId } });
+            toast.success(result.message);
+            await navigate({ to: "/offers/$caseId", params: { caseId: targetCaseId } });
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Aktion fehlgeschlagen.");
+          } finally {
+            setBusy(null);
+          }
+        }}
+      />
 
       <AlertDialog open={confirmOverwrite} onOpenChange={setConfirmOverwrite}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Geprüfte Werte überschreiben?</AlertDialogTitle>
             <AlertDialogDescription>
-              In diesem Angebot wurden Werte von Hand geändert. Eine neue Auswertung ersetzt sie
-              durch die Angaben aus E-Mail und Anhängen.
+              In diesem Dossier wurden Werte von Hand geändert. Eine neue Auswertung ersetzt sie
+              durch die Angaben aus den E-Mails und Anhängen.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -368,8 +497,9 @@ function OfferDetailPage() {
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm">
                 <p>
-                  Es entsteht ein Catch im Status «Entwurf». Nichts wird bestellt, publiziert oder
-                  an den Lieferanten gemeldet. Eine Übernahme ist pro Angebot nur einmal möglich.
+                  Aus diesem Dossier entsteht genau ein Catch im Status «Entwurf». Nichts wird
+                  bestellt, publiziert oder an den Lieferanten gemeldet. Eine Übernahme ist pro
+                  Dossier nur einmal möglich.
                 </p>
                 {warnings.length ? (
                   <ul className="list-disc space-y-1 pl-5">
@@ -380,8 +510,8 @@ function OfferDetailPage() {
                 ) : null}
                 <p>
                   Hauptbild:{" "}
-                  {primaryImage
-                    ? primaryImage.file_name
+                  {chosenImage
+                    ? chosenImage.file_name
                     : "keines gewählt — der Catch bleibt ohne Bild."}
                 </p>
                 {missing.length ? (
@@ -397,18 +527,15 @@ function OfferDetailPage() {
                 setConfirmConvert(false);
                 setBusy("convert");
                 try {
-                  const result = await convertOfferToCatch({
+                  const result = await convertCaseToCatch({
                     data: {
-                      offerId,
-                      values: formValuesToExtraction(values, offer.extracted_data),
-                      imageAttachmentId: primaryImage?.id ?? null,
+                      caseId,
+                      values: formValuesToExtraction(values, dossier.consolidated_data),
+                      imageAttachmentId: chosenImage?.id ?? null,
                     },
                   });
                   toast.success(result.message);
-                  await navigate({
-                    to: "/catches/$catchId",
-                    params: { catchId: result.catchId },
-                  });
+                  await navigate({ to: "/catches/$catchId", params: { catchId: result.catchId } });
                 } catch (error) {
                   toast.error(
                     error instanceof Error ? error.message : "Die Übernahme ist fehlgeschlagen.",

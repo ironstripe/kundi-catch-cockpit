@@ -107,7 +107,7 @@ describe("calculateCatch — Sonderfälle", () => {
     expect(result.missing).toEqual([
       "Einkaufsmenge",
       "Einkaufspreis pro Einheit",
-      "Kundi-Catch-Preis",
+      "Food-Catch-Preis",
     ]);
   });
 

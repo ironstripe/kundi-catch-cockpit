@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Fish, Inbox, LayoutDashboard, History, Settings, PlusCircle } from "lucide-react";
 
-import { KundiCatchBrand } from "@/components/brand/kundi-catch-logo";
+import { FoodCatchBrand } from "@/components/brand/food-catch-logo";
 import {
   Sidebar,
   SidebarContent,
@@ -35,7 +35,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b p-3">
-        <KundiCatchBrand collapsed={collapsed} />
+        <FoodCatchBrand collapsed={collapsed} />
       </SidebarHeader>
 
       <SidebarContent>
