@@ -54,7 +54,7 @@ import {
   setOfferIgnored,
 } from "@/lib/supplier-offers.functions";
 
-export const Route = createFileRoute("/_authenticated/offers/$offerId")({
+export const Route = createFileRoute("/_authenticated/offers/$caseId")({
   head: () => ({
     meta: [
       { title: "Angebot prüfen — Kundi Catch Cockpit" },
