@@ -94,8 +94,9 @@ async function readPdf(
   const { extractText, getDocumentProxy } = await import("unpdf");
   const document = await getDocumentProxy(bytes);
   const pages = Math.min(document.numPages, SOURCE_LIMITS.maxPdfPages);
-  const { text } = await extractText(document, { mergePages: true });
-  const joined = Array.isArray(text) ? text.slice(0, pages).join("\n") : String(text ?? "");
+  const { text } = await extractText(document);
+  const perPage: string[] = Array.isArray(text) ? text : [String(text ?? "")];
+  const joined = perPage.slice(0, pages).join("\n");
 
   if (pdfTextIsUsable(joined)) {
     return {
