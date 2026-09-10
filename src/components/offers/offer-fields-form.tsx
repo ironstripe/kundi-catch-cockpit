@@ -148,6 +148,8 @@ export function OfferFieldsForm({
           <CardContent className="grid gap-4 md:grid-cols-2">
             {group.keys.map((key) => {
               const field = offer[key];
+              const isMissing =
+                REQUIRED_FOR_CONVERSION.includes(key) && !(values[key] ?? "").trim();
               const isLong = key === "other_conditions" || key === "offer_reason";
               const inputType = NUMERIC_FIELDS.includes(key)
                 ? "number"
@@ -185,9 +187,20 @@ export function OfferFieldsForm({
                       step={inputType === "number" ? "any" : undefined}
                       value={values[key] ?? ""}
                       disabled={disabled}
+                      aria-invalid={isMissing || undefined}
+                      className={
+                        isMissing
+                          ? "border-destructive/60 focus-visible:ring-destructive/30"
+                          : undefined
+                      }
                       onChange={(event) => onChange({ ...values, [key]: event.target.value })}
                     />
                   )}
+                  {isMissing ? (
+                    <p className="text-[11px] text-destructive">
+                      Für die Übernahme in einen Catch nötig.
+                    </p>
+                  ) : null}
                   {field?.source_excerpt ? (
                     <p className="flex items-start gap-1 text-[11px] leading-snug text-muted-foreground">
                       <Quote className="mt-0.5 size-3 shrink-0" aria-hidden />
