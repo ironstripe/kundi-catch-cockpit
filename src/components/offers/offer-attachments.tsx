@@ -13,9 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { updateOfferAttachment } from "@/lib/supplier-offers.functions";
+import { retryAttachmentContent, updateOfferAttachment } from "@/lib/supplier-offers.functions";
 import {
   ATTACHMENT_KIND_LABELS,
+  CONTENT_STATUS_LABELS,
   signedAttachmentUrl,
   type OfferAttachment,
 } from "@/lib/supplier-offers";

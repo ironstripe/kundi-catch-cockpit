@@ -78,6 +78,8 @@ export function formValuesToExtraction(
       unit: source?.unit ?? null,
       confidence: source?.confidence ?? null,
       source_excerpt: source?.source_excerpt ?? null,
+      source_name: source?.source_name ?? null,
+      source_type: source?.source_type ?? null,
     };
   }
   return result;
