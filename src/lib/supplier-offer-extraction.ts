@@ -206,6 +206,8 @@ function normaliseField(key: OfferFieldKey, input: unknown): ExtractedField {
     unit: textOrNull(record["unit"], 40),
     confidence: clampConfidence(record["confidence"]),
     source_excerpt: textOrNull(record["source_excerpt"], 500),
+    source_name: textOrNull(record["source_name"], 200),
+    source_type: textOrNull(record["source_type"], 40),
   };
 }
 
