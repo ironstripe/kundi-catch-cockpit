@@ -105,14 +105,18 @@ export const NUMERIC_FIELDS: OfferFieldKey[] = [
 export const DATE_FIELDS: OfferFieldKey[] = ["available_from", "expiry_date"];
 
 export interface ExtractedField {
-  /** Wortgetreu übernommener Wert; `null`, wenn die E-Mail dazu nichts sagt. */
+  /** Wortgetreu übernommener Wert; `null`, wenn die Quellen dazu nichts sagen. */
   value: string | number | null;
   /** Einheit, falls im Text genannt (kg, Stück, CHF …). */
   unit: string | null;
   /** Sicherheit der Erkennung zwischen 0 und 1. */
   confidence: number | null;
-  /** Textstelle aus der E-Mail, auf der der Wert beruht. */
+  /** Textstelle aus der Quelle, auf der der Wert beruht. */
   source_excerpt: string | null;
+  /** Datei- oder Quellenname, aus dem der Wert stammt. */
+  source_name: string | null;
+  /** Art der Quelle: E-Mail, PDF, Tabelle, Bild oder weitergeleitete Nachricht. */
+  source_type: string | null;
 }
 
 export type ExtractedOffer = Partial<Record<OfferFieldKey, ExtractedField | null>>;
@@ -122,6 +126,8 @@ export const EMPTY_FIELD: ExtractedField = {
   unit: null,
   confidence: null,
   source_excerpt: null,
+  source_name: null,
+  source_type: null,
 };
 
 function clampConfidence(value: unknown): number | null {
