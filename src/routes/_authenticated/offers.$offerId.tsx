@@ -316,6 +316,29 @@ function OfferDetailPage() {
         />
       </div>
 
+      <AlertDialog open={confirmOverwrite} onOpenChange={setConfirmOverwrite}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Geprüfte Werte überschreiben?</AlertDialogTitle>
+            <AlertDialogDescription>
+              In diesem Angebot wurden Werte von Hand geändert. Eine neue Auswertung ersetzt sie
+              durch die Angaben aus E-Mail und Anhängen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmOverwrite(false);
+                void runExtraction(true);
+              }}
+            >
+              Neu auswerten
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={confirmConvert} onOpenChange={setConfirmConvert}>
         <AlertDialogContent>
           <AlertDialogHeader>
