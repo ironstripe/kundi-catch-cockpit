@@ -148,6 +148,8 @@ export function OfferFieldsForm({
           <CardContent className="grid gap-4 md:grid-cols-2">
             {group.keys.map((key) => {
               const field = offer[key];
+              const isMissing =
+                REQUIRED_FOR_CONVERSION.includes(key) && !(values[key] ?? "").trim();
               const isLong = key === "other_conditions" || key === "offer_reason";
               const inputType = NUMERIC_FIELDS.includes(key)
                 ? "number"
