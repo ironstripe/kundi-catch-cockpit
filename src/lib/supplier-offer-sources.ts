@@ -85,7 +85,10 @@ export function truncateSourceText(
   text: string,
   max: number = SOURCE_LIMITS.maxChars,
 ): { text: string; truncated: boolean } {
-  const cleaned = text.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  const cleaned = text
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
   if (cleaned.length <= max) return { text: cleaned, truncated: false };
   return { text: `${cleaned.slice(0, max)}\n…`, truncated: true };
 }
@@ -97,9 +100,8 @@ export function pdfTextIsUsable(text: string): boolean {
 
 /** Einfacher CSV-Leser (Komma oder Semikolon, Anführungszeichen erlaubt). */
 export function parseCsv(content: string): string[][] {
-  const delimiter = (content.match(/;/g)?.length ?? 0) > (content.match(/,/g)?.length ?? 0)
-    ? ";"
-    : ",";
+  const delimiter =
+    (content.match(/;/g)?.length ?? 0) > (content.match(/,/g)?.length ?? 0) ? ";" : ",";
   const rows: string[][] = [];
   let row: string[] = [];
   let cell = "";

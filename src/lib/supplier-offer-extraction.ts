@@ -338,6 +338,8 @@ export const MANUAL_EDIT_MARKER = "MANUELL_GEPRUEFT";
 export function hasManualEdits(offer: ExtractedOffer): boolean {
   return OFFER_FIELD_KEYS.some((key) => {
     const field = offer[key];
-    return Boolean(field && field.value !== null && field.confidence === null && field.source_excerpt);
+    return Boolean(
+      field && field.value !== null && field.confidence === null && field.source_excerpt,
+    );
   });
 }

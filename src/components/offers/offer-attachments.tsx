@@ -137,7 +137,9 @@ export function OfferAttachments({
                   </Badge>
                 </div>
                 {attachment.content_extraction_status !== "done" && attachment.extraction_error ? (
-                  <p className="mt-1 text-xs text-muted-foreground">{attachment.extraction_error}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {attachment.extraction_error}
+                  </p>
                 ) : null}
               </div>
               <div className="flex items-center gap-2">

@@ -12,10 +12,7 @@ import {
   OFFER_FIELD_LABELS,
   type ExtractedOffer,
 } from "@/lib/supplier-offer-extraction";
-import {
-  formatSourcesForPrompt,
-  type OfferExtractionSource,
-} from "@/lib/supplier-offer-sources";
+import { formatSourcesForPrompt, type OfferExtractionSource } from "@/lib/supplier-offer-sources";
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "google/gemini-3.7-flash";

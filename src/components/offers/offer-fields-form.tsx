@@ -195,9 +195,7 @@ export function OfferFieldsForm({
                     </p>
                   ) : null}
                   {field?.source_name ? (
-                    <p className="text-[11px] text-muted-foreground">
-                      Quelle: {field.source_name}
-                    </p>
+                    <p className="text-[11px] text-muted-foreground">Quelle: {field.source_name}</p>
                   ) : null}
                 </div>
               );

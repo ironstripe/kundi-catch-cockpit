@@ -95,10 +95,11 @@ export const retryOfferExtraction = createServerFn({ method: "POST" })
       .eq("id", row.id);
 
     try {
-      const { sources: attachmentSources, read, failed } = await processOfferAttachmentContents(
-        supabaseAdmin,
-        row.id,
-      );
+      const {
+        sources: attachmentSources,
+        read,
+        failed,
+      } = await processOfferAttachmentContents(supabaseAdmin, row.id);
       const sources = [
         emailSource(row.subject, emailPlainText(row.text_body, row.html_body)),
         ...attachmentSources,
