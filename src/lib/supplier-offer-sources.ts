@@ -12,6 +12,10 @@ export interface OfferExtractionSource {
   source_name: string;
   text: string;
   truncated: boolean;
+  /** E-Mail, aus der diese Quelle stammt (Angebotsdossier mit mehreren E-Mails). */
+  email_id?: string | null;
+  /** Empfangszeitpunkt der Quelle, damit Neueres von Bestätigtem unterscheidbar bleibt. */
+  received_at?: string | null;
 }
 
 /** Harte Grenzen, damit eine grosse Datei nie die Auswertung sprengt. */
@@ -186,7 +190,9 @@ export function formatSourcesForPrompt(sources: OfferExtractionSource[]): string
   return sources
     .map((source) =>
       [
-        `--- QUELLE (${source.source_type}): ${source.source_name}${source.truncated ? " [gekürzt]" : ""} ---`,
+        `--- QUELLE (${source.source_type}): ${source.source_name}${source.truncated ? " [gekürzt]" : ""}${
+          source.received_at ? ` | empfangen: ${source.received_at}` : ""
+        } ---`,
         source.text || "(kein Text)",
       ].join("\n"),
     )

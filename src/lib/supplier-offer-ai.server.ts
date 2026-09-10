@@ -164,11 +164,17 @@ export async function extractOfferFields(args: {
 }
 
 /** Die E-Mail selbst als Quelle. */
-export function emailSource(subject: string | null, body: string): OfferExtractionSource {
+export function emailSource(
+  subject: string | null,
+  body: string,
+  meta: { email_id?: string | null; received_at?: string | null } = {},
+): OfferExtractionSource {
   return {
     source_type: "email",
     source_name: subject ? `E-Mail: ${subject}` : "E-Mail",
     text: body,
     truncated: false,
+    email_id: meta.email_id ?? null,
+    received_at: meta.received_at ?? null,
   };
 }

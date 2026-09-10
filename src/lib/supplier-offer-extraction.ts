@@ -117,6 +117,10 @@ export interface ExtractedField {
   source_name: string | null;
   /** Art der Quelle: E-Mail, PDF, Tabelle, Bild oder weitergeleitete Nachricht. */
   source_type: string | null;
+  /** E-Mail im Angebotsdossier, aus der die Quelle stammt. */
+  source_email_id: string | null;
+  /** Empfangszeitpunkt der Quelle. */
+  source_received_at: string | null;
 }
 
 export type ExtractedOffer = Partial<Record<OfferFieldKey, ExtractedField | null>>;
@@ -128,6 +132,8 @@ export const EMPTY_FIELD: ExtractedField = {
   source_excerpt: null,
   source_name: null,
   source_type: null,
+  source_email_id: null,
+  source_received_at: null,
 };
 
 function clampConfidence(value: unknown): number | null {
@@ -209,6 +215,8 @@ function normaliseField(key: OfferFieldKey, input: unknown): ExtractedField {
     source_excerpt: textOrNull(record["source_excerpt"], 500),
     source_name: textOrNull(record["source_name"], 200),
     source_type: textOrNull(record["source_type"], 40),
+    source_email_id: textOrNull(record["source_email_id"], 64),
+    source_received_at: textOrNull(record["source_received_at"], 40),
   };
 }
 
