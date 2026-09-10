@@ -289,6 +289,7 @@ export const createCaseFromEmail = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!email) throw new Error("E-Mail nicht gefunden.");
 
+    await assertSourceCaseEditable(supabaseAdmin, email.case_id);
     const sourceCaseId = email.case_id;
     const caseId = await createCaseForEmail(
       supabaseAdmin,
