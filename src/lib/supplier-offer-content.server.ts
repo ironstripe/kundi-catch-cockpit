@@ -189,7 +189,16 @@ export async function extractAttachmentContent(args: {
     } else {
       raw = await transcribeVisual(args.bytes, args.mimeType, args.fileName);
       meta = { mode: "vision" };
-      if (!raw) throw new Error("Im Bild ist kein Text erkennbar.");
+      // Ein reines Produktfoto ohne Text ist kein Fehler, sondern ohne Inhalt.
+      if (!raw) {
+        return {
+          status: "unsupported",
+          text: "",
+          error: "Im Bild ist kein Text erkennbar — es fliesst nicht in die Auswertung ein.",
+          meta,
+          sourceType,
+        };
+      }
     }
 
     const { text, truncated } = truncateSourceText(raw);
