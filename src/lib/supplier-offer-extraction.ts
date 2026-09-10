@@ -326,3 +326,17 @@ export function findingWarnings(findings: {
 export function combineWarnings(...lists: string[][]): string[] {
   return Array.from(new Set(lists.flat().filter(Boolean)));
 }
+
+/** Kennzeichnung, damit die Oberfläche vor dem Überschreiben rückfragen kann. */
+export const MANUAL_EDIT_MARKER = "MANUELL_GEPRUEFT";
+
+/**
+ * Von Hand geänderte Werte erkennt man daran, dass ein Wert gesetzt ist,
+ * aber keine Sicherheit mehr trägt (siehe `saveOfferFields`).
+ */
+export function hasManualEdits(offer: ExtractedOffer): boolean {
+  return OFFER_FIELD_KEYS.some((key) => {
+    const field = offer[key];
+    return Boolean(field && field.value !== null && field.confidence === null && field.source_excerpt);
+  });
+}
