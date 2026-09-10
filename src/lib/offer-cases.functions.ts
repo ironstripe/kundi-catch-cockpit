@@ -229,6 +229,7 @@ export const assignEmailToCase = createServerFn({ method: "POST" })
     if (email.case_id === data.targetCaseId) {
       throw new Error("Die E-Mail gehört bereits zu diesem Dossier.");
     }
+    await assertSourceCaseEditable(supabaseAdmin, email.case_id);
 
     const sourceCaseId = email.case_id;
     const { error } = await supabaseAdmin
