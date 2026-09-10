@@ -102,17 +102,7 @@ export function InboundDiagnosticsSection() {
                     {entry.recipients ?? "—"}
                   </TableCell>
                   <TableCell className="max-w-48 truncate text-sm">
-                    {entry.offer_id ? (
-                      <Link
-                        to="/offers/$offerId"
-                        params={{ offerId: entry.offer_id }}
-                        className="underline underline-offset-2"
-                      >
-                        {entry.subject ?? "(kein Betreff)"}
-                      </Link>
-                    ) : (
-                      (entry.subject ?? "—")
-                    )}
+                    {entry.subject ?? "—"}
                   </TableCell>
                   <TableCell>
                     <Badge

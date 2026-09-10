@@ -154,6 +154,13 @@ export const updateOfferAttachment = createServerFn({ method: "POST" })
     return { status: "ok", message: "Anhang aktualisiert." };
   });
 
+export interface InboundConfigStatus {
+  webhook_secret_configured: boolean;
+  api_key_configured: boolean;
+  inbound_address: string;
+  webhook_url: string;
+}
+
 export const getInboundConfigStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<InboundConfigStatus> => {
