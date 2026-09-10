@@ -50,41 +50,22 @@ async function transcribeVisual(
   mimeType: string,
   fileName: string,
 ): Promise<string> {
-  const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) throw new Error("Das Lesen von Bildinhalten ist nicht konfiguriert.");
-
   const dataUrl = `data:${mimeType};base64,${bytesToBase64(bytes)}`;
-  const block =
+  const block: ResponsePart =
     mimeType === "application/pdf"
-      ? { type: "file", file: { filename: fileName, file_data: dataUrl } }
-      : { type: "image_url", image_url: { url: dataUrl } };
+      ? { type: "input_file", filename: fileName, file_data: dataUrl }
+      : { type: "input_image", image_url: dataUrl };
 
-  const response = await fetch(GATEWAY_URL, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: VISION_MODEL,
-      messages: [
-        {
-          role: "system",
-          content:
-            "Schreibe den sichtbaren Text der Datei wortgetreu ab. Erfinde nichts, ergänze nichts, fasse nicht zusammen. Gib nur den Text zurück.",
-        },
-        { role: "user", content: [{ type: "text", text: `Datei: ${fileName}` }, block] },
-      ],
-    }),
+  return callResponsesApi({
+    instructions:
+      "Schreibe den sichtbaren Text der Datei wortgetreu ab. Erfinde nichts, ergänze nichts, fasse nicht zusammen. Gib nur den Text zurück.",
+    parts: [{ type: "input_text", text: `Datei: ${fileName}` }, block],
+    labels: {
+      busy: "Das Lesen ist zurzeit ausgelastet.",
+      credits: "Für das Lesen fehlt Guthaben im Arbeitsbereich.",
+      failed: "Das Lesen ist fehlgeschlagen",
+    },
   });
-
-  if (response.status === 429) throw new Error("Das Lesen ist zurzeit ausgelastet.");
-  if (response.status === 402) throw new Error("Für das Lesen fehlt Guthaben im Arbeitsbereich.");
-  if (!response.ok) {
-    const detail = await response.text();
-    console.error(`[offer-content] Gateway ${response.status}: ${detail.slice(0, 400)}`);
-    throw new Error(`Das Lesen ist fehlgeschlagen (HTTP ${response.status}).`);
-  }
-
-  const payload = (await response.json()) as { choices?: { message?: { content?: string } }[] };
-  return (payload.choices?.[0]?.message?.content ?? "").trim();
 }
 
 async function readPdf(
