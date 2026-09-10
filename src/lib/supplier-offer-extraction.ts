@@ -303,3 +303,26 @@ export function originalSenderFromBody(body: string | null): {
   const plain = line.match(/[^\s<>]+@[^\s<>]+/);
   return { email: plain ? plain[0].toLowerCase() : null, name: null };
 }
+
+/** Zusätzliche Hinweise aus der Auswertung: Widersprüche und mehrere Produkte. */
+export function findingWarnings(findings: {
+  conflicts?: string[] | null;
+  multiple_products?: boolean | null;
+}): string[] {
+  const warnings: string[] = [];
+  if (findings.multiple_products) {
+    warnings.push(
+      "Die Quellen enthalten mehrere Produkte. Bitte das gewünschte Produkt wählen — es wird nichts zusammengeführt.",
+    );
+  }
+  for (const conflict of findings.conflicts ?? []) {
+    const text = String(conflict).trim();
+    if (text) warnings.push(`Widerspruch zwischen Quellen: ${text}`);
+  }
+  return warnings;
+}
+
+/** Hinweise aus Plausibilität und Auswertung ohne Dubletten zusammenführen. */
+export function combineWarnings(...lists: string[][]): string[] {
+  return Array.from(new Set(lists.flat().filter(Boolean)));
+}
