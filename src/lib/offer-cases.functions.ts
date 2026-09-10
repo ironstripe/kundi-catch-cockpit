@@ -188,6 +188,22 @@ async function emailCount(supabaseAdmin: AdminClient, caseId: string): Promise<n
 }
 
 /** Leeres, noch nicht übernommenes Dossier entfernen. */
+/** Aus einem übernommenen Dossier darf keine Quelle mehr herausgelöst werden. */
+async function assertSourceCaseEditable(
+  supabaseAdmin: AdminClient,
+  caseId: string | null,
+): Promise<void> {
+  if (!caseId) return;
+  const { data } = await supabaseAdmin
+    .from("supplier_offer_cases")
+    .select("status")
+    .eq("id", caseId)
+    .maybeSingle();
+  if (data?.status === "converted") {
+    throw new Error("Aus einem bereits übernommenen Dossier kann keine E-Mail entfernt werden.");
+  }
+}
+
 async function dropIfEmpty(supabaseAdmin: AdminClient, caseId: string): Promise<boolean> {
   const { data: row } = await supabaseAdmin
     .from("supplier_offer_cases")
