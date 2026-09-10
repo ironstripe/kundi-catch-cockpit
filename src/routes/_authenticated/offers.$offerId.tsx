@@ -92,6 +92,27 @@ function OfferDetailPage() {
   const [initial, setInitial] = useState<OfferFormValues>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmConvert, setConfirmConvert] = useState(false);
+  const [confirmOverwrite, setConfirmOverwrite] = useState(false);
+
+  async function runExtraction(overwrite: boolean) {
+    setBusy("extract");
+    try {
+      const result = await retryOfferExtraction({
+        data: { offerId, confirmOverwrite: overwrite },
+      });
+      toast.success(result.message);
+      await refetch();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Aktion fehlgeschlagen.";
+      if (message.includes(MANUAL_EDIT_MARKER)) {
+        setConfirmOverwrite(true);
+      } else {
+        toast.error(message);
+      }
+    } finally {
+      setBusy(null);
+    }
+  }
 
   useEffect(() => {
     if (!offer) return;
