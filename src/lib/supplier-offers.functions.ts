@@ -483,3 +483,23 @@ export const getInboundConfigStatus = createServerFn({ method: "GET" })
       webhook_url: `${origin}/api/public/webhooks/resend`,
     };
   });
+
+/** Inhalt eines einzelnen Anhangs erneut lesen. */
+export const retryAttachmentContent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { offerId: string; attachmentId: string }) => input)
+  .handler(async ({ data, context }): Promise<OfferActionResult> => {
+    await assertEditor(context.supabase as unknown as Supa, context.userId);
+    const { supabaseAdmin } = await loadOffer(data.offerId);
+
+    const result = await processOfferAttachmentContents(supabaseAdmin, data.offerId, {
+      force: true,
+      attachmentId: data.attachmentId,
+    });
+    return {
+      status: result.read ? "done" : "failed",
+      message: result.read
+        ? "Inhalt gelesen. Für neue Angaben bitte die Auswertung wiederholen."
+        : "Der Inhalt konnte nicht gelesen werden.",
+    };
+  });
