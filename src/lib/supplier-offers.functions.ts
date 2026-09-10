@@ -76,11 +76,16 @@ async function audit(
 /** Auswertung erneut ausführen — idempotent, überschreibt das Ergebnis. */
 export const retryOfferExtraction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { offerId: string }) => input)
+  .inputValidator((input: { offerId: string; confirmOverwrite?: boolean }) => input)
   .handler(async ({ data, context }): Promise<OfferActionResult> => {
     await assertEditor(context.supabase as unknown as Supa, context.userId);
     const { row, supabaseAdmin } = await loadOffer(data.offerId);
     if (row.status === "converted") throw new Error("Das Angebot wurde bereits übernommen.");
+
+    // Von Hand geprüfte Werte werden nie ungefragt überschrieben.
+    if (!data.confirmOverwrite && hasManualEdits(normaliseExtraction(row.extracted_data))) {
+      throw new Error(MANUAL_EDIT_MARKER);
+    }
 
     await supabaseAdmin
       .from("supplier_offer_emails")
