@@ -24,8 +24,7 @@ import {
 
 type AdminClient = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 
-const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const VISION_MODEL = "google/gemini-3.7-flash";
+import { callResponsesApi, type ResponsePart } from "@/lib/ai-gateway.server";
 
 export interface ContentExtractionResult {
   status: ContentExtractionStatus;
