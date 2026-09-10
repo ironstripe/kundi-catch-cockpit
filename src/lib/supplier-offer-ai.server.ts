@@ -123,41 +123,17 @@ export async function extractOfferFields(args: {
     formatSourcesForPrompt(args.sources),
   ].join("\n");
 
-  const response = await fetch(GATEWAY_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
+  const content = await callResponsesApi({
+    instructions: SYSTEM_PROMPT,
+    parts: [{ type: "input_text", text: userContent }],
+    schema: { name: "supplier_offer", schema: buildSchema() },
+    labels: {
+      busy: "Die Auswertung ist zurzeit ausgelastet. Bitte später erneut versuchen.",
+      credits: "Für die Auswertung fehlt Guthaben im Arbeitsbereich.",
+      failed: "Die Auswertung ist fehlgeschlagen",
     },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userContent },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: { name: "supplier_offer", strict: true, schema: buildSchema() },
-      },
-    }),
   });
 
-  if (response.status === 429) {
-    throw new Error("Die Auswertung ist zurzeit ausgelastet. Bitte später erneut versuchen.");
-  }
-  if (response.status === 402) {
-    throw new Error("Für die Auswertung fehlt Guthaben im Arbeitsbereich.");
-  }
-  if (!response.ok) {
-    const detail = await response.text();
-    console.error(`[offer-extraction] Gateway ${response.status}: ${detail}`);
-    throw new Error(`Die Auswertung ist fehlgeschlagen (HTTP ${response.status}).`);
-  }
-
-  const payload = (await response.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
-  const content = payload.choices?.[0]?.message?.content ?? "";
   const jsonText = content
     .trim()
     .replace(/^```(?:json)?/i, "")
