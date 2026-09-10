@@ -22,6 +22,8 @@ import {
   extractionWarnings,
   fieldValue,
   findingWarnings,
+  hasManualEdits,
+  MANUAL_EDIT_MARKER,
   missingRequiredFields,
   normaliseExtraction,
   OFFER_FIELD_LABELS,
