@@ -15,10 +15,13 @@ import {
   SUPPLIER_OFFER_BUCKET,
   type InboundEmailPayload,
 } from "@/lib/supplier-offer-attachments.server";
-import { emailPlainText, extractOfferFields } from "@/lib/supplier-offer-ai.server";
+import { emailPlainText, emailSource, extractOfferFields } from "@/lib/supplier-offer-ai.server";
+import { processOfferAttachmentContents } from "@/lib/supplier-offer-content.server";
 import {
+  combineWarnings,
   extractionWarnings,
   fieldValue,
+  findingWarnings,
   missingRequiredFields,
   normaliseExtraction,
   OFFER_FIELD_LABELS,
