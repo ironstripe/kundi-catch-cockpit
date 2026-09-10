@@ -7,13 +7,13 @@ import { EMPTY_CATCH_FORM } from "@/lib/catches";
 export const Route = createFileRoute("/_authenticated/catches/new")({
   head: () => ({
     meta: [
-      { title: "Neuer Catch — Kundi Catch Cockpit" },
+      { title: "Neuer Catch — Food Catch Cockpit" },
       {
         name: "description",
         content:
           "Neuen Catch erfassen: Produkt, Produktbild, Beschaffung, Verkaufspreis, Aktion und Handicap-Story.",
       },
-      { property: "og:title", content: "Neuer Catch — Kundi Catch Cockpit" },
+      { property: "og:title", content: "Neuer Catch — Food Catch Cockpit" },
       {
         property: "og:description",
         content: "Erfassungsmaske für einen neuen Catch des Kundelfingerhofs.",

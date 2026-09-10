@@ -12,16 +12,16 @@ import { catchDetailToForm, fetchCatch } from "@/lib/catches";
 export const Route = createFileRoute("/_authenticated/catches/$catchId/edit")({
   head: () => ({
     meta: [
-      { title: "Catch bearbeiten — Kundi Catch Cockpit" },
+      { title: "Catch bearbeiten — Food Catch Cockpit" },
       {
         name: "description",
         content:
           "Bestehenden Catch bearbeiten: Angaben ergänzen, Produktbild ersetzen und Status auf Bereit setzen.",
       },
-      { property: "og:title", content: "Catch bearbeiten — Kundi Catch Cockpit" },
+      { property: "og:title", content: "Catch bearbeiten — Food Catch Cockpit" },
       {
         property: "og:description",
-        content: "Bearbeitungsmaske für einen bestehenden Kundi Catch.",
+        content: "Bearbeitungsmaske für einen bestehenden Food Catch.",
       },
     ],
   }),

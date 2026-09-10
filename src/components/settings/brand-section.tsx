@@ -3,7 +3,7 @@ import { Lock, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { KundiCatchLogo } from "@/components/brand/kundi-catch-logo";
+import { FoodCatchLogo } from "@/components/brand/kundi-catch-logo";
 import { NoAccess, SectionShell } from "@/components/settings/section-shell";
 import { Button } from "@/components/ui/button";
 import { BRAND_BUCKET, useBrandLogo } from "@/hooks/use-brand-logo";
@@ -58,7 +58,7 @@ function AssetSlot({
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
       <div className="flex items-center justify-center rounded-md border bg-white p-6">
-        <KundiCatchLogo className={previewClassName} src={previewUrl} />
+        <FoodCatchLogo className={previewClassName} src={previewUrl} />
       </div>
       <dl className="grid gap-2 text-xs sm:grid-cols-3">
         <div>
@@ -135,8 +135,8 @@ export function BrandSection() {
         next,
         summary:
           target === "icon"
-            ? `Kundi-Catch-Icon ersetzt durch ${file.name}`
-            : `Kundi-Catch-Logo ersetzt durch ${file.name}`,
+            ? `Food-Catch-Icon ersetzt durch ${file.name}`
+            : `Food-Catch-Logo ersetzt durch ${file.name}`,
       });
       toast.success(target === "icon" ? "Icon gespeichert." : "Logo gespeichert.");
       await queryClient.invalidateQueries({ queryKey: ["app-settings"] });
@@ -157,7 +157,7 @@ export function BrandSection() {
     >
       <div className="grid gap-4 md:grid-cols-2">
         <AssetSlot
-          label="Kundi-Catch-Icon"
+          label="Food-Catch-Icon"
           description="Zwei-Fische-Symbol ohne Text. Für App-Icon, Favicon und kompakte Darstellungen."
           asset={icon}
           previewUrl={iconUrl}
@@ -166,8 +166,8 @@ export function BrandSection() {
           onUpload={(file) => void upload(file, "icon")}
         />
         <AssetSlot
-          label="Kundi-Catch-Logo"
-          description="KUNDI CATCH, Kundelfingerhof und der Markenclaim."
+          label="Food-Catch-Logo"
+          description="FOOD CATCH, Kundelfingerhof und der Markenclaim."
           asset={brand}
           previewUrl={url}
           previewClassName="size-24"

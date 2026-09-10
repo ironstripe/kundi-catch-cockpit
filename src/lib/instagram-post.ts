@@ -7,12 +7,12 @@
 
 import { HANDICAP_REASON_LABELS, type HandicapReason } from "@/lib/catch-domain";
 
-export const INSTAGRAM_HEADLINE = "KUNDI CATCH";
+export const INSTAGRAM_HEADLINE = "FOOD CATCH";
 export const INSTAGRAM_CLAIM = "Guter Fisch. Kleines Handicap. Grosser Fang.";
 export const INSTAGRAM_PURPOSE = "Gut essen. Food Waste vermeiden.";
 
 export const DEFAULT_INSTAGRAM_CTA =
-  "Die aktuellen Kundi Catches gibt es zuerst in unserer WhatsApp-Gruppe.\nJetzt über den Link in der Bio beitreten.";
+  "Die aktuellen Food Catches gibt es zuerst in unserer WhatsApp-Gruppe.\nJetzt über den Link in der Bio beitreten.";
 
 /** Maximale Länge des Handicap-Hinweises im Teaser. */
 export const HANDICAP_HINT_MAX = 120;
@@ -49,7 +49,7 @@ export function generateInstagramCaption(
   source: InstagramSource,
   callToAction: string = DEFAULT_INSTAGRAM_CTA,
 ): string {
-  const product = clean(source.product_name) ?? "Kundi Catch";
+  const product = clean(source.product_name) ?? "Food Catch";
   const hint = handicapHint(source);
   const cta = clean(callToAction) ? callToAction.trim() : DEFAULT_INSTAGRAM_CTA;
 

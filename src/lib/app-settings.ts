@@ -63,7 +63,7 @@ export const DEFAULT_BRAND_SETTINGS: BrandSettings = {
 
 /** Freigegebene Markentexte — nicht über Einstellungen änderbar. */
 export const PROTECTED_BRAND_TEXTS = [
-  "KUNDI CATCH",
+  "FOOD CATCH",
   "Kundelfingerhof",
   "Guter Fisch. Kleines Handicap. Grosser Fang.",
   "Nur solange Vorrat.",
@@ -92,7 +92,7 @@ export const DEFAULT_INSTAGRAM_SETTINGS: InstagramSettings = {
   enabled: false,
   whatsapp_group_url: "",
   call_to_action:
-    "Die aktuellen Kundi Catches gibt es zuerst in unserer WhatsApp-Gruppe.\nJetzt über den Link in der Bio beitreten.",
+    "Die aktuellen Food Catches gibt es zuerst in unserer WhatsApp-Gruppe.\nJetzt über den Link in der Bio beitreten.",
   default_publish_time: "now",
   default_publish_hour: "09:00",
 };

@@ -78,14 +78,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Kundi Catch Cockpit" },
+      { title: "Food Catch Cockpit" },
       {
         name: "description",
         content:
-          "Internes Cockpit der Kundelfingerhof AG zur Planung und Auswertung von Kundi-Catch-Aktionen.",
+          "Internes Cockpit der Kundelfingerhof AG zur Planung und Auswertung von Food-Catch-Aktionen.",
       },
       { name: "author", content: "Kundelfingerhof AG" },
-      { property: "og:title", content: "Kundi Catch Cockpit" },
+      { property: "og:title", content: "Food Catch Cockpit" },
       {
         property: "og:description",
         content: "Guter Fisch. Kleines Handicap. Grosser Fang.",

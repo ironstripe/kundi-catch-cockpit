@@ -1,7 +1,7 @@
 {
-  "name": "Kundi Catch Cockpit",
-  "short_name": "Kundi Catch",
-  "description": "Internes Cockpit der Kundelfingerhof AG für Kundi-Catch-Aktionen.",
+  "name": "Food Catch Cockpit",
+  "short_name": "Food Catch",
+  "description": "Internes Cockpit der Kundelfingerhof AG für Food-Catch-Aktionen.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

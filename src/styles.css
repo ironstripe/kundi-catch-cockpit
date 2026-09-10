@@ -5,11 +5,11 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Kundi Catch Cockpit — Design System
+ * Food Catch Cockpit — Design System
  *
  * Die Farb-, Radius- und Typografie-Tokens sind 1:1 aus Kundivent übernommen,
- * damit sich Kundi Catch wie eine Schwester-Anwendung anfühlt.
- * Ergänzt um zurückhaltende Produkt-Akzente aus dem Kundi-Catch-Logo
+ * damit sich Food Catch wie eine Schwester-Anwendung anfühlt.
+ * Ergänzt um zurückhaltende Produkt-Akzente aus dem Food-Catch-Logo
  * (Teal/Petrol) sowie Status-Tokens für den Catch-Lebenszyklus.
  */
 
@@ -59,7 +59,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Produkt-Akzente Kundi Catch (aus dem Logo) */
+  /* Produkt-Akzente Food Catch (aus dem Logo) */
   --color-catch-deep: var(--catch-deep);
   --color-catch-teal: var(--catch-teal);
 

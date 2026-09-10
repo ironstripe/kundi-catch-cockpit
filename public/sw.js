@@ -1,4 +1,4 @@
-/* Kundi Catch Cockpit — Service Worker (App-Shell-Cache, Offline-Hinweis). */
+/* Food Catch Cockpit — Service Worker (App-Shell-Cache, Offline-Hinweis). */
 
 const CACHE = "kundi-catch-shell-v1";
 const SHELL = ["/", "/manifest.webmanifest", "/favicon.png", "/icon-512.png"];

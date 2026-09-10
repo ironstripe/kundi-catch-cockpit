@@ -62,7 +62,7 @@ export function validateReady(values: CatchFormValues, hasImage: boolean): Field
 
   const catchPrice = toNumber(values.catch_price);
   if (catchPrice === null || catchPrice <= 0) {
-    issues.push({ field: "catch_price", message: "Kundi-Catch-Preis muss grösser als 0 sein." });
+    issues.push({ field: "catch_price", message: "Food-Catch-Preis muss grösser als 0 sein." });
   }
 
   if (values.location_ids.length === 0) {

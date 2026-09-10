@@ -1,5 +1,5 @@
 /**
- * Schweizer Formatierung für Kundi Catch.
+ * Schweizer Formatierung für Food Catch.
  * Zeitzone: Europe/Zurich, Währung: CHF, Locale: de-CH.
  */
 

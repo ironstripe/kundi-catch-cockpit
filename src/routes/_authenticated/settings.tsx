@@ -18,16 +18,16 @@ import { useRoles } from "@/hooks/use-role";
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [
-      { title: "Einstellungen — Kundi Catch Cockpit" },
+      { title: "Einstellungen — Food Catch Cockpit" },
       {
         name: "description",
         content:
-          "Stammdaten für Kundi Catch: Standorte, Lieferanten, Kategorien, Nutzer und Rollen, Kalkulationsregeln, WhatsApp-Textvorlage und Markenasset.",
+          "Stammdaten für Food Catch: Standorte, Lieferanten, Kategorien, Nutzer und Rollen, Kalkulationsregeln, WhatsApp-Textvorlage und Markenasset.",
       },
-      { property: "og:title", content: "Einstellungen — Kundi Catch Cockpit" },
+      { property: "og:title", content: "Einstellungen — Food Catch Cockpit" },
       {
         property: "og:description",
-        content: "Stammdaten, Rollen und Vorlagen für das Kundi Catch Cockpit verwalten.",
+        content: "Stammdaten, Rollen und Vorlagen für das Food Catch Cockpit verwalten.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -43,7 +43,7 @@ function SettingsPage() {
     <>
       <PageHeader
         title="Einstellungen"
-        description="Stammdaten, Kalkulationsregeln, Vorlagen und Zugriffsrechte für Kundi Catch."
+        description="Stammdaten, Kalkulationsregeln, Vorlagen und Zugriffsrechte für Food Catch."
       />
 
       <Tabs defaultValue="master-data" className="space-y-4">

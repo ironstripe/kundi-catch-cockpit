@@ -65,7 +65,7 @@ export const DECISION_LABELS: Record<DecisionLevel, string> = {
 const MISSING_LABELS = {
   purchase_quantity: "Einkaufsmenge",
   purchase_price: "Einkaufspreis pro Einheit",
-  catch_price: "Kundi-Catch-Preis",
+  catch_price: "Food-Catch-Preis",
 } as const;
 
 /** Wandelt Formulartext in eine endliche Zahl oder null. */
@@ -185,7 +185,7 @@ function decide(
     breakEven === null
   ) {
     level = "red";
-    if (v.catch_price <= 0) criteria.push("Kundi-Catch-Preis ist null oder negativ");
+    if (v.catch_price <= 0) criteria.push("Food-Catch-Preis ist null oder negativ");
     if (v.maximum_contribution_margin <= 0) {
       criteria.push("Maximaler DB ist null oder negativ");
     }
@@ -247,10 +247,10 @@ function explain(v: CalculationValues, t: CatchThresholds): string[] {
     out.push("Der Vergleichspreis fehlt. Der Preisvorteil kann noch nicht beurteilt werden.");
   } else if (discount < 0) {
     out.push(
-      `Der Kundi-Catch-Preis liegt ${pct(Math.abs(discount))} über dem Normalpreis. Das ist kein Preisvorteil für die Kundschaft.`,
+      `Der Food-Catch-Preis liegt ${pct(Math.abs(discount))} über dem Normalpreis. Das ist kein Preisvorteil für die Kundschaft.`,
     );
   } else if (discount === 0) {
-    out.push("Der Kundi-Catch-Preis entspricht dem Normalpreis. Es entsteht kein Preisvorteil.");
+    out.push("Der Food-Catch-Preis entspricht dem Normalpreis. Es entsteht kein Preisvorteil.");
   } else {
     out.push(
       discount >= t.minimum_green_discount

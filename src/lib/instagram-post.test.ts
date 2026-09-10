@@ -18,7 +18,7 @@ describe("generateInstagramCaption", () => {
     const text = generateInstagramCaption(base);
     expect(text).toBe(
       [
-        "KUNDI CATCH\nGuter Fisch. Kleines Handicap. Grosser Fang.",
+        "FOOD CATCH\nGuter Fisch. Kleines Handicap. Grosser Fang.",
         "Felchenfilets TK — Kurzes Mindesthaltbarkeitsdatum.",
         DEFAULT_INSTAGRAM_CTA,
         "Gut essen. Food Waste vermeiden.",

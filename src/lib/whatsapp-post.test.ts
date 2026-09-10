@@ -37,7 +37,7 @@ const felchen: PostSource = {
   image_path: "bild.jpg",
 };
 
-const expected = `🐟 *KUNDI CATCH*
+const expected = `🐟 *FOOD CATCH*
 
 *Guter Fisch. Kleines Handicap. Grosser Fang.*
 
@@ -65,7 +65,7 @@ describe("generatePostText", () => {
 
   it("ohne Normalpreis nur den Catch-Preis", () => {
     const text = generatePostText({ ...felchen, regular_price: null });
-    expect(text).toContain("*KUNDI CATCH CHF 7.90/kg* 🔥");
+    expect(text).toContain("*FOOD CATCH CHF 7.90/kg* 🔥");
     expect(text).not.toContain("günstiger");
     expect(text).not.toContain("~");
     expect(text).not.toMatch(/NaN|undefined|null/);
@@ -116,13 +116,13 @@ describe("generatePostText", () => {
 
   it("nennt einen negativen Preisvorteil nicht Rabatt", () => {
     const text = generatePostText({ ...felchen, regular_price: 6.5 });
-    expect(text).toContain("*KUNDI CATCH CHF 7.90/kg* 🔥");
+    expect(text).toContain("*FOOD CATCH CHF 7.90/kg* 🔥");
     expect(text).not.toContain("günstiger");
   });
 
   it("behält Emojis und Zeilenumbrüche", () => {
     const text = generatePostText(felchen);
-    expect(text.startsWith("🐟 *KUNDI CATCH*")).toBe(true);
+    expect(text.startsWith("🐟 *FOOD CATCH*")).toBe(true);
     expect(text.split("\n").length).toBeGreaterThan(15);
   });
 
@@ -200,7 +200,7 @@ describe("Markenarchitektur", () => {
 
   it("schützt die freigegebenen Markentexte ohne alte Purpose-Zeile", () => {
     expect([...PROTECTED_BRAND_TEXTS]).toEqual([
-      "KUNDI CATCH",
+      "FOOD CATCH",
       "Kundelfingerhof",
       "Guter Fisch. Kleines Handicap. Grosser Fang.",
       "Nur solange Vorrat.",

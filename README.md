@@ -1,10 +1,10 @@
-# Kundi Catch Cockpit
+# Food Catch Cockpit
 
-Build the foundation for a new internal web application called Kundi Catch Cockpit.
+Build the foundation for a new internal web application called Food Catch Cockpit.
 
 Product context
 
-Kundi Catch is a Kundelfingerhof initiative for selling limited seafood surplus and special lots through WhatsApp.
+Food Catch is a Kundelfingerhof initiative for selling limited seafood surplus and special lots through WhatsApp.
 
 The application will later support:
 
@@ -26,7 +26,7 @@ Mandatory design reference
 
 Use the same visual style, component language and interaction patterns as the existing Kundivent application.
 
-Kundi Catch must feel like a sister application to Kundivent, not like a separate new product.
+Food Catch must feel like a sister application to Kundivent, not like a separate new product.
 
 Reuse or closely match the Kundivent approach for:
 
@@ -64,7 +64,7 @@ responsive behaviour
 
 Do not introduce a generic SaaS dashboard style.
 
-Use the supplied Kundi Catch logo as the product logo. Do not redraw, reinterpret or replace it.
+Use the supplied Food Catch logo as the product logo. Do not redraw, reinterpret or replace it.
 
 The approved brand texts are:
 
@@ -74,7 +74,7 @@ Schnell sein. Gut essen. Food Waste vermeiden.
 
 Do not create additional taglines.
 
-The Kundivent colour system remains the UI foundation. Colours from the Kundi Catch logo may be used as restrained product accents.
+The Kundivent colour system remains the UI foundation. Colours from the Food Catch logo may be used as restrained product accents.
 
 Step 1 scope
 
@@ -106,7 +106,7 @@ Dashboard foundation
 
 Create a clean dashboard page with:
 
-page title: Kundi Catch Cockpit
+page title: Food Catch Cockpit
 
 primary action: Neuer Catch
 
@@ -438,13 +438,13 @@ Acceptance criteria
 
 This step is complete when:
 
-The Kundi Catch application shell is working.
+The Food Catch application shell is working.
 
 Navigation between all four main sections works.
 
 The UI clearly follows the Kundivent design language.
 
-The supplied Kundi Catch logo is correctly integrated.
+The supplied Food Catch logo is correctly integrated.
 
 The dashboard displays realistic sample content.
 

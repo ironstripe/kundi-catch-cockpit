@@ -67,7 +67,7 @@ describe("reconcileCatch", () => {
 
   it("meldet fehlende Preisdaten", () => {
     const result = reconcileCatch({ ...base, purchase_price: null, catch_price: null });
-    expect(result.missing).toEqual(["Einkaufspreis pro Einheit", "Kundi-Catch-Preis"]);
+    expect(result.missing).toEqual(["Einkaufspreis pro Einheit", "Food-Catch-Preis"]);
     expect(result.values).toBeNull();
   });
 

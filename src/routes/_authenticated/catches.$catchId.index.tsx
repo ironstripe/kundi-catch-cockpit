@@ -29,16 +29,16 @@ import { formatCurrency, formatDate, formatDateTime, formatQuantity } from "@/li
 export const Route = createFileRoute("/_authenticated/catches/$catchId/")({
   head: () => ({
     meta: [
-      { title: "Catch-Detail — Kundi Catch Cockpit" },
+      { title: "Catch-Detail — Food Catch Cockpit" },
       {
         name: "description",
         content:
           "Alle Angaben zu einem Catch: Produkt, Beschaffung, Preise, Standorte, Verfügbarkeit und Handicap-Story.",
       },
-      { property: "og:title", content: "Catch-Detail — Kundi Catch Cockpit" },
+      { property: "og:title", content: "Catch-Detail — Food Catch Cockpit" },
       {
         property: "og:description",
-        content: "Detailansicht eines Kundi Catch mit allen erfassten Angaben.",
+        content: "Detailansicht eines Food Catch mit allen erfassten Angaben.",
       },
     ],
   }),
@@ -235,7 +235,7 @@ function CatchDetailPage() {
               value={item.regular_price === null ? null : formatCurrency(item.regular_price)}
             />
             <Row
-              label="Kundi-Catch-Preis"
+              label="Food-Catch-Preis"
               value={item.catch_price === null ? null : formatCurrency(item.catch_price)}
             />
           </Section>

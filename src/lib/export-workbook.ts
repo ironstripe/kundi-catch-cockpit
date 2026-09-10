@@ -26,7 +26,7 @@ interface Column {
   numFmt?: string;
 }
 
-/** Dateiname nach Vorgabe: Kundi_Catch_Export_YYYY-MM-DD_HH-mm.xlsx */
+/** Dateiname nach Vorgabe: Food_Catch_Export_YYYY-MM-DD_HH-mm.xlsx */
 export function exportFileName(now = new Date()): string {
   const parts = new Intl.DateTimeFormat("sv-SE", {
     timeZone: "Europe/Zurich",
@@ -38,7 +38,7 @@ export function exportFileName(now = new Date()): string {
     hour12: false,
   }).format(now);
   const [date, time] = parts.split(" ");
-  return `Kundi_Catch_Export_${date}_${(time ?? "00:00").replace(":", "-")}.xlsx`;
+  return `Food_Catch_Export_${date}_${(time ?? "00:00").replace(":", "-")}.xlsx`;
 }
 
 function toDate(value: string | null | undefined): Date | null {
@@ -163,7 +163,7 @@ export async function buildExportWorkbook(
 ): Promise<{ blob: Blob; fileName: string }> {
   const ExcelJS = (await import("exceljs")).default;
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "Kundi Catch Cockpit";
+  workbook.creator = "Food Catch Cockpit";
   workbook.created = new Date();
 
   function addSheet(name: string, columns: Column[], rows: Record<string, unknown>[]) {

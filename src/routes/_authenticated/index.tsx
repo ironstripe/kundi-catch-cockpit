@@ -23,13 +23,13 @@ import { formatCurrency, formatPercentValue, formatQuantity } from "@/lib/format
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Kundi Catch Cockpit" },
+      { title: "Dashboard — Food Catch Cockpit" },
       {
         name: "description",
         content:
           "Übersicht über laufende und abgeschlossene Catches des Kundelfingerhofs: Mengen, Preise und Abverkauf auf einen Blick.",
       },
-      { property: "og:title", content: "Dashboard — Kundi Catch Cockpit" },
+      { property: "og:title", content: "Dashboard — Food Catch Cockpit" },
       {
         property: "og:description",
         content: "Laufende Catches, Kennzahlen und Abverkauf des Kundelfingerhofs.",
@@ -112,7 +112,7 @@ function DashboardPage() {
   return (
     <>
       <PageHeader
-        title="Kundi Catch Cockpit"
+        title="Food Catch Cockpit"
         description="Guter Fisch. Kleines Handicap. Grosser Fang."
         actions={
           <Button asChild>
