@@ -6,6 +6,7 @@
  * — es wird nichts geschätzt, ergänzt oder als Werbetext formuliert.
  */
 
+import { AI_MODEL, callResponsesApi } from "@/lib/ai-gateway.server";
 import {
   normaliseExtraction,
   OFFER_FIELD_KEYS,
