@@ -84,25 +84,33 @@ export const retryOfferExtraction = createServerFn({ method: "POST" })
       .update({ status: "extracting", extraction_status: "running", extraction_error: null })
       .eq("id", row.id);
 
-    const { data: attachments } = await supabaseAdmin
-      .from("supplier_offer_attachments")
-      .select("file_name")
-      .eq("offer_id", row.id);
-
     try {
+      const { sources: attachmentSources, read, failed } = await processOfferAttachmentContents(
+        supabaseAdmin,
+        row.id,
+      );
+      const sources = [
+        emailSource(row.subject, emailPlainText(row.text_body, row.html_body)),
+        ...attachmentSources,
+      ];
+
       const result = await extractOfferFields({
         subject: row.subject,
         from: row.forwarded_by_email,
-        body: emailPlainText(row.text_body, row.html_body),
-        attachmentNames: (attachments ?? []).map((item) => item.file_name),
+        sources,
       });
+      const warnings = combineWarnings(
+        extractionWarnings(result.data),
+        findingWarnings(result.findings),
+        failed ? [`${failed} Anhang/Anhänge konnten nicht gelesen werden.`] : [],
+      );
       await supabaseAdmin
         .from("supplier_offer_emails")
         .update({
           status: "review",
           extraction_status: "done",
           extracted_data: result.data as never,
-          extraction_warnings: extractionWarnings(result.data) as never,
+          extraction_warnings: warnings as never,
           extraction_error: null,
         })
         .eq("id", row.id);
@@ -110,9 +118,15 @@ export const retryOfferExtraction = createServerFn({ method: "POST" })
         offerId: row.id,
         action: "offer_extracted",
         actorId: context.userId,
-        payload: { model: result.model, retry: true },
+        payload: { model: result.model, retry: true, sources: result.sources, read_now: read },
       });
-      return { status: "review", message: "Auswertung abgeschlossen." };
+      const usedNames = attachmentSources.map((source) => source.source_name);
+      return {
+        status: "review",
+        message: usedNames.length
+          ? `Auswertung abgeschlossen — einbezogen: E-Mail, ${usedNames.join(", ")}.`
+          : "Auswertung abgeschlossen — nur die E-Mail war lesbar.",
+      };
     } catch (error) {
       const message = error instanceof Error ? error.message : "unbekannter Fehler";
       await supabaseAdmin
