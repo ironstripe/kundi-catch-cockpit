@@ -248,6 +248,28 @@ function OfferDetailPage() {
                 <FileDown className="mr-2 size-4" aria-hidden />
                 Als Catch-Entwurf übernehmen
               </Button>
+              {editable && missing.length ? (
+                <p className="text-xs text-muted-foreground">
+                  Noch nötig:{" "}
+                  {missing.map((key, index) => (
+                    <span key={key}>
+                      {index > 0 ? ", " : ""}
+                      <button
+                        type="button"
+                        className="underline underline-offset-2 hover:text-foreground"
+                        onClick={() => {
+                          const target = document.getElementById(`offer-${key}`);
+                          target?.scrollIntoView({ behavior: "smooth", block: "center" });
+                          target?.focus({ preventScroll: true });
+                        }}
+                      >
+                        {OFFER_FIELD_LABELS[key]}
+                      </button>
+                    </span>
+                  ))}
+                  . Werte eintragen und speichern, dann wird die Übernahme aktiv.
+                </p>
+              ) : null}
               <Button
                 variant="outline"
                 disabled={!editable || busy !== null}
