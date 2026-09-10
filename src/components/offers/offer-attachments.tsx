@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Download, ImageIcon, Star } from "lucide-react";
+import { BookOpenCheck, Download, ImageIcon, Star } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
