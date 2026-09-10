@@ -131,6 +131,7 @@ export const EMPTY_FIELD: ExtractedField = {
 };
 
 function clampConfidence(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
   const numeric = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(numeric)) return null;
   return Math.min(1, Math.max(0, numeric));
