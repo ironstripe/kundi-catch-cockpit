@@ -15,10 +15,15 @@ import {
   SUPPLIER_OFFER_BUCKET,
   type InboundEmailPayload,
 } from "@/lib/supplier-offer-attachments.server";
-import { emailPlainText, extractOfferFields } from "@/lib/supplier-offer-ai.server";
+import { emailPlainText, emailSource, extractOfferFields } from "@/lib/supplier-offer-ai.server";
+import { processOfferAttachmentContents } from "@/lib/supplier-offer-content.server";
 import {
+  combineWarnings,
   extractionWarnings,
   fieldValue,
+  findingWarnings,
+  hasManualEdits,
+  MANUAL_EDIT_MARKER,
   missingRequiredFields,
   normaliseExtraction,
   OFFER_FIELD_LABELS,
@@ -73,36 +78,50 @@ async function audit(
 /** Auswertung erneut ausführen — idempotent, überschreibt das Ergebnis. */
 export const retryOfferExtraction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { offerId: string }) => input)
+  .inputValidator((input: { offerId: string; confirmOverwrite?: boolean }) => input)
   .handler(async ({ data, context }): Promise<OfferActionResult> => {
     await assertEditor(context.supabase as unknown as Supa, context.userId);
     const { row, supabaseAdmin } = await loadOffer(data.offerId);
     if (row.status === "converted") throw new Error("Das Angebot wurde bereits übernommen.");
+
+    // Von Hand geprüfte Werte werden nie ungefragt überschrieben.
+    if (!data.confirmOverwrite && hasManualEdits(normaliseExtraction(row.extracted_data))) {
+      throw new Error(MANUAL_EDIT_MARKER);
+    }
 
     await supabaseAdmin
       .from("supplier_offer_emails")
       .update({ status: "extracting", extraction_status: "running", extraction_error: null })
       .eq("id", row.id);
 
-    const { data: attachments } = await supabaseAdmin
-      .from("supplier_offer_attachments")
-      .select("file_name")
-      .eq("offer_id", row.id);
-
     try {
+      const {
+        sources: attachmentSources,
+        read,
+        failed,
+      } = await processOfferAttachmentContents(supabaseAdmin, row.id);
+      const sources = [
+        emailSource(row.subject, emailPlainText(row.text_body, row.html_body)),
+        ...attachmentSources,
+      ];
+
       const result = await extractOfferFields({
         subject: row.subject,
         from: row.forwarded_by_email,
-        body: emailPlainText(row.text_body, row.html_body),
-        attachmentNames: (attachments ?? []).map((item) => item.file_name),
+        sources,
       });
+      const warnings = combineWarnings(
+        extractionWarnings(result.data),
+        findingWarnings(result.findings),
+        failed ? [`${failed} Anhang/Anhänge konnten nicht gelesen werden.`] : [],
+      );
       await supabaseAdmin
         .from("supplier_offer_emails")
         .update({
           status: "review",
           extraction_status: "done",
           extracted_data: result.data as never,
-          extraction_warnings: extractionWarnings(result.data) as never,
+          extraction_warnings: warnings as never,
           extraction_error: null,
         })
         .eq("id", row.id);
@@ -110,9 +129,15 @@ export const retryOfferExtraction = createServerFn({ method: "POST" })
         offerId: row.id,
         action: "offer_extracted",
         actorId: context.userId,
-        payload: { model: result.model, retry: true },
+        payload: { model: result.model, retry: true, sources: result.sources, read_now: read },
       });
-      return { status: "review", message: "Auswertung abgeschlossen." };
+      const usedNames = attachmentSources.map((source) => source.source_name);
+      return {
+        status: "review",
+        message: usedNames.length
+          ? `Auswertung abgeschlossen — einbezogen: E-Mail, ${usedNames.join(", ")}.`
+          : "Auswertung abgeschlossen — nur die E-Mail war lesbar.",
+      };
     } catch (error) {
       const message = error instanceof Error ? error.message : "unbekannter Fehler";
       await supabaseAdmin
@@ -457,5 +482,25 @@ export const getInboundConfigStatus = createServerFn({ method: "GET" })
       api_key_configured: Boolean(process.env["RESEND_API_KEY"]),
       inbound_address: process.env["RESEND_INBOUND_ADDRESS"] ?? "kundi-catch@rinueeldii.resend.app",
       webhook_url: `${origin}/api/public/webhooks/resend`,
+    };
+  });
+
+/** Inhalt eines einzelnen Anhangs erneut lesen. */
+export const retryAttachmentContent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { offerId: string; attachmentId: string }) => input)
+  .handler(async ({ data, context }): Promise<OfferActionResult> => {
+    await assertEditor(context.supabase as unknown as Supa, context.userId);
+    const { supabaseAdmin } = await loadOffer(data.offerId);
+
+    const result = await processOfferAttachmentContents(supabaseAdmin, data.offerId, {
+      force: true,
+      attachmentId: data.attachmentId,
+    });
+    return {
+      status: result.read ? "done" : "failed",
+      message: result.read
+        ? "Inhalt gelesen. Für neue Angaben bitte die Auswertung wiederholen."
+        : "Der Inhalt konnte nicht gelesen werden.",
     };
   });

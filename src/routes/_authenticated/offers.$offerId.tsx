@@ -40,6 +40,7 @@ import { useRoles } from "@/hooks/use-role";
 import { formatDateTime } from "@/lib/format";
 import {
   extractionWarnings,
+  MANUAL_EDIT_MARKER,
   missingRequiredFields,
   normaliseExtraction,
   OFFER_FIELD_LABELS,
@@ -92,6 +93,27 @@ function OfferDetailPage() {
   const [initial, setInitial] = useState<OfferFormValues>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmConvert, setConfirmConvert] = useState(false);
+  const [confirmOverwrite, setConfirmOverwrite] = useState(false);
+
+  async function runExtraction(overwrite: boolean) {
+    setBusy("extract");
+    try {
+      const result = await retryOfferExtraction({
+        data: { offerId, confirmOverwrite: overwrite },
+      });
+      toast.success(result.message);
+      await refetch();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Aktion fehlgeschlagen.";
+      if (message.includes(MANUAL_EDIT_MARKER)) {
+        setConfirmOverwrite(true);
+      } else {
+        toast.error(message);
+      }
+    } finally {
+      setBusy(null);
+    }
+  }
 
   useEffect(() => {
     if (!offer) return;
@@ -229,7 +251,7 @@ function OfferDetailPage() {
               <Button
                 variant="outline"
                 disabled={!editable || busy !== null}
-                onClick={() => run("extract", () => retryOfferExtraction({ data: { offerId } }))}
+                onClick={() => void runExtraction(false)}
               >
                 <Sparkles className="mr-2 size-4" aria-hidden />
                 Auswertung wiederholen
@@ -293,6 +315,29 @@ function OfferDetailPage() {
           onChanged={() => void refetch()}
         />
       </div>
+
+      <AlertDialog open={confirmOverwrite} onOpenChange={setConfirmOverwrite}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Geprüfte Werte überschreiben?</AlertDialogTitle>
+            <AlertDialogDescription>
+              In diesem Angebot wurden Werte von Hand geändert. Eine neue Auswertung ersetzt sie
+              durch die Angaben aus E-Mail und Anhängen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmOverwrite(false);
+                void runExtraction(true);
+              }}
+            >
+              Neu auswerten
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={confirmConvert} onOpenChange={setConfirmConvert}>
         <AlertDialogContent>

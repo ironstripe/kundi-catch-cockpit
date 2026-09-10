@@ -650,7 +650,12 @@ export type Database = {
       }
       supplier_offer_attachments: {
         Row: {
+          content_extraction_status: string
           created_at: string
+          extracted_at: string | null
+          extracted_text: string | null
+          extraction_error: string | null
+          extraction_meta: Json | null
           file_name: string
           file_size: number
           id: string
@@ -663,7 +668,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          content_extraction_status?: string
           created_at?: string
+          extracted_at?: string | null
+          extracted_text?: string | null
+          extraction_error?: string | null
+          extraction_meta?: Json | null
           file_name: string
           file_size?: number
           id?: string
@@ -676,7 +686,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          content_extraction_status?: string
           created_at?: string
+          extracted_at?: string | null
+          extracted_text?: string | null
+          extraction_error?: string | null
+          extraction_meta?: Json | null
           file_name?: string
           file_size?: number
           id?: string

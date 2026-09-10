@@ -105,14 +105,18 @@ export const NUMERIC_FIELDS: OfferFieldKey[] = [
 export const DATE_FIELDS: OfferFieldKey[] = ["available_from", "expiry_date"];
 
 export interface ExtractedField {
-  /** Wortgetreu übernommener Wert; `null`, wenn die E-Mail dazu nichts sagt. */
+  /** Wortgetreu übernommener Wert; `null`, wenn die Quellen dazu nichts sagen. */
   value: string | number | null;
   /** Einheit, falls im Text genannt (kg, Stück, CHF …). */
   unit: string | null;
   /** Sicherheit der Erkennung zwischen 0 und 1. */
   confidence: number | null;
-  /** Textstelle aus der E-Mail, auf der der Wert beruht. */
+  /** Textstelle aus der Quelle, auf der der Wert beruht. */
   source_excerpt: string | null;
+  /** Datei- oder Quellenname, aus dem der Wert stammt. */
+  source_name: string | null;
+  /** Art der Quelle: E-Mail, PDF, Tabelle, Bild oder weitergeleitete Nachricht. */
+  source_type: string | null;
 }
 
 export type ExtractedOffer = Partial<Record<OfferFieldKey, ExtractedField | null>>;
@@ -122,9 +126,12 @@ export const EMPTY_FIELD: ExtractedField = {
   unit: null,
   confidence: null,
   source_excerpt: null,
+  source_name: null,
+  source_type: null,
 };
 
 function clampConfidence(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
   const numeric = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(numeric)) return null;
   return Math.min(1, Math.max(0, numeric));
@@ -200,6 +207,8 @@ function normaliseField(key: OfferFieldKey, input: unknown): ExtractedField {
     unit: textOrNull(record["unit"], 40),
     confidence: clampConfidence(record["confidence"]),
     source_excerpt: textOrNull(record["source_excerpt"], 500),
+    source_name: textOrNull(record["source_name"], 200),
+    source_type: textOrNull(record["source_type"], 40),
   };
 }
 
@@ -294,4 +303,43 @@ export function originalSenderFromBody(body: string | null): {
   }
   const plain = line.match(/[^\s<>]+@[^\s<>]+/);
   return { email: plain ? plain[0].toLowerCase() : null, name: null };
+}
+
+/** Zusätzliche Hinweise aus der Auswertung: Widersprüche und mehrere Produkte. */
+export function findingWarnings(findings: {
+  conflicts?: string[] | null;
+  multiple_products?: boolean | null;
+}): string[] {
+  const warnings: string[] = [];
+  if (findings.multiple_products) {
+    warnings.push(
+      "Die Quellen enthalten mehrere Produkte. Bitte das gewünschte Produkt wählen — es wird nichts zusammengeführt.",
+    );
+  }
+  for (const conflict of findings.conflicts ?? []) {
+    const text = String(conflict).trim();
+    if (text) warnings.push(`Widerspruch zwischen Quellen: ${text}`);
+  }
+  return warnings;
+}
+
+/** Hinweise aus Plausibilität und Auswertung ohne Dubletten zusammenführen. */
+export function combineWarnings(...lists: string[][]): string[] {
+  return Array.from(new Set(lists.flat().filter(Boolean)));
+}
+
+/** Kennzeichnung, damit die Oberfläche vor dem Überschreiben rückfragen kann. */
+export const MANUAL_EDIT_MARKER = "MANUELL_GEPRUEFT";
+
+/**
+ * Von Hand geänderte Werte erkennt man daran, dass ein Wert gesetzt ist,
+ * aber keine Sicherheit mehr trägt (siehe `saveOfferFields`).
+ */
+export function hasManualEdits(offer: ExtractedOffer): boolean {
+  return OFFER_FIELD_KEYS.some((key) => {
+    const field = offer[key];
+    return Boolean(
+      field && field.value !== null && field.confidence === null && field.source_excerpt,
+    );
+  });
 }

@@ -78,6 +78,8 @@ export function formValuesToExtraction(
       unit: source?.unit ?? null,
       confidence: source?.confidence ?? null,
       source_excerpt: source?.source_excerpt ?? null,
+      source_name: source?.source_name ?? null,
+      source_type: source?.source_type ?? null,
     };
   }
   return result;
@@ -139,7 +141,8 @@ export function OfferFieldsForm({
           <CardHeader>
             <CardTitle className="text-sm">{group.title}</CardTitle>
             <CardDescription className="text-xs">
-              Werte stammen aus der E-Mail. Leere Felder bedeuten: die E-Mail sagt dazu nichts.
+              Werte stammen aus der E-Mail und den gelesenen Anhängen. Leere Felder bedeuten: keine
+              Quelle sagt dazu etwas.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
@@ -190,6 +193,9 @@ export function OfferFieldsForm({
                       <Quote className="mt-0.5 size-3 shrink-0" aria-hidden />
                       <span className="line-clamp-2">{field.source_excerpt}</span>
                     </p>
+                  ) : null}
+                  {field?.source_name ? (
+                    <p className="text-[11px] text-muted-foreground">Quelle: {field.source_name}</p>
                   ) : null}
                 </div>
               );

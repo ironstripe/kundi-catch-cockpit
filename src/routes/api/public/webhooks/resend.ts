@@ -14,8 +14,14 @@ import {
   storeAttachments,
   type InboundEmailPayload,
 } from "@/lib/supplier-offer-attachments.server";
-import { emailPlainText, extractOfferFields } from "@/lib/supplier-offer-ai.server";
-import { extractionWarnings, originalSenderFromBody } from "@/lib/supplier-offer-extraction";
+import { emailPlainText, emailSource, extractOfferFields } from "@/lib/supplier-offer-ai.server";
+import { processOfferAttachmentContents } from "@/lib/supplier-offer-content.server";
+import {
+  combineWarnings,
+  extractionWarnings,
+  findingWarnings,
+  originalSenderFromBody,
+} from "@/lib/supplier-offer-extraction";
 
 export const DEFAULT_INBOUND_ADDRESS = "kundi-catch@rinueeldii.resend.app";
 
@@ -303,13 +309,15 @@ export const Route = createFileRoute("/api/public/webhooks/resend")({
             .update({ status: "extracting", extraction_status: "running" })
             .eq("id", offerId);
 
+          const { sources: attachmentSources, failed } = await processOfferAttachmentContents(
+            supabaseAdmin,
+            offerId,
+          );
+
           const result = await extractOfferFields({
             subject: full.subject ?? null,
             from: forwarder.address || null,
-            body: bodyText,
-            attachmentNames: (full.attachments ?? []).map(
-              (item) => item.filename ?? item.name ?? "anhang",
-            ),
+            sources: [emailSource(full.subject ?? null, bodyText), ...attachmentSources],
           });
           await supabaseAdmin
             .from("supplier_offer_emails")
@@ -317,7 +325,11 @@ export const Route = createFileRoute("/api/public/webhooks/resend")({
               status: "review",
               extraction_status: "done",
               extracted_data: result.data as never,
-              extraction_warnings: extractionWarnings(result.data) as never,
+              extraction_warnings: combineWarnings(
+                extractionWarnings(result.data),
+                findingWarnings(result.findings),
+                failed ? [`${failed} Anhang/Anhänge konnten nicht gelesen werden.`] : [],
+              ) as never,
               extraction_error: null,
             })
             .eq("id", offerId);
