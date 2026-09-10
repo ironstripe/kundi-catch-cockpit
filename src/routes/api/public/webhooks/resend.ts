@@ -303,13 +303,15 @@ export const Route = createFileRoute("/api/public/webhooks/resend")({
             .update({ status: "extracting", extraction_status: "running" })
             .eq("id", offerId);
 
+          const { sources: attachmentSources, failed } = await processOfferAttachmentContents(
+            supabaseAdmin,
+            offerId,
+          );
+
           const result = await extractOfferFields({
             subject: full.subject ?? null,
             from: forwarder.address || null,
-            body: bodyText,
-            attachmentNames: (full.attachments ?? []).map(
-              (item) => item.filename ?? item.name ?? "anhang",
-            ),
+            sources: [emailSource(full.subject ?? null, bodyText), ...attachmentSources],
           });
           await supabaseAdmin
             .from("supplier_offer_emails")
@@ -317,7 +319,11 @@ export const Route = createFileRoute("/api/public/webhooks/resend")({
               status: "review",
               extraction_status: "done",
               extracted_data: result.data as never,
-              extraction_warnings: extractionWarnings(result.data) as never,
+              extraction_warnings: combineWarnings(
+                extractionWarnings(result.data),
+                findingWarnings(result.findings),
+                failed ? [`${failed} Anhang/Anhänge konnten nicht gelesen werden.`] : [],
+              ) as never,
               extraction_error: null,
             })
             .eq("id", offerId);
