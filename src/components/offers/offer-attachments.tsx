@@ -121,13 +121,37 @@ export function OfferAttachments({
                 <p className="text-xs text-muted-foreground">
                   {formatSize(attachment.file_size)} · {attachment.mime_type}
                 </p>
-                {attachment.is_primary_image ? (
-                  <Badge variant="secondary" className="mt-1">
-                    Hauptbild
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  {attachment.is_primary_image ? (
+                    <Badge variant="secondary">Hauptbild</Badge>
+                  ) : null}
+                  <Badge
+                    variant={
+                      attachment.content_extraction_status === "done" ? "secondary" : "outline"
+                    }
+                  >
+                    {CONTENT_STATUS_LABELS[
+                      (attachment.content_extraction_status ??
+                        "pending") as keyof typeof CONTENT_STATUS_LABELS
+                    ] ?? "Noch nicht gelesen"}
                   </Badge>
+                </div>
+                {attachment.content_extraction_status !== "done" && attachment.extraction_error ? (
+                  <p className="mt-1 text-xs text-muted-foreground">{attachment.extraction_error}</p>
                 ) : null}
               </div>
               <div className="flex items-center gap-2">
+                {canEdit && !locked ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={reading === attachment.id}
+                    onClick={() => reread(attachment.id)}
+                  >
+                    <BookOpenCheck className="mr-1 size-3.5" aria-hidden />
+                    Inhalt erneut lesen
+                  </Button>
+                ) : null}
                 <Select
                   value={attachment.kind}
                   onValueChange={(value) => update(attachment.id, { kind: value })}
