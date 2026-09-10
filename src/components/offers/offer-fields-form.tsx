@@ -141,7 +141,8 @@ export function OfferFieldsForm({
           <CardHeader>
             <CardTitle className="text-sm">{group.title}</CardTitle>
             <CardDescription className="text-xs">
-              Werte stammen aus der E-Mail. Leere Felder bedeuten: die E-Mail sagt dazu nichts.
+              Werte stammen aus der E-Mail und den gelesenen Anhängen. Leere Felder bedeuten: keine
+              Quelle sagt dazu etwas.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
