@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { CheckCircle2, XCircle } from "lucide-react";
 
 import { SectionShell } from "@/components/settings/section-shell";
