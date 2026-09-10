@@ -64,6 +64,21 @@ export function OfferAttachments({
   locked: boolean;
   onChanged: () => void;
 }) {
+  const [reading, setReading] = useState<string | null>(null);
+
+  async function reread(attachmentId: string) {
+    setReading(attachmentId);
+    try {
+      const result = await retryAttachmentContent({ data: { offerId, attachmentId } });
+      toast.success(result.message);
+      onChanged();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Lesen fehlgeschlagen.");
+    } finally {
+      setReading(null);
+    }
+  }
+
   async function update(attachmentId: string, patch: { kind?: string; primary?: boolean }) {
     try {
       await updateOfferAttachment({ data: { offerId, attachmentId, ...patch } });
