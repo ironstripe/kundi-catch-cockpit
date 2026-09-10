@@ -31,6 +31,8 @@ export const EXTRACTION_STATUS_LABELS: Record<string, string> = {
   skipped: "Übersprungen",
 };
 
+export { CONTENT_STATUS_LABELS } from "@/lib/supplier-offer-sources";
+
 export const ATTACHMENT_KIND_LABELS: Record<string, string> = {
   product_image: "Produktbild",
   product_label: "Etikett",
