@@ -101,9 +101,7 @@ describe("generatePostText", () => {
       ...felchen,
       location_names: ["Hofladen Kundelfingerhof", "Stadtladen Schaffhausen"],
     });
-    expect(text).toContain(
-      "📍 Abholung:\n• Hofladen Kundelfingerhof\n• Stadtladen Schaffhausen",
-    );
+    expect(text).toContain("📍 Abholung:\n• Hofladen Kundelfingerhof\n• Stadtladen Schaffhausen");
   });
 
   it("ohne Verfügbarkeitsende keine Zeile «Verfügbar bis»", () => {

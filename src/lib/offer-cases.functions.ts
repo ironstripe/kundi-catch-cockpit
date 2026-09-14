@@ -451,8 +451,7 @@ export const convertCaseToCatch = createServerFn({ method: "POST" })
           numberOrNull(fieldValue(offer, "purchase_vat_rate")) ?? DEFAULT_PURCHASE_VAT_RATE,
         regular_price: numberOrNull(fieldValue(offer, "regular_price")),
         delivery_cost: numberOrNull(fieldValue(offer, "delivery_cost")) ?? 0,
-        delivery_cost_includes_vat:
-          vatBasisIncluded(offer, "delivery_cost_includes_vat") ?? false,
+        delivery_cost_includes_vat: vatBasisIncluded(offer, "delivery_cost_includes_vat") ?? false,
         delivery_vat_rate:
           numberOrNull(fieldValue(offer, "delivery_vat_rate")) ?? DEFAULT_DELIVERY_VAT_RATE,
         vat_basis_confirmed: false,
