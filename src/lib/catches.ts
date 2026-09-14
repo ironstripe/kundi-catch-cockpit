@@ -453,9 +453,12 @@ export async function createSignedImageUrl(path: string, expiresIn = 3600) {
 }
 
 /** Gespeicherter Catch -> Eingabewerte der Nachkalkulation. */
-export function catchToReconciliationInput(item: CatchListItem): ReconciliationInput {
+export function catchToReconciliationInput(
+  item: CatchListItem,
+  defaultVatRate: number = DEFAULT_VAT_RATE,
+): ReconciliationInput {
   return {
-    ...catchToCalculationInput(item),
+    ...catchToCalculationInput(item, defaultVatRate),
     remaining_quantity: item.remaining_quantity,
     published_at: item.published_at,
     inventory_counted_at: item.inventory_counted_at,
@@ -463,7 +466,10 @@ export function catchToReconciliationInput(item: CatchListItem): ReconciliationI
 }
 
 /** Gespeicherter Catch -> Eingabewerte der Vorkalkulation. */
-export function catchToCalculationInput(item: CatchListItem): CalculationInput {
+export function catchToCalculationInput(
+  item: CatchListItem,
+  defaultVatRate: number = DEFAULT_VAT_RATE,
+): CalculationInput {
   return {
     purchase_quantity: item.purchase_quantity || null,
     quantity_unit: item.quantity_unit,
@@ -471,11 +477,15 @@ export function catchToCalculationInput(item: CatchListItem): CalculationInput {
     delivery_cost: item.delivery_included ? 0 : item.delivery_cost,
     regular_price: item.regular_price,
     catch_price: item.catch_price,
+    vat_rate: item.vat_rate ?? defaultVatRate,
   };
 }
 
 /** Formularwerte -> Eingabewerte der Vorkalkulation (Live-Vorschau). */
-export function formValuesToCalculationInput(values: CatchFormValues): CalculationInput {
+export function formValuesToCalculationInput(
+  values: CatchFormValues,
+  defaultVatRate: number = DEFAULT_VAT_RATE,
+): CalculationInput {
   return {
     purchase_quantity: parseNumberInput(values.purchase_quantity),
     quantity_unit: values.quantity_unit,
@@ -483,5 +493,6 @@ export function formValuesToCalculationInput(values: CatchFormValues): Calculati
     delivery_cost: values.delivery_included ? 0 : parseNumberInput(values.delivery_cost),
     regular_price: parseNumberInput(values.regular_price),
     catch_price: parseNumberInput(values.catch_price),
+    vat_rate: parseVatRate(values.vat_rate) ?? defaultVatRate,
   };
 }
