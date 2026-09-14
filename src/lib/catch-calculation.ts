@@ -150,17 +150,23 @@ export function calculateCatch(
       ? input.regular_price
       : null;
 
+  const vatRate = resolveVatRate(input.vat_rate);
+  const catchPriceNet = netFromGross(catchPrice, vatRate);
+  const vatPerUnit = catchPrice - catchPriceNet;
+
   const totalInvestment = quantity * purchasePrice + safeDelivery;
-  const maximumRevenue = quantity * catchPrice;
+  const maximumRevenueGross = quantity * catchPrice;
+  const maximumRevenue = quantity * catchPriceNet;
+  const maximumVat = maximumRevenueGross - maximumRevenue;
   const deliveryCostPerUnit = safeDivide(safeDelivery, quantity);
   const effectiveCostPerUnit = purchasePrice + (deliveryCostPerUnit ?? 0);
-  const contributionMarginPerUnit = catchPrice - effectiveCostPerUnit;
+  const contributionMarginPerUnit = catchPriceNet - effectiveCostPerUnit;
   const maximumContributionMargin = maximumRevenue - totalInvestment;
   const grossMarginPercentage =
     maximumRevenue > 0 ? (maximumContributionMargin / maximumRevenue) * 100 : null;
   const discountPercentage =
     regularPrice !== null ? ((regularPrice - catchPrice) / regularPrice) * 100 : null;
-  const breakEvenQuantity = catchPrice > 0 ? safeDivide(totalInvestment, catchPrice) : null;
+  const breakEvenQuantity = catchPriceNet > 0 ? safeDivide(totalInvestment, catchPriceNet) : null;
   const breakEvenSellThrough =
     breakEvenQuantity !== null ? (breakEvenQuantity / quantity) * 100 : null;
 
@@ -170,9 +176,14 @@ export function calculateCatch(
     purchase_price: purchasePrice,
     delivery_cost: safeDelivery,
     catch_price: catchPrice,
+    catch_price_net: catchPriceNet,
     regular_price: regularPrice,
+    vat_rate: vatRate,
+    vat_per_unit: vatPerUnit,
     total_investment: totalInvestment,
     maximum_revenue: maximumRevenue,
+    maximum_revenue_gross: maximumRevenueGross,
+    maximum_vat: maximumVat,
     delivery_cost_per_unit: deliveryCostPerUnit,
     effective_cost_per_unit: effectiveCostPerUnit,
     contribution_margin_per_unit: contributionMarginPerUnit,
