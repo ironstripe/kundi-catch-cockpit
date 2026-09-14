@@ -262,6 +262,13 @@ function explain(v: CalculationValues, t: CatchThresholds): string[] {
   const discount = v.discount_percentage;
   const breakEven = v.break_even_sell_through;
 
+  out.push(
+    v.vat_rate > 0
+      ? `Der Food-Catch-Preis von CHF ${v.catch_price.toFixed(2)} enthält ${pct(v.vat_rate)} MWST. Gerechnet wird mit dem Nettopreis von CHF ${v.catch_price_net.toFixed(2)}.`
+      : "Für diesen Catch ist kein Mehrwertsteuersatz hinterlegt. Brutto- und Nettopreis sind identisch.",
+  );
+
+
   if (margin !== null) {
     out.push(
       margin >= t.minimum_green_margin
