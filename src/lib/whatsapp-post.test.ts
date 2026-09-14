@@ -49,6 +49,7 @@ Unser Lieferant baut seinen Lagerbestand ab. Mit dem Fisch stimmt alles. Es ist 
 
 ~CHF 10.75/kg~ → *CHF 7.90/kg* 🔥
 26.5 % günstiger
+inkl. MWST
 
 MHD: 19.01.2027
 *Nur solange Vorrat.*
