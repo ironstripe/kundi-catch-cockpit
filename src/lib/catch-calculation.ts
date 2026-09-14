@@ -4,9 +4,14 @@
  * Eine einzige Quelle der Wahrheit für Formular-Vorschau, Detailseite und
  * Dashboard. Es wird mit voller Genauigkeit gerechnet; gerundet wird erst
  * bei der Anzeige.
+ *
+ * MWST: Kundenpreise (Food-Catch-Preis, Normalpreis) sind Bruttopreise inkl.
+ * Schweizer MWST. Umsatz, Deckungsbeitrag und Rohmarge werden netto gerechnet.
+ * Einkaufspreis und Lieferkosten sind Nettowerte.
  */
 
 import { DEFAULT_CATCH_THRESHOLDS, type CatchThresholds } from "@/lib/catch-thresholds";
+import { netFromGross, resolveVatRate } from "@/lib/vat";
 
 export interface CalculationInput {
   purchase_quantity: number | null;
@@ -15,6 +20,8 @@ export interface CalculationInput {
   delivery_cost: number | null;
   regular_price: number | null;
   catch_price: number | null;
+  /** MWST-Satz in Prozent; fehlt er, gilt der Standardsatz. */
+  vat_rate?: number | null;
 }
 
 export type DecisionLevel = "green" | "orange" | "red" | "incomplete";
@@ -24,17 +31,30 @@ export interface CalculationValues {
   quantity_unit: string;
   purchase_price: number;
   delivery_cost: number;
+  /** Kundenpreis inkl. MWST. */
   catch_price: number;
+  /** Kundenpreis ohne MWST. */
+  catch_price_net: number;
+  /** Normalpreis inkl. MWST. */
   regular_price: number | null;
+  /** Angewendeter MWST-Satz in Prozent. */
+  vat_rate: number;
+  /** In einer Einheit enthaltene MWST. */
+  vat_per_unit: number;
   total_investment: number;
+  /** Maximaler Umsatz ohne MWST — Basis für Deckungsbeitrag und Rohmarge. */
   maximum_revenue: number;
+  /** Maximaler Umsatz inkl. MWST — was die Kundschaft zahlt. */
+  maximum_revenue_gross: number;
+  /** Im maximalen Bruttoumsatz enthaltene MWST. */
+  maximum_vat: number;
   delivery_cost_per_unit: number | null;
   effective_cost_per_unit: number;
   contribution_margin_per_unit: number;
   maximum_contribution_margin: number;
-  /** Rohmarge in Prozent, null wenn kein Umsatz möglich ist. */
+  /** Rohmarge in Prozent auf Nettobasis, null wenn kein Umsatz möglich ist. */
   gross_margin_percentage: number | null;
-  /** Preisvorteil in Prozent, null ohne gültigen Normalpreis. */
+  /** Preisvorteil in Prozent (Bruttovergleich), null ohne gültigen Normalpreis. */
   discount_percentage: number | null;
   break_even_quantity: number | null;
   break_even_sell_through: number | null;
