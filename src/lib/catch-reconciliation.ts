@@ -3,9 +3,17 @@
  *
  * Die verkaufte Menge ergibt sich ausschliesslich aus der manuell erfassten
  * Restmenge. Es werden keine Einzelverkäufe rekonstruiert.
+ *
+ * MWST: Der Food-Catch-Preis ist ein Bruttopreis. Umsatz und Deckungsbeitrag
+ * werden netto ausgewiesen, der Bruttoumsatz und die enthaltene MWST separat.
  */
 
-import { calculateCatch, type CalculationInput, type CalculationValues } from "@/lib/catch-calculation";
+import {
+  calculateCatch,
+  type CalculationInput,
+  type CalculationValues,
+} from "@/lib/catch-calculation";
+import { netFromGross, resolveVatRate } from "@/lib/vat";
 
 export interface ReconciliationInput extends CalculationInput {
   remaining_quantity: number | null;
@@ -19,7 +27,14 @@ export interface ReconciliationValues {
   remaining_quantity: number;
   sold_quantity: number;
   sell_through_percentage: number | null;
+  /** Angewendeter MWST-Satz in Prozent. */
+  vat_rate: number;
+  /** Effektiver Umsatz ohne MWST — Basis für den Deckungsbeitrag. */
   effective_revenue: number;
+  /** Effektiver Umsatz inkl. MWST — was die Kundschaft bezahlt hat. */
+  effective_revenue_gross: number;
+  /** Im Bruttoumsatz enthaltene MWST. */
+  effective_vat: number;
   total_investment: number;
   effective_contribution_margin: number;
   remaining_inventory_value: number;
@@ -80,10 +95,7 @@ export function validateRemainingQuantity(
   return errors;
 }
 
-export function breakEvenResult(
-  actual: number | null,
-  breakEven: number | null,
-): BreakEvenResult {
+export function breakEvenResult(actual: number | null, breakEven: number | null): BreakEvenResult {
   if (!finite(actual) || !finite(breakEven)) return "unknown";
   if (actual > breakEven + BREAK_EVEN_TOLERANCE) return "reached";
   if (actual < breakEven - BREAK_EVEN_TOLERANCE) return "missed";
@@ -147,9 +159,14 @@ export function reconcileCatch(input: ReconciliationInput): ReconciliationResult
   const deliveryCost =
     finite(input.delivery_cost) && input.delivery_cost > 0 ? input.delivery_cost : 0;
 
+  const vatRate = resolveVatRate(input.vat_rate);
+  const catchPriceNet = netFromGross(catchPrice, vatRate);
+
   const soldQuantity = Math.max(0, purchaseQuantity - remaining);
   const sellThrough = purchaseQuantity > 0 ? (soldQuantity / purchaseQuantity) * 100 : null;
-  const effectiveRevenue = soldQuantity * catchPrice;
+  const effectiveRevenueGross = soldQuantity * catchPrice;
+  const effectiveRevenue = soldQuantity * catchPriceNet;
+  const effectiveVat = effectiveRevenueGross - effectiveRevenue;
   const totalInvestment = purchaseQuantity * purchasePrice + deliveryCost;
   const effectiveContributionMargin = effectiveRevenue - totalInvestment;
   const remainingInventoryValue = remaining * purchasePrice;
@@ -167,7 +184,10 @@ export function reconcileCatch(input: ReconciliationInput): ReconciliationResult
       remaining_quantity: remaining,
       sold_quantity: soldQuantity,
       sell_through_percentage: sellThrough,
+      vat_rate: vatRate,
       effective_revenue: effectiveRevenue,
+      effective_revenue_gross: effectiveRevenueGross,
+      effective_vat: effectiveVat,
       total_investment: totalInvestment,
       effective_contribution_margin: effectiveContributionMargin,
       remaining_inventory_value: remainingInventoryValue,
@@ -195,7 +215,12 @@ export interface UnitTotal {
 export interface HistoryTotals {
   count: number;
   by_unit: UnitTotal[];
+  /** Umsatz ohne MWST. */
   revenue: number;
+  /** Umsatz inkl. MWST. */
+  revenue_gross: number;
+  /** Summe der enthaltenen MWST. */
+  vat: number;
   contribution_margin: number;
   /** Durchschnittliche Aktionsdauer in Millisekunden, null ohne Daten. */
   average_duration_ms: number | null;
@@ -208,6 +233,8 @@ export interface HistoryTotals {
 export function aggregateReconciliations(inputs: ReconciliationInput[]): HistoryTotals {
   const byUnit = new Map<string, { purchase: number; sold: number }>();
   let revenue = 0;
+  let revenueGross = 0;
+  let vat = 0;
   let margin = 0;
   let durationSum = 0;
   let durationCount = 0;
@@ -223,6 +250,8 @@ export function aggregateReconciliations(inputs: ReconciliationInput[]): History
     entry.sold += v.sold_quantity;
     byUnit.set(v.quantity_unit, entry);
     revenue += v.effective_revenue;
+    revenueGross += v.effective_revenue_gross;
+    vat += v.effective_vat;
     margin += v.effective_contribution_margin;
     if (v.action_duration_ms !== null) {
       durationSum += v.action_duration_ms;
@@ -239,6 +268,8 @@ export function aggregateReconciliations(inputs: ReconciliationInput[]): History
       sell_through: entry.purchase > 0 ? (entry.sold / entry.purchase) * 100 : null,
     })),
     revenue,
+    revenue_gross: revenueGross,
+    vat,
     contribution_margin: margin,
     average_duration_ms: durationCount > 0 ? durationSum / durationCount : null,
   };

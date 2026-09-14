@@ -11,6 +11,7 @@ import { LocationsSection } from "@/components/settings/locations-section";
 import { SuppliersSection } from "@/components/settings/suppliers-section";
 import { TemplateSection } from "@/components/settings/template-section";
 import { ThresholdsSection } from "@/components/settings/thresholds-section";
+import { VatSection } from "@/components/settings/vat-section";
 import { UsersSection } from "@/components/settings/users-section";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRoles } from "@/hooks/use-role";
@@ -70,8 +71,9 @@ function SettingsPage() {
           <CategoriesSection />
         </TabsContent>
 
-        <TabsContent value="calculation">
+        <TabsContent value="calculation" className="space-y-4">
           <ThresholdsSection />
+          <VatSection />
         </TabsContent>
 
         <TabsContent value="template">

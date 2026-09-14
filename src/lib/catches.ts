@@ -3,6 +3,7 @@ import { parseNumberInput, type CalculationInput } from "@/lib/catch-calculation
 import type { ReconciliationInput } from "@/lib/catch-reconciliation";
 import { ACTIVE_STATUSES, type CatchStatus, type Temperature } from "@/lib/catch-domain";
 import { zurichLocalToIso } from "@/lib/format";
+import { DEFAULT_VAT_RATE, parseVatRate } from "@/lib/vat";
 
 export const CATCH_IMAGE_BUCKET = "catch-images";
 
@@ -20,6 +21,8 @@ export interface CatchFormValues {
   delivery_included: boolean;
   regular_price: string;
   catch_price: string;
+  /** MWST-Satz in Prozent; leer = globaler Standardsatz. */
+  vat_rate: string;
   location_ids: string[];
   available_from: string;
   available_until: string;
@@ -42,6 +45,7 @@ export const EMPTY_CATCH_FORM: CatchFormValues = {
   delivery_included: false,
   regular_price: "",
   catch_price: "",
+  vat_rate: String(DEFAULT_VAT_RATE),
   location_ids: [],
   available_from: "",
   available_until: "",
@@ -64,6 +68,8 @@ export interface CatchListItem {
   delivery_cost: number;
   delivery_included: boolean;
   regular_price: number | null;
+  /** MWST-Satz in Prozent; null = globaler Standardsatz. */
+  vat_rate: number | null;
   updated_at: string;
   expected_sell_through: number | null;
   image_path: string | null;
@@ -120,7 +126,7 @@ export interface CatchDetail extends CatchListItem {
 const LIST_SELECT = `
   id, catch_number, product_name, temperature, status, available_from,
   purchase_quantity, quantity_unit, catch_price, expected_sell_through,
-  purchase_price, delivery_cost, delivery_included, regular_price, updated_at,
+  purchase_price, delivery_cost, delivery_included, regular_price, vat_rate, updated_at,
   published_at, published_text, published_image_path,
   supplier_id, remaining_quantity, inventory_counted_at, learning,
   closed_at, cancelled_at, cancellation_reason,
@@ -132,7 +138,7 @@ const LIST_SELECT = `
 const DETAIL_SELECT = `
   id, catch_number, product_name, temperature, status, description, packaging,
   expiry_date, supplier_id, purchase_quantity, quantity_unit, purchase_price,
-  delivery_cost, delivery_included, regular_price, catch_price, available_from,
+  delivery_cost, delivery_included, regular_price, catch_price, vat_rate, available_from,
   available_until, handicap_reason, handicap_story, internal_note,
   expected_sell_through, created_at, updated_at,
   published_at, published_by, published_text, published_image_path,
@@ -179,6 +185,7 @@ function mapList(row: any): CatchListItem {
     delivery_cost: Number(row.delivery_cost ?? 0),
     delivery_included: Boolean(row.delivery_included),
     regular_price: row.regular_price === null ? null : Number(row.regular_price),
+    vat_rate: row.vat_rate === null || row.vat_rate === undefined ? null : Number(row.vat_rate),
     updated_at: row.updated_at,
     expected_sell_through:
       row.expected_sell_through === null ? null : Number(row.expected_sell_through),
@@ -324,6 +331,7 @@ export function catchDetailToForm(detail: CatchDetail): CatchFormValues {
     delivery_included: detail.delivery_included,
     regular_price: toText(detail.regular_price),
     catch_price: toText(detail.catch_price),
+    vat_rate: toText(detail.vat_rate),
     location_ids: detail.location_ids,
     available_from: detail.available_from ?? "",
     available_until: detail.available_until ?? "",
@@ -350,7 +358,6 @@ interface SaveArgs {
 
 /** Legt einen Catch an oder aktualisiert ihn inkl. Standortzuordnung. */
 export async function saveCatch({ id, values, status, audit }: SaveArgs): Promise<string> {
-
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id ?? null;
 
@@ -368,6 +375,7 @@ export async function saveCatch({ id, values, status, audit }: SaveArgs): Promis
     delivery_included: values.delivery_included,
     regular_price: num(values.regular_price),
     catch_price: num(values.catch_price),
+    vat_rate: parseVatRate(values.vat_rate),
     available_from: values.available_from ? zurichLocalToIso(values.available_from) : null,
     available_until: values.available_until ? zurichLocalToIso(values.available_until) : null,
     handicap_reason: values.handicap_reason || null,
@@ -443,9 +451,12 @@ export async function createSignedImageUrl(path: string, expiresIn = 3600) {
 }
 
 /** Gespeicherter Catch -> Eingabewerte der Nachkalkulation. */
-export function catchToReconciliationInput(item: CatchListItem): ReconciliationInput {
+export function catchToReconciliationInput(
+  item: CatchListItem,
+  defaultVatRate: number = DEFAULT_VAT_RATE,
+): ReconciliationInput {
   return {
-    ...catchToCalculationInput(item),
+    ...catchToCalculationInput(item, defaultVatRate),
     remaining_quantity: item.remaining_quantity,
     published_at: item.published_at,
     inventory_counted_at: item.inventory_counted_at,
@@ -453,7 +464,10 @@ export function catchToReconciliationInput(item: CatchListItem): ReconciliationI
 }
 
 /** Gespeicherter Catch -> Eingabewerte der Vorkalkulation. */
-export function catchToCalculationInput(item: CatchListItem): CalculationInput {
+export function catchToCalculationInput(
+  item: CatchListItem,
+  defaultVatRate: number = DEFAULT_VAT_RATE,
+): CalculationInput {
   return {
     purchase_quantity: item.purchase_quantity || null,
     quantity_unit: item.quantity_unit,
@@ -461,11 +475,15 @@ export function catchToCalculationInput(item: CatchListItem): CalculationInput {
     delivery_cost: item.delivery_included ? 0 : item.delivery_cost,
     regular_price: item.regular_price,
     catch_price: item.catch_price,
+    vat_rate: item.vat_rate ?? defaultVatRate,
   };
 }
 
 /** Formularwerte -> Eingabewerte der Vorkalkulation (Live-Vorschau). */
-export function formValuesToCalculationInput(values: CatchFormValues): CalculationInput {
+export function formValuesToCalculationInput(
+  values: CatchFormValues,
+  defaultVatRate: number = DEFAULT_VAT_RATE,
+): CalculationInput {
   return {
     purchase_quantity: parseNumberInput(values.purchase_quantity),
     quantity_unit: values.quantity_unit,
@@ -473,5 +491,6 @@ export function formValuesToCalculationInput(values: CatchFormValues): Calculati
     delivery_cost: values.delivery_included ? 0 : parseNumberInput(values.delivery_cost),
     regular_price: parseNumberInput(values.regular_price),
     catch_price: parseNumberInput(values.catch_price),
+    vat_rate: parseVatRate(values.vat_rate) ?? defaultVatRate,
   };
 }

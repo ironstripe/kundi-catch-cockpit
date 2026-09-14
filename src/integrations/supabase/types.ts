@@ -304,6 +304,7 @@ export type Database = {
           supplier_id: string | null
           temperature: string
           updated_at: string
+          vat_rate: number | null
         }
         Insert: {
           actual_sell_through?: number | null
@@ -370,6 +371,7 @@ export type Database = {
           supplier_id?: string | null
           temperature?: string
           updated_at?: string
+          vat_rate?: number | null
         }
         Update: {
           actual_sell_through?: number | null
@@ -436,6 +438,7 @@ export type Database = {
           supplier_id?: string | null
           temperature?: string
           updated_at?: string
+          vat_rate?: number | null
         }
         Relationships: [
           {

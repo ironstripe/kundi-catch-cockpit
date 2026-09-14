@@ -139,10 +139,7 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
             </p>
             <SourceRow label="Catch-Nummer" value={item.catch_number ?? "—"} />
             <SourceRow label="Produkt" value={item.product_name} />
-            <SourceRow
-              label="Produktart"
-              value={item.temperature === "frozen" ? "TK" : "Frisch"}
-            />
+            <SourceRow label="Produktart" value={item.temperature === "frozen" ? "TK" : "Frisch"} />
             <SourceRow
               label="Einkaufsmenge"
               value={formatQuantity(item.purchase_quantity, item.quantity_unit)}
@@ -169,7 +166,11 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
             />
             <SourceRow
               label="Publiziert am"
-              value={item.published_at ? formatDateTime(item.published_at) : "Publikationszeitpunkt fehlt"}
+              value={
+                item.published_at
+                  ? formatDateTime(item.published_at)
+                  : "Publikationszeitpunkt fehlt"
+              }
             />
             <SourceRow
               label="Abholorte"
@@ -291,7 +292,14 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
                     : formatPercentValue(v.sell_through_percentage)
                 }
               />
-              <SourceRow label="Effektiver Umsatz" value={formatCurrency(v.effective_revenue)} />
+              <SourceRow
+                label="Effektiver Umsatz (netto)"
+                value={formatCurrency(v.effective_revenue)}
+              />
+              <SourceRow
+                label="Effektiver Umsatz (brutto)"
+                value={formatCurrency(v.effective_revenue_gross)}
+              />
               <SourceRow
                 label="Effektiver DB"
                 value={formatCurrency(v.effective_contribution_margin)}
@@ -319,8 +327,8 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
           <AlertDialogHeader>
             <AlertDialogTitle>Catch abbrechen?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ein abgebrochener Catch erscheint in der Historie und fliesst nicht in die
-              Abverkaufs- und Finanzdurchschnitte ein.
+              Ein abgebrochener Catch erscheint in der Historie und fliesst nicht in die Abverkaufs-
+              und Finanzdurchschnitte ein.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-1.5">

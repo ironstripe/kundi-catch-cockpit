@@ -4,9 +4,14 @@
  * Eine einzige Quelle der Wahrheit für Formular-Vorschau, Detailseite und
  * Dashboard. Es wird mit voller Genauigkeit gerechnet; gerundet wird erst
  * bei der Anzeige.
+ *
+ * MWST: Kundenpreise (Food-Catch-Preis, Normalpreis) sind Bruttopreise inkl.
+ * Schweizer MWST. Umsatz, Deckungsbeitrag und Rohmarge werden netto gerechnet.
+ * Einkaufspreis und Lieferkosten sind Nettowerte.
  */
 
 import { DEFAULT_CATCH_THRESHOLDS, type CatchThresholds } from "@/lib/catch-thresholds";
+import { netFromGross, resolveVatRate } from "@/lib/vat";
 
 export interface CalculationInput {
   purchase_quantity: number | null;
@@ -15,6 +20,8 @@ export interface CalculationInput {
   delivery_cost: number | null;
   regular_price: number | null;
   catch_price: number | null;
+  /** MWST-Satz in Prozent; fehlt er, gilt der Standardsatz. */
+  vat_rate?: number | null;
 }
 
 export type DecisionLevel = "green" | "orange" | "red" | "incomplete";
@@ -24,17 +31,30 @@ export interface CalculationValues {
   quantity_unit: string;
   purchase_price: number;
   delivery_cost: number;
+  /** Kundenpreis inkl. MWST. */
   catch_price: number;
+  /** Kundenpreis ohne MWST. */
+  catch_price_net: number;
+  /** Normalpreis inkl. MWST. */
   regular_price: number | null;
+  /** Angewendeter MWST-Satz in Prozent. */
+  vat_rate: number;
+  /** In einer Einheit enthaltene MWST. */
+  vat_per_unit: number;
   total_investment: number;
+  /** Maximaler Umsatz ohne MWST — Basis für Deckungsbeitrag und Rohmarge. */
   maximum_revenue: number;
+  /** Maximaler Umsatz inkl. MWST — was die Kundschaft zahlt. */
+  maximum_revenue_gross: number;
+  /** Im maximalen Bruttoumsatz enthaltene MWST. */
+  maximum_vat: number;
   delivery_cost_per_unit: number | null;
   effective_cost_per_unit: number;
   contribution_margin_per_unit: number;
   maximum_contribution_margin: number;
-  /** Rohmarge in Prozent, null wenn kein Umsatz möglich ist. */
+  /** Rohmarge in Prozent auf Nettobasis, null wenn kein Umsatz möglich ist. */
   gross_margin_percentage: number | null;
-  /** Preisvorteil in Prozent, null ohne gültigen Normalpreis. */
+  /** Preisvorteil in Prozent (Bruttovergleich), null ohne gültigen Normalpreis. */
   discount_percentage: number | null;
   break_even_quantity: number | null;
   break_even_sell_through: number | null;
@@ -130,17 +150,23 @@ export function calculateCatch(
       ? input.regular_price
       : null;
 
+  const vatRate = resolveVatRate(input.vat_rate);
+  const catchPriceNet = netFromGross(catchPrice, vatRate);
+  const vatPerUnit = catchPrice - catchPriceNet;
+
   const totalInvestment = quantity * purchasePrice + safeDelivery;
-  const maximumRevenue = quantity * catchPrice;
+  const maximumRevenueGross = quantity * catchPrice;
+  const maximumRevenue = quantity * catchPriceNet;
+  const maximumVat = maximumRevenueGross - maximumRevenue;
   const deliveryCostPerUnit = safeDivide(safeDelivery, quantity);
   const effectiveCostPerUnit = purchasePrice + (deliveryCostPerUnit ?? 0);
-  const contributionMarginPerUnit = catchPrice - effectiveCostPerUnit;
+  const contributionMarginPerUnit = catchPriceNet - effectiveCostPerUnit;
   const maximumContributionMargin = maximumRevenue - totalInvestment;
   const grossMarginPercentage =
     maximumRevenue > 0 ? (maximumContributionMargin / maximumRevenue) * 100 : null;
   const discountPercentage =
     regularPrice !== null ? ((regularPrice - catchPrice) / regularPrice) * 100 : null;
-  const breakEvenQuantity = catchPrice > 0 ? safeDivide(totalInvestment, catchPrice) : null;
+  const breakEvenQuantity = catchPriceNet > 0 ? safeDivide(totalInvestment, catchPriceNet) : null;
   const breakEvenSellThrough =
     breakEvenQuantity !== null ? (breakEvenQuantity / quantity) * 100 : null;
 
@@ -150,9 +176,14 @@ export function calculateCatch(
     purchase_price: purchasePrice,
     delivery_cost: safeDelivery,
     catch_price: catchPrice,
+    catch_price_net: catchPriceNet,
     regular_price: regularPrice,
+    vat_rate: vatRate,
+    vat_per_unit: vatPerUnit,
     total_investment: totalInvestment,
     maximum_revenue: maximumRevenue,
+    maximum_revenue_gross: maximumRevenueGross,
+    maximum_vat: maximumVat,
     delivery_cost_per_unit: deliveryCostPerUnit,
     effective_cost_per_unit: effectiveCostPerUnit,
     contribution_margin_per_unit: contributionMarginPerUnit,
@@ -231,6 +262,12 @@ function explain(v: CalculationValues, t: CatchThresholds): string[] {
   const discount = v.discount_percentage;
   const breakEven = v.break_even_sell_through;
 
+  out.push(
+    v.vat_rate > 0
+      ? `Der Food-Catch-Preis von CHF ${v.catch_price.toFixed(2)} enthält ${pct(v.vat_rate)} MWST. Gerechnet wird mit dem Nettopreis von CHF ${v.catch_price_net.toFixed(2)}.`
+      : "Für diesen Catch ist kein Mehrwertsteuersatz hinterlegt. Brutto- und Nettopreis sind identisch.",
+  );
+
   if (margin !== null) {
     out.push(
       margin >= t.minimum_green_margin
@@ -275,8 +312,13 @@ function explain(v: CalculationValues, t: CatchThresholds): string[] {
 /** Aggregierte Kennzahlen mehrerer Catches fürs Dashboard. */
 export interface CatchTotals {
   contribution_margin: number;
+  /** Maximaler Umsatz ohne MWST. */
   revenue: number;
-  /** Gewichtete Rohmarge in Prozent, null wenn kein Umsatz vorliegt. */
+  /** Maximaler Umsatz inkl. MWST. */
+  revenue_gross: number;
+  /** Summe der enthaltenen MWST. */
+  vat: number;
+  /** Gewichtete Rohmarge in Prozent (netto), null wenn kein Umsatz vorliegt. */
   weighted_margin: number | null;
   /** Geplante Einkaufsmenge je Einheit — nie einheitenübergreifend addiert. */
   quantity_by_unit: { unit: string; quantity: number }[];
@@ -285,6 +327,8 @@ export interface CatchTotals {
 export function aggregateCatches(inputs: CalculationInput[]): CatchTotals {
   let contribution = 0;
   let revenue = 0;
+  let revenueGross = 0;
+  let vat = 0;
   const byUnit = new Map<string, number>();
 
   for (const input of inputs) {
@@ -293,6 +337,8 @@ export function aggregateCatches(inputs: CalculationInput[]): CatchTotals {
       if (result.values.maximum_revenue > 0) {
         contribution += result.values.maximum_contribution_margin;
         revenue += result.values.maximum_revenue;
+        revenueGross += result.values.maximum_revenue_gross;
+        vat += result.values.maximum_vat;
       }
     }
     const quantity = input.purchase_quantity;
@@ -304,6 +350,8 @@ export function aggregateCatches(inputs: CalculationInput[]): CatchTotals {
   return {
     contribution_margin: contribution,
     revenue,
+    revenue_gross: revenueGross,
+    vat,
     weighted_margin: revenue > 0 ? (contribution / revenue) * 100 : null,
     quantity_by_unit: [...byUnit.entries()].map(([unit, quantity]) => ({ unit, quantity })),
   };

@@ -8,7 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { CATCH_STATUS_LABELS, TEMPERATURE_LABELS, type CatchStatus } from "@/lib/catch-domain";
 import { calculateCatch } from "@/lib/catch-calculation";
 import { formatDuration, reconcileCatch } from "@/lib/catch-reconciliation";
-import { AUDIT_ACTION_LABELS, AUDIT_ENTITY_LABELS, auditSummary, fetchAuditEvents } from "@/lib/audit";
+import {
+  AUDIT_ACTION_LABELS,
+  AUDIT_ENTITY_LABELS,
+  auditSummary,
+  fetchAuditEvents,
+} from "@/lib/audit";
 import { fetchAllLocations, fetchAllSuppliers, fetchCategories } from "@/lib/master-data";
 import { ROLE_LABELS, type AppRole } from "@/hooks/use-role";
 
@@ -48,7 +53,7 @@ function toDate(value: string | null | undefined): Date | null {
 const CATCH_SELECT = `
   id, catch_number, status, product_name, temperature, category, description, packaging,
   expiry_date, purchase_quantity, quantity_unit, purchase_price, delivery_cost,
-  delivery_included, regular_price, catch_price, available_from, available_until,
+  delivery_included, regular_price, catch_price, vat_rate, available_from, available_until,
   handicap_story, published_at, closed_at, remaining_quantity, inventory_counted_at,
   learning, created_at, updated_at,
   suppliers ( name ),
@@ -74,6 +79,7 @@ function catchRow(row: any) {
     delivery_included: Boolean(row.delivery_included),
     regular_price: row.regular_price ?? null,
     catch_price: row.catch_price ?? null,
+    vat_rate: row.vat_rate === null || row.vat_rate === undefined ? null : Number(row.vat_rate),
   };
   const reconciliation = reconcileCatch({
     ...input,
@@ -112,7 +118,10 @@ function catchRow(row: any) {
     remaining_quantity: row.remaining_quantity ?? null,
     sold_quantity: values?.sold_quantity ?? null,
     sell_through: values?.sell_through_percentage ?? null,
+    vat_rate: values?.vat_rate ?? null,
     effective_revenue: values?.effective_revenue ?? null,
+    effective_revenue_gross: values?.effective_revenue_gross ?? null,
+    effective_vat: values?.effective_vat ?? null,
     effective_margin: values?.effective_contribution_margin ?? null,
     remaining_value: values?.remaining_inventory_value ?? null,
     duration: formatDuration(values?.action_duration_ms ?? null),
@@ -148,7 +157,10 @@ const CATCH_COLUMNS: Column[] = [
   { header: "Restmenge", key: "remaining_quantity", width: 12, numFmt: "#,##0.00" },
   { header: "Verkaufte Menge", key: "sold_quantity", width: 14, numFmt: "#,##0.00" },
   { header: "Abverkauf", key: "sell_through", width: 12, numFmt: PERCENT },
-  { header: "Effektiver Umsatz", key: "effective_revenue", width: 16, numFmt: CHF },
+  { header: "MWST-Satz", key: "vat_rate", width: 12, numFmt: PERCENT },
+  { header: "Effektiver Umsatz netto", key: "effective_revenue", width: 20, numFmt: CHF },
+  { header: "Effektiver Umsatz brutto", key: "effective_revenue_gross", width: 20, numFmt: CHF },
+  { header: "Enthaltene MWST", key: "effective_vat", width: 16, numFmt: CHF },
   { header: "Effektiver DB", key: "effective_margin", width: 16, numFmt: CHF },
   { header: "Restwarenwert", key: "remaining_value", width: 16, numFmt: CHF },
   { header: "Aktionsdauer", key: "duration", width: 14 },

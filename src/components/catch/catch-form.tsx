@@ -49,8 +49,10 @@ import {
   saveCatch,
   type CatchFormValues,
 } from "@/lib/catches";
+import { fetchAppSettings } from "@/lib/app-settings";
 import { isoToZurichLocal } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { DEFAULT_VAT_RATE } from "@/lib/vat";
 
 interface CatchFormProps {
   mode: "create" | "edit";
@@ -107,9 +109,12 @@ export function CatchForm({
   const [storyTouched, setStoryTouched] = useState(Boolean(initialValues.handicap_story));
   const savedRef = useRef(false);
 
+  const settings = useQuery({ queryKey: ["app-settings"], queryFn: fetchAppSettings });
+  const defaultVatRate = settings.data?.vat.rate ?? DEFAULT_VAT_RATE;
+
   const calculation = useMemo(
-    () => calculateCatch(formValuesToCalculationInput(values)),
-    [values],
+    () => calculateCatch(formValuesToCalculationInput(values, defaultVatRate)),
+    [values, defaultVatRate],
   );
 
   const suppliers = useQuery({ queryKey: ["suppliers"], queryFn: fetchSuppliers });
@@ -135,7 +140,8 @@ export function CatchForm({
   }
 
   async function persist(status: "draft" | "ready", confirmedCritical = false) {
-    const found = status === "draft" ? validateDraft(values) : validateReady(values, Boolean(imagePath));
+    const found =
+      status === "draft" ? validateDraft(values) : validateReady(values, Boolean(imagePath));
     setIssues(found);
     if (found.length > 0) {
       focusFirst(found);
@@ -196,7 +202,10 @@ export function CatchForm({
         await supabase
           .from("catch_images")
           .delete()
-          .in("id", rows.map((row) => row.id));
+          .in(
+            "id",
+            rows.map((row) => row.id),
+          );
       }
       return;
     }
@@ -206,7 +215,10 @@ export function CatchForm({
       await supabase
         .from("catch_images")
         .delete()
-        .in("id", rows.map((row) => row.id));
+        .in(
+          "id",
+          rows.map((row) => row.id),
+        );
     }
     await supabase
       .from("catch_images")
@@ -419,9 +431,16 @@ export function CatchForm({
             </div>
           </FormSection>
 
-          <FormSection title="Verkaufspreis" description="Was zahlt die Kundschaft?">
+          <FormSection
+            title="Verkaufspreis"
+            description="Was zahlt die Kundschaft? Alle Kundenpreise sind Bruttopreise inklusive MWST."
+          >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Normalpreis" error={issueFor("regular_price")} hint="CHF, optional">
+              <Field
+                label="Normalpreis"
+                error={issueFor("regular_price")}
+                hint="CHF inkl. MWST, optional"
+              >
                 <Input
                   id="regular_price"
                   type="number"
@@ -432,7 +451,12 @@ export function CatchForm({
                   onChange={(event) => set("regular_price", event.target.value)}
                 />
               </Field>
-              <Field label="Food-Catch-Preis" required error={issueFor("catch_price")} hint="CHF">
+              <Field
+                label="Food-Catch-Preis"
+                required
+                error={issueFor("catch_price")}
+                hint="CHF inkl. MWST"
+              >
                 <Input
                   id="catch_price"
                   type="number"
@@ -442,6 +466,23 @@ export function CatchForm({
                   value={values.catch_price}
                   aria-invalid={Boolean(issueFor("catch_price"))}
                   onChange={(event) => set("catch_price", event.target.value)}
+                />
+              </Field>
+              <Field
+                label="Mehrwertsteuersatz"
+                error={issueFor("vat_rate")}
+                hint={`Prozent, leer = Standardsatz ${defaultVatRate} %`}
+              >
+                <Input
+                  id="vat_rate"
+                  type="number"
+                  min="0"
+                  max="99.9"
+                  step="0.1"
+                  inputMode="decimal"
+                  value={values.vat_rate}
+                  aria-invalid={Boolean(issueFor("vat_rate"))}
+                  onChange={(event) => set("vat_rate", event.target.value)}
                 />
               </Field>
             </div>

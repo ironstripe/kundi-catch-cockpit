@@ -18,16 +18,30 @@ describe("calculateCatch — Referenzfall Felchenfilets TK", () => {
   const result = calculateCatch(input({}));
   const v = result.values!;
 
-  it("berechnet alle Kennzahlen korrekt", () => {
+  const NET = 7.9 / 1.026;
+
+  it("berechnet alle Kennzahlen netto nach MWST", () => {
+    expect(v.vat_rate).toBeCloseTo(2.6, 6);
+    expect(v.catch_price_net).toBeCloseTo(NET, 6);
+    expect(v.vat_per_unit).toBeCloseTo(7.9 - NET, 6);
     expect(v.total_investment).toBeCloseTo(650, 6);
-    expect(v.maximum_revenue).toBeCloseTo(790, 6);
+    expect(v.maximum_revenue_gross).toBeCloseTo(790, 6);
+    expect(v.maximum_revenue).toBeCloseTo(100 * NET, 6);
+    expect(v.maximum_vat).toBeCloseTo(790 - 100 * NET, 6);
     expect(v.effective_cost_per_unit).toBeCloseTo(6.5, 6);
-    expect(v.contribution_margin_per_unit).toBeCloseTo(1.4, 6);
-    expect(v.maximum_contribution_margin).toBeCloseTo(140, 6);
-    expect(v.gross_margin_percentage!.toFixed(1)).toBe("17.7");
+    expect(v.contribution_margin_per_unit).toBeCloseTo(NET - 6.5, 6);
+    expect(v.maximum_contribution_margin).toBeCloseTo(100 * NET - 650, 6);
+    expect(v.gross_margin_percentage!.toFixed(1)).toBe("15.6");
     expect(v.discount_percentage!.toFixed(1)).toBe("26.5");
-    expect(v.break_even_quantity!.toFixed(2)).toBe("82.28");
-    expect(v.break_even_sell_through!.toFixed(1)).toBe("82.3");
+    expect(v.break_even_quantity!.toFixed(2)).toBe("84.42");
+    expect(v.break_even_sell_through!.toFixed(1)).toBe("84.4");
+  });
+
+  it("rechnet ohne MWST wie zuvor", () => {
+    const zero = calculateCatch(input({ vat_rate: 0 })).values!;
+    expect(zero.maximum_revenue).toBeCloseTo(790, 6);
+    expect(zero.maximum_vat).toBeCloseTo(0, 6);
+    expect(zero.maximum_contribution_margin).toBeCloseTo(140, 6);
   });
 
   it("bewertet den Catch als grün", () => {
@@ -52,7 +66,7 @@ describe("calculateCatch — Sonderfälle", () => {
     expect(v.delivery_cost_per_unit).toBeCloseTo(0.5, 6);
     expect(v.effective_cost_per_unit).toBeCloseTo(7, 6);
     expect(v.total_investment).toBeCloseTo(700, 6);
-    expect(v.maximum_contribution_margin).toBeCloseTo(90, 6);
+    expect(v.maximum_contribution_margin).toBeCloseTo((100 * 7.9) / 1.026 - 700, 6);
   });
 
   it("rechnet ohne Lieferkosten identisch", () => {
@@ -65,7 +79,9 @@ describe("calculateCatch — Sonderfälle", () => {
     const result = calculateCatch(input({ catch_price: 6 }));
     expect(result.values!.maximum_contribution_margin).toBeLessThan(0);
     expect(result.level).toBe("red");
-    expect(result.explanations).toContain("Der geplante Verkaufspreis deckt den Wareneinsatz nicht.");
+    expect(result.explanations).toContain(
+      "Der geplante Verkaufspreis deckt den Wareneinsatz nicht.",
+    );
   });
 
   it("meldet Break-even über 95 % als kritisch", () => {
@@ -84,17 +100,23 @@ describe("calculateCatch — Sonderfälle", () => {
 
   it("rechnet mit Stückmengen", () => {
     const v = calculateCatch(
-      input({ quantity_unit: "Stk", purchase_quantity: 40, purchase_price: 4, catch_price: 6, regular_price: 9 }),
+      input({
+        quantity_unit: "Stk",
+        purchase_quantity: 40,
+        purchase_price: 4,
+        catch_price: 6,
+        regular_price: 9,
+      }),
     ).values!;
     expect(v.quantity_unit).toBe("Stk");
     expect(v.total_investment).toBeCloseTo(160, 6);
-    expect(v.maximum_revenue).toBeCloseTo(240, 6);
+    expect(v.maximum_revenue).toBeCloseTo((40 * 6) / 1.026, 6);
   });
 
   it("rechnet mit Dezimalmengen", () => {
     const v = calculateCatch(input({ purchase_quantity: 12.5 })).values!;
     expect(v.total_investment).toBeCloseTo(81.25, 6);
-    expect(v.maximum_revenue).toBeCloseTo(98.75, 6);
+    expect(v.maximum_revenue).toBeCloseTo((12.5 * 7.9) / 1.026, 6);
   });
 
   it("zeigt bei unvollständigem Entwurf den neutralen Zustand", () => {
@@ -149,13 +171,14 @@ describe("aggregateCatches", () => {
 
   it("berechnet die gewichtete Rohmarge", () => {
     const totals = aggregateCatches([input({}), input({})]);
-    expect(totals.contribution_margin).toBeCloseTo(280, 6);
-    expect(totals.weighted_margin!.toFixed(1)).toBe("17.7");
+    expect(totals.contribution_margin).toBeCloseTo(2 * ((100 * 7.9) / 1.026 - 650), 6);
+    expect(totals.weighted_margin!.toFixed(1)).toBe("15.6");
   });
 
   it("ignoriert unvollständige Datensätze ohne Umsatz", () => {
     const totals = aggregateCatches([input({}), input({ catch_price: null })]);
-    expect(totals.revenue).toBeCloseTo(790, 6);
-    expect(totals.weighted_margin!.toFixed(1)).toBe("17.7");
+    expect(totals.revenue).toBeCloseTo((100 * 7.9) / 1.026, 6);
+    expect(totals.revenue_gross).toBeCloseTo(790, 6);
+    expect(totals.weighted_margin!.toFixed(1)).toBe("15.6");
   });
 });

@@ -30,11 +30,14 @@ describe("reconcileCatch", () => {
     const v = result.values!;
     expect(v.sold_quantity).toBe(88);
     expect(v.sell_through_percentage).toBeCloseTo(88, 6);
-    expect(v.effective_revenue).toBeCloseTo(695.2, 6);
+    expect(v.vat_rate).toBeCloseTo(2.6, 6);
+    expect(v.effective_revenue_gross).toBeCloseTo(695.2, 6);
+    expect(v.effective_revenue).toBeCloseTo((88 * 7.9) / 1.026, 6);
+    expect(v.effective_vat).toBeCloseTo(695.2 - (88 * 7.9) / 1.026, 6);
     expect(v.total_investment).toBeCloseTo(650, 6);
-    expect(v.effective_contribution_margin).toBeCloseTo(45.2, 6);
+    expect(v.effective_contribution_margin).toBeCloseTo((88 * 7.9) / 1.026 - 650, 6);
     expect(v.remaining_inventory_value).toBeCloseTo(78, 6);
-    expect(v.break_even_sell_through).toBeCloseTo(82.2785, 3);
+    expect(v.break_even_sell_through).toBeCloseTo(84.4177, 3);
     expect(result.break_even).toBe("reached");
     expect(result.break_even_label).toBe("Break-even erreicht");
   });
@@ -139,7 +142,9 @@ describe("aggregateReconciliations", () => {
     const pieces = totals.by_unit.find((entry) => entry.unit === "Stück")!;
     expect(pieces.sold_quantity).toBe(45);
     expect(pieces.sell_through).toBeCloseTo(90, 6);
-    expect(totals.revenue).toBeCloseTo(695.2 + 135, 6);
+    expect(totals.revenue).toBeCloseTo((88 * 7.9) / 1.026 + (45 * 3) / 1.026, 6);
+    expect(totals.revenue_gross).toBeCloseTo(695.2 + 135, 6);
+    expect(totals.vat).toBeCloseTo(695.2 + 135 - totals.revenue, 6);
     expect(totals.average_duration_ms).toBe(28 * 3600_000);
   });
 
