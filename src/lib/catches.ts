@@ -45,7 +45,7 @@ export const EMPTY_CATCH_FORM: CatchFormValues = {
   delivery_included: false,
   regular_price: "",
   catch_price: "",
-  vat_rate: String(DEFAULT_VAT_RATE),
+  vat_rate: "",
   location_ids: [],
   available_from: "",
   available_until: "",
