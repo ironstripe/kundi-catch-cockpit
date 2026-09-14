@@ -107,9 +107,12 @@ export function CatchForm({
   const [storyTouched, setStoryTouched] = useState(Boolean(initialValues.handicap_story));
   const savedRef = useRef(false);
 
+  const settings = useQuery({ queryKey: ["app-settings"], queryFn: fetchAppSettings });
+  const defaultVatRate = settings.data?.vat.rate ?? DEFAULT_VAT_RATE;
+
   const calculation = useMemo(
-    () => calculateCatch(formValuesToCalculationInput(values)),
-    [values],
+    () => calculateCatch(formValuesToCalculationInput(values, defaultVatRate)),
+    [values, defaultVatRate],
   );
 
   const suppliers = useQuery({ queryKey: ["suppliers"], queryFn: fetchSuppliers });
