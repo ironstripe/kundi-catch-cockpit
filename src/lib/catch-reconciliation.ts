@@ -158,9 +158,14 @@ export function reconcileCatch(input: ReconciliationInput): ReconciliationResult
   const deliveryCost =
     finite(input.delivery_cost) && input.delivery_cost > 0 ? input.delivery_cost : 0;
 
+  const vatRate = resolveVatRate(input.vat_rate);
+  const catchPriceNet = netFromGross(catchPrice, vatRate);
+
   const soldQuantity = Math.max(0, purchaseQuantity - remaining);
   const sellThrough = purchaseQuantity > 0 ? (soldQuantity / purchaseQuantity) * 100 : null;
-  const effectiveRevenue = soldQuantity * catchPrice;
+  const effectiveRevenueGross = soldQuantity * catchPrice;
+  const effectiveRevenue = soldQuantity * catchPriceNet;
+  const effectiveVat = effectiveRevenueGross - effectiveRevenue;
   const totalInvestment = purchaseQuantity * purchasePrice + deliveryCost;
   const effectiveContributionMargin = effectiveRevenue - totalInvestment;
   const remainingInventoryValue = remaining * purchasePrice;
@@ -178,7 +183,10 @@ export function reconcileCatch(input: ReconciliationInput): ReconciliationResult
       remaining_quantity: remaining,
       sold_quantity: soldQuantity,
       sell_through_percentage: sellThrough,
+      vat_rate: vatRate,
       effective_revenue: effectiveRevenue,
+      effective_revenue_gross: effectiveRevenueGross,
+      effective_vat: effectiveVat,
       total_investment: totalInvestment,
       effective_contribution_margin: effectiveContributionMargin,
       remaining_inventory_value: remainingInventoryValue,
