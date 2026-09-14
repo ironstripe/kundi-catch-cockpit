@@ -155,3 +155,29 @@ describe("aggregateReconciliations", () => {
     expect(totals.revenue).toBe(0);
   });
 });
+
+describe("Nachkalkulation mit Steuerbasis", () => {
+  it("rechnet den effektiven Deckungsbeitrag gegen die Nettoinvestition", () => {
+    const result = reconcileCatch({
+      purchase_quantity: 100,
+      quantity_unit: "kg",
+      purchase_price: 6.5,
+      delivery_cost: 108.1,
+      delivery_cost_includes_vat: true,
+      delivery_vat_rate: 8.1,
+      regular_price: 10.75,
+      catch_price: 7.9,
+      vat_rate: 2.6,
+      remaining_quantity: 20,
+      published_at: null,
+      inventory_counted_at: null,
+    });
+    const v = result.values!;
+    expect(v.sold_quantity).toBe(80);
+    expect(v.effective_revenue_gross).toBeCloseTo(632, 8);
+    expect(v.effective_revenue).toBeCloseTo(632 / 1.026, 8);
+    expect(v.total_investment).toBeCloseTo(750, 6);
+    expect(v.effective_contribution_margin).toBeCloseTo(632 / 1.026 - 750, 6);
+    expect(v.remaining_inventory_value).toBeCloseTo(130, 8);
+  });
+});
