@@ -3,6 +3,7 @@ import { parseNumberInput, type CalculationInput } from "@/lib/catch-calculation
 import type { ReconciliationInput } from "@/lib/catch-reconciliation";
 import { ACTIVE_STATUSES, type CatchStatus, type Temperature } from "@/lib/catch-domain";
 import { zurichLocalToIso } from "@/lib/format";
+import { DEFAULT_VAT_RATE, parseVatRate } from "@/lib/vat";
 
 export const CATCH_IMAGE_BUCKET = "catch-images";
 
@@ -20,6 +21,8 @@ export interface CatchFormValues {
   delivery_included: boolean;
   regular_price: string;
   catch_price: string;
+  /** MWST-Satz in Prozent; leer = globaler Standardsatz. */
+  vat_rate: string;
   location_ids: string[];
   available_from: string;
   available_until: string;
@@ -42,6 +45,7 @@ export const EMPTY_CATCH_FORM: CatchFormValues = {
   delivery_included: false,
   regular_price: "",
   catch_price: "",
+  vat_rate: String(DEFAULT_VAT_RATE),
   location_ids: [],
   available_from: "",
   available_until: "",
