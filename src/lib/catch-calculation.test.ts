@@ -18,16 +18,30 @@ describe("calculateCatch — Referenzfall Felchenfilets TK", () => {
   const result = calculateCatch(input({}));
   const v = result.values!;
 
-  it("berechnet alle Kennzahlen korrekt", () => {
+  const NET = 7.9 / 1.026;
+
+  it("berechnet alle Kennzahlen netto nach MWST", () => {
+    expect(v.vat_rate).toBeCloseTo(2.6, 6);
+    expect(v.catch_price_net).toBeCloseTo(NET, 6);
+    expect(v.vat_per_unit).toBeCloseTo(7.9 - NET, 6);
     expect(v.total_investment).toBeCloseTo(650, 6);
-    expect(v.maximum_revenue).toBeCloseTo(790, 6);
+    expect(v.maximum_revenue_gross).toBeCloseTo(790, 6);
+    expect(v.maximum_revenue).toBeCloseTo(100 * NET, 6);
+    expect(v.maximum_vat).toBeCloseTo(790 - 100 * NET, 6);
     expect(v.effective_cost_per_unit).toBeCloseTo(6.5, 6);
-    expect(v.contribution_margin_per_unit).toBeCloseTo(1.4, 6);
-    expect(v.maximum_contribution_margin).toBeCloseTo(140, 6);
-    expect(v.gross_margin_percentage!.toFixed(1)).toBe("17.7");
+    expect(v.contribution_margin_per_unit).toBeCloseTo(NET - 6.5, 6);
+    expect(v.maximum_contribution_margin).toBeCloseTo(100 * NET - 650, 6);
+    expect(v.gross_margin_percentage!.toFixed(1)).toBe("15.6");
     expect(v.discount_percentage!.toFixed(1)).toBe("26.5");
-    expect(v.break_even_quantity!.toFixed(2)).toBe("82.28");
-    expect(v.break_even_sell_through!.toFixed(1)).toBe("82.3");
+    expect(v.break_even_quantity!.toFixed(2)).toBe("84.42");
+    expect(v.break_even_sell_through!.toFixed(1)).toBe("84.4");
+  });
+
+  it("rechnet ohne MWST wie zuvor", () => {
+    const zero = calculateCatch(input({ vat_rate: 0 })).values!;
+    expect(zero.maximum_revenue).toBeCloseTo(790, 6);
+    expect(zero.maximum_vat).toBeCloseTo(0, 6);
+    expect(zero.maximum_contribution_margin).toBeCloseTo(140, 6);
   });
 
   it("bewertet den Catch als grün", () => {
