@@ -79,7 +79,9 @@ describe("calculateCatch — Sonderfälle", () => {
     const result = calculateCatch(input({ catch_price: 6 }));
     expect(result.values!.maximum_contribution_margin).toBeLessThan(0);
     expect(result.level).toBe("red");
-    expect(result.explanations).toContain("Der geplante Verkaufspreis deckt den Wareneinsatz nicht.");
+    expect(result.explanations).toContain(
+      "Der geplante Verkaufspreis deckt den Wareneinsatz nicht.",
+    );
   });
 
   it("meldet Break-even über 95 % als kritisch", () => {
@@ -98,7 +100,13 @@ describe("calculateCatch — Sonderfälle", () => {
 
   it("rechnet mit Stückmengen", () => {
     const v = calculateCatch(
-      input({ quantity_unit: "Stk", purchase_quantity: 40, purchase_price: 4, catch_price: 6, regular_price: 9 }),
+      input({
+        quantity_unit: "Stk",
+        purchase_quantity: 40,
+        purchase_price: 4,
+        catch_price: 6,
+        regular_price: 9,
+      }),
     ).values!;
     expect(v.quantity_unit).toBe("Stk");
     expect(v.total_investment).toBeCloseTo(160, 6);

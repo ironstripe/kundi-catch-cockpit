@@ -8,7 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { CATCH_STATUS_LABELS, TEMPERATURE_LABELS, type CatchStatus } from "@/lib/catch-domain";
 import { calculateCatch } from "@/lib/catch-calculation";
 import { formatDuration, reconcileCatch } from "@/lib/catch-reconciliation";
-import { AUDIT_ACTION_LABELS, AUDIT_ENTITY_LABELS, auditSummary, fetchAuditEvents } from "@/lib/audit";
+import {
+  AUDIT_ACTION_LABELS,
+  AUDIT_ENTITY_LABELS,
+  auditSummary,
+  fetchAuditEvents,
+} from "@/lib/audit";
 import { fetchAllLocations, fetchAllSuppliers, fetchCategories } from "@/lib/master-data";
 import { ROLE_LABELS, type AppRole } from "@/hooks/use-role";
 

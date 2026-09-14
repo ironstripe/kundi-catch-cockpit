@@ -139,10 +139,7 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
             </p>
             <SourceRow label="Catch-Nummer" value={item.catch_number ?? "—"} />
             <SourceRow label="Produkt" value={item.product_name} />
-            <SourceRow
-              label="Produktart"
-              value={item.temperature === "frozen" ? "TK" : "Frisch"}
-            />
+            <SourceRow label="Produktart" value={item.temperature === "frozen" ? "TK" : "Frisch"} />
             <SourceRow
               label="Einkaufsmenge"
               value={formatQuantity(item.purchase_quantity, item.quantity_unit)}
@@ -169,7 +166,11 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
             />
             <SourceRow
               label="Publiziert am"
-              value={item.published_at ? formatDateTime(item.published_at) : "Publikationszeitpunkt fehlt"}
+              value={
+                item.published_at
+                  ? formatDateTime(item.published_at)
+                  : "Publikationszeitpunkt fehlt"
+              }
             />
             <SourceRow
               label="Abholorte"
@@ -326,8 +327,8 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
           <AlertDialogHeader>
             <AlertDialogTitle>Catch abbrechen?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ein abgebrochener Catch erscheint in der Historie und fliesst nicht in die
-              Abverkaufs- und Finanzdurchschnitte ein.
+              Ein abgebrochener Catch erscheint in der Historie und fliesst nicht in die Abverkaufs-
+              und Finanzdurchschnitte ein.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-1.5">

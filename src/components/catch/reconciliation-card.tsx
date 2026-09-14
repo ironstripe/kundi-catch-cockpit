@@ -2,12 +2,7 @@ import type { ReactNode } from "react";
 import { CheckCircle2, AlertTriangle, MinusCircle, HelpCircle } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { BreakEvenResult, ReconciliationResult } from "@/lib/catch-reconciliation";
 import { formatDuration } from "@/lib/catch-reconciliation";
 import { formatCurrency, formatPercentValue, formatQuantity } from "@/lib/format";
@@ -90,9 +85,7 @@ export function ReconciliationCard({
     <Card>
       <CardHeader>
         <CardTitle className="text-sm">{title}</CardTitle>
-        {description ? (
-          <CardDescription className="text-xs">{description}</CardDescription>
-        ) : null}
+        {description ? <CardDescription className="text-xs">{description}</CardDescription> : null}
       </CardHeader>
       <CardContent className="space-y-4">
         {!v ? (
@@ -124,10 +117,7 @@ export function ReconciliationCard({
                 label="Effektiver Umsatz (netto)"
                 value={formatCurrency(v.effective_revenue)}
               />
-              <Metric
-                label="Umsatz brutto"
-                value={formatCurrency(v.effective_revenue_gross)}
-              />
+              <Metric label="Umsatz brutto" value={formatCurrency(v.effective_revenue_gross)} />
               <Metric
                 label={`Enthaltene MWST (${formatPercentValue(v.vat_rate)})`}
                 value={formatCurrency(v.effective_vat)}
@@ -198,9 +188,7 @@ export function ReconciliationCard({
                   />
                   <ComparisonRow
                     label="Deckungsbeitrag"
-                    planned={
-                      planned ? formatCurrency(planned.maximum_contribution_margin) : "—"
-                    }
+                    planned={planned ? formatCurrency(planned.maximum_contribution_margin) : "—"}
                     actual={formatCurrency(v.effective_contribution_margin)}
                   />
                   <ComparisonRow

@@ -121,11 +121,7 @@ export function filterHistory(rows: CatchListItem[], search: HistorySearch): Cat
       return false;
     if (search.supplier && search.supplier !== ALL && row.supplier_name !== search.supplier)
       return false;
-    if (
-      search.location &&
-      search.location !== ALL &&
-      !row.location_names.includes(search.location)
-    )
+    if (search.location && search.location !== ALL && !row.location_names.includes(search.location))
       return false;
     if (search.status && search.status !== ALL && row.status !== search.status) return false;
     if (cutoff !== null) {
@@ -158,10 +154,7 @@ function HistoryPage() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   useEffect(() => setVisibleCount(PAGE_SIZE), [search]);
   const visible = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
-  const closedOnly = useMemo(
-    () => filtered.filter((row) => row.status === "closed"),
-    [filtered],
-  );
+  const closedOnly = useMemo(() => filtered.filter((row) => row.status === "closed"), [filtered]);
   const totals = useMemo(
     () => aggregateReconciliations(closedOnly.map(catchToReconciliationInput)),
     [closedOnly],
@@ -195,12 +188,12 @@ function HistoryPage() {
 
   const hasFilters = Boolean(
     search.q ||
-      search.period ||
-      search.temperature ||
-      search.product ||
-      search.supplier ||
-      search.location ||
-      search.status,
+    search.period ||
+    search.temperature ||
+    search.product ||
+    search.supplier ||
+    search.location ||
+    search.status,
   );
 
   const quantityText = (key: "purchase_quantity" | "sold_quantity") =>
@@ -220,7 +213,12 @@ function HistoryPage() {
           .join(" · ");
 
   const kpis = [
-    { label: "Anzahl Catches", value: String(filtered.length), hint: "Gefilterte Auswahl", icon: Fish },
+    {
+      label: "Anzahl Catches",
+      value: String(filtered.length),
+      hint: "Gefilterte Auswahl",
+      icon: Fish,
+    },
     {
       label: "Gesamte Einkaufsmenge",
       value: quantityText("purchase_quantity"),

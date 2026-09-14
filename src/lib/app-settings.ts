@@ -121,9 +121,7 @@ function merge<T extends object>(fallback: T, value: unknown): T {
 }
 
 export async function fetchAppSettings(): Promise<AppSettings> {
-  const { data, error } = await supabase
-    .from("application_settings")
-    .select("key, value, version");
+  const { data, error } = await supabase.from("application_settings").select("key, value, version");
   if (error) throw error;
   const rows = new Map((data ?? []).map((row) => [row.key, row]));
   const thresholdRow = rows.get(SETTING_KEYS.thresholds);

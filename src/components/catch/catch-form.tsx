@@ -140,7 +140,8 @@ export function CatchForm({
   }
 
   async function persist(status: "draft" | "ready", confirmedCritical = false) {
-    const found = status === "draft" ? validateDraft(values) : validateReady(values, Boolean(imagePath));
+    const found =
+      status === "draft" ? validateDraft(values) : validateReady(values, Boolean(imagePath));
     setIssues(found);
     if (found.length > 0) {
       focusFirst(found);
@@ -201,7 +202,10 @@ export function CatchForm({
         await supabase
           .from("catch_images")
           .delete()
-          .in("id", rows.map((row) => row.id));
+          .in(
+            "id",
+            rows.map((row) => row.id),
+          );
       }
       return;
     }
@@ -211,7 +215,10 @@ export function CatchForm({
       await supabase
         .from("catch_images")
         .delete()
-        .in("id", rows.map((row) => row.id));
+        .in(
+          "id",
+          rows.map((row) => row.id),
+        );
     }
     await supabase
       .from("catch_images")

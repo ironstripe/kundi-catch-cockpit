@@ -268,7 +268,6 @@ function explain(v: CalculationValues, t: CatchThresholds): string[] {
       : "Für diesen Catch ist kein Mehrwertsteuersatz hinterlegt. Brutto- und Nettopreis sind identisch.",
   );
 
-
   if (margin !== null) {
     out.push(
       margin >= t.minimum_green_margin

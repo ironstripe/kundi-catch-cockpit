@@ -3,12 +3,7 @@ import type { ReactNode } from "react";
 
 import { DECISION_CLASSES, DECISION_ICONS } from "@/components/catch/decision-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { CalculationResult } from "@/lib/catch-calculation";
 import { formatCurrency, formatPercentValue, formatQuantity } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -16,8 +11,7 @@ import { cn } from "@/lib/utils";
 const HELP: Record<string, string> = {
   "Maximaler DB":
     "Der maximale Deckungsbeitrag zeigt, was übrig bleibt, wenn die gesamte Einkaufsmenge zum Food-Catch-Preis verkauft wird.",
-  Rohmarge:
-    "Die Rohmarge ist der Anteil des maximalen Deckungsbeitrags am maximalen Umsatz.",
+  Rohmarge: "Die Rohmarge ist der Anteil des maximalen Deckungsbeitrags am maximalen Umsatz.",
   "Break-even-Abverkauf":
     "Der Break-even-Abverkauf zeigt, welcher Anteil der Einkaufsmenge verkauft werden muss, damit der gesamte Wareneinsatz gedeckt ist.",
   Preisvorteil:
@@ -82,10 +76,7 @@ export function CalculationCard({
           <>
             <dl className={cn("grid gap-2", compact ? "grid-cols-2" : "grid-cols-2")}>
               <Primary label="Investition" value={formatCurrency(v.total_investment)} />
-              <Primary
-                label="Maximaler Umsatz (netto)"
-                value={formatCurrency(v.maximum_revenue)}
-              />
+              <Primary label="Maximaler Umsatz (netto)" value={formatCurrency(v.maximum_revenue)} />
               <Primary
                 label="Maximaler DB"
                 value={formatCurrency(v.maximum_contribution_margin)}
@@ -133,9 +124,7 @@ export function CalculationCard({
               <Secondary
                 label="Break-even-Menge"
                 value={
-                  v.break_even_quantity === null
-                    ? "—"
-                    : formatQuantity(v.break_even_quantity, unit)
+                  v.break_even_quantity === null ? "—" : formatQuantity(v.break_even_quantity, unit)
                 }
               />
               <Secondary
@@ -185,15 +174,7 @@ function Help({ label }: { label: string }) {
   );
 }
 
-function Primary({
-  label,
-  value,
-  negative,
-}: {
-  label: string;
-  value: string;
-  negative?: boolean;
-}) {
+function Primary({ label, value, negative }: { label: string; value: string; negative?: boolean }) {
   return (
     <div className="rounded-md border bg-muted/20 p-2">
       <dt className="flex items-center gap-1 text-[11px] uppercase tracking-wide text-muted-foreground">

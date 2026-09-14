@@ -8,7 +8,11 @@
  * werden netto ausgewiesen, der Bruttoumsatz und die enthaltene MWST separat.
  */
 
-import { calculateCatch, type CalculationInput, type CalculationValues } from "@/lib/catch-calculation";
+import {
+  calculateCatch,
+  type CalculationInput,
+  type CalculationValues,
+} from "@/lib/catch-calculation";
 import { netFromGross, resolveVatRate } from "@/lib/vat";
 
 export interface ReconciliationInput extends CalculationInput {
@@ -91,10 +95,7 @@ export function validateRemainingQuantity(
   return errors;
 }
 
-export function breakEvenResult(
-  actual: number | null,
-  breakEven: number | null,
-): BreakEvenResult {
+export function breakEvenResult(actual: number | null, breakEven: number | null): BreakEvenResult {
   if (!finite(actual) || !finite(breakEven)) return "unknown";
   if (actual > breakEven + BREAK_EVEN_TOLERANCE) return "reached";
   if (actual < breakEven - BREAK_EVEN_TOLERANCE) return "missed";

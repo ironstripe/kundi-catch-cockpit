@@ -185,8 +185,7 @@ function mapList(row: any): CatchListItem {
     delivery_cost: Number(row.delivery_cost ?? 0),
     delivery_included: Boolean(row.delivery_included),
     regular_price: row.regular_price === null ? null : Number(row.regular_price),
-    vat_rate:
-      row.vat_rate === null || row.vat_rate === undefined ? null : Number(row.vat_rate),
+    vat_rate: row.vat_rate === null || row.vat_rate === undefined ? null : Number(row.vat_rate),
     updated_at: row.updated_at,
     expected_sell_through:
       row.expected_sell_through === null ? null : Number(row.expected_sell_through),
@@ -359,7 +358,6 @@ interface SaveArgs {
 
 /** Legt einen Catch an oder aktualisiert ihn inkl. Standortzuordnung. */
 export async function saveCatch({ id, values, status, audit }: SaveArgs): Promise<string> {
-
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id ?? null;
 

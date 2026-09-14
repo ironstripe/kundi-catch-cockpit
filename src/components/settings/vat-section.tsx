@@ -56,7 +56,8 @@ export function VatSection() {
 
   function save() {
     const parsed = parseVatRate(rate);
-    const message = parsed === null ? "Bitte einen Mehrwertsteuersatz erfassen." : validateVatRate(parsed);
+    const message =
+      parsed === null ? "Bitte einen Mehrwertsteuersatz erfassen." : validateVatRate(parsed);
     if (message || parsed === null) {
       setError(message ?? "Bitte einen Mehrwertsteuersatz erfassen.");
       return;
