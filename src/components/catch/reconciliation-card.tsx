@@ -120,7 +120,18 @@ export function ReconciliationCard({
                 }
                 strong
               />
-              <Metric label="Effektiver Umsatz" value={formatCurrency(v.effective_revenue)} />
+              <Metric
+                label="Effektiver Umsatz (netto)"
+                value={formatCurrency(v.effective_revenue)}
+              />
+              <Metric
+                label="Umsatz brutto"
+                value={formatCurrency(v.effective_revenue_gross)}
+              />
+              <Metric
+                label={`Enthaltene MWST (${formatPercentValue(v.vat_rate)})`}
+                value={formatCurrency(v.effective_vat)}
+              />
               <Metric label="Gesamter Wareneinsatz" value={formatCurrency(v.total_investment)} />
               <Metric
                 label="Effektiver DB"
@@ -142,8 +153,9 @@ export function ReconciliationCard({
             </dl>
 
             <p className="text-xs text-muted-foreground">
-              Der effektive DB stellt den Umsatz der verkauften Menge dem gesamten Einkauf der
-              Partie gegenüber. Noch vorhandener Warenwert wird separat ausgewiesen.
+              Der effektive DB stellt den Nettoumsatz der verkauften Menge (Kundenpreise abzüglich
+              MWST) dem gesamten Einkauf der Partie gegenüber. Noch vorhandener Warenwert wird
+              separat ausgewiesen.
             </p>
 
             <div

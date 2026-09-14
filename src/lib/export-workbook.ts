@@ -74,6 +74,7 @@ function catchRow(row: any) {
     delivery_included: Boolean(row.delivery_included),
     regular_price: row.regular_price ?? null,
     catch_price: row.catch_price ?? null,
+    vat_rate: row.vat_rate === null || row.vat_rate === undefined ? null : Number(row.vat_rate),
   };
   const reconciliation = reconcileCatch({
     ...input,
@@ -112,7 +113,10 @@ function catchRow(row: any) {
     remaining_quantity: row.remaining_quantity ?? null,
     sold_quantity: values?.sold_quantity ?? null,
     sell_through: values?.sell_through_percentage ?? null,
+    vat_rate: values?.vat_rate ?? null,
     effective_revenue: values?.effective_revenue ?? null,
+    effective_revenue_gross: values?.effective_revenue_gross ?? null,
+    effective_vat: values?.effective_vat ?? null,
     effective_margin: values?.effective_contribution_margin ?? null,
     remaining_value: values?.remaining_inventory_value ?? null,
     duration: formatDuration(values?.action_duration_ms ?? null),

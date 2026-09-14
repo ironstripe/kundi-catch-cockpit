@@ -104,6 +104,14 @@ export function CalculationCard({
 
             <dl className="space-y-1 border-t pt-3">
               <Secondary
+                label={`Food-Catch-Preis netto (MWST ${formatPercentValue(v.vat_rate)})`}
+                value={`${formatCurrency(v.catch_price_net)} / ${unit}`}
+              />
+              <Secondary
+                label="Maximaler Umsatz brutto"
+                value={`${formatCurrency(v.maximum_revenue_gross)} (davon MWST ${formatCurrency(v.maximum_vat)})`}
+              />
+              <Secondary
                 label="Effektiver EK pro Einheit"
                 value={`${formatCurrency(v.effective_cost_per_unit)} / ${unit}`}
               />
