@@ -214,7 +214,12 @@ export interface UnitTotal {
 export interface HistoryTotals {
   count: number;
   by_unit: UnitTotal[];
+  /** Umsatz ohne MWST. */
   revenue: number;
+  /** Umsatz inkl. MWST. */
+  revenue_gross: number;
+  /** Summe der enthaltenen MWST. */
+  vat: number;
   contribution_margin: number;
   /** Durchschnittliche Aktionsdauer in Millisekunden, null ohne Daten. */
   average_duration_ms: number | null;
@@ -227,6 +232,8 @@ export interface HistoryTotals {
 export function aggregateReconciliations(inputs: ReconciliationInput[]): HistoryTotals {
   const byUnit = new Map<string, { purchase: number; sold: number }>();
   let revenue = 0;
+  let revenueGross = 0;
+  let vat = 0;
   let margin = 0;
   let durationSum = 0;
   let durationCount = 0;
@@ -242,6 +249,8 @@ export function aggregateReconciliations(inputs: ReconciliationInput[]): History
     entry.sold += v.sold_quantity;
     byUnit.set(v.quantity_unit, entry);
     revenue += v.effective_revenue;
+    revenueGross += v.effective_revenue_gross;
+    vat += v.effective_vat;
     margin += v.effective_contribution_margin;
     if (v.action_duration_ms !== null) {
       durationSum += v.action_duration_ms;
@@ -258,6 +267,8 @@ export function aggregateReconciliations(inputs: ReconciliationInput[]): History
       sell_through: entry.purchase > 0 ? (entry.sold / entry.purchase) * 100 : null,
     })),
     revenue,
+    revenue_gross: revenueGross,
+    vat,
     contribution_margin: margin,
     average_duration_ms: durationCount > 0 ? durationSum / durationCount : null,
   };
