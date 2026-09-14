@@ -240,9 +240,9 @@ function HistoryPage() {
       icon: Percent,
     },
     {
-      label: "Effektiver Gesamtumsatz",
+      label: "Effektiver Gesamtumsatz (netto)",
       value: formatCurrency(totals.revenue),
-      hint: "Nur abgeschlossene Catches",
+      hint: `Ohne MWST · brutto ${formatCurrency(totals.revenue_gross)}`,
       icon: Wallet,
     },
     {
