@@ -32,6 +32,7 @@ export type AuditAction =
   | "category_created"
   | "category_updated"
   | "thresholds_updated"
+  | "vat_updated"
   | "template_updated"
   | "logo_replaced"
   | "settings_reset"
