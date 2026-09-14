@@ -82,7 +82,10 @@ export function CalculationCard({
           <>
             <dl className={cn("grid gap-2", compact ? "grid-cols-2" : "grid-cols-2")}>
               <Primary label="Investition" value={formatCurrency(v.total_investment)} />
-              <Primary label="Maximaler Umsatz" value={formatCurrency(v.maximum_revenue)} />
+              <Primary
+                label="Maximaler Umsatz (netto)"
+                value={formatCurrency(v.maximum_revenue)}
+              />
               <Primary
                 label="Maximaler DB"
                 value={formatCurrency(v.maximum_contribution_margin)}
