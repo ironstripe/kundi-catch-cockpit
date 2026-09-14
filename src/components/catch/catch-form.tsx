@@ -419,9 +419,16 @@ export function CatchForm({
             </div>
           </FormSection>
 
-          <FormSection title="Verkaufspreis" description="Was zahlt die Kundschaft?">
+          <FormSection
+            title="Verkaufspreis"
+            description="Was zahlt die Kundschaft? Alle Kundenpreise sind Bruttopreise inklusive MWST."
+          >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Normalpreis" error={issueFor("regular_price")} hint="CHF, optional">
+              <Field
+                label="Normalpreis"
+                error={issueFor("regular_price")}
+                hint="CHF inkl. MWST, optional"
+              >
                 <Input
                   id="regular_price"
                   type="number"
@@ -432,7 +439,12 @@ export function CatchForm({
                   onChange={(event) => set("regular_price", event.target.value)}
                 />
               </Field>
-              <Field label="Food-Catch-Preis" required error={issueFor("catch_price")} hint="CHF">
+              <Field
+                label="Food-Catch-Preis"
+                required
+                error={issueFor("catch_price")}
+                hint="CHF inkl. MWST"
+              >
                 <Input
                   id="catch_price"
                   type="number"
@@ -442,6 +454,23 @@ export function CatchForm({
                   value={values.catch_price}
                   aria-invalid={Boolean(issueFor("catch_price"))}
                   onChange={(event) => set("catch_price", event.target.value)}
+                />
+              </Field>
+              <Field
+                label="Mehrwertsteuersatz"
+                error={issueFor("vat_rate")}
+                hint={`Prozent, leer = Standardsatz ${defaultVatRate} %`}
+              >
+                <Input
+                  id="vat_rate"
+                  type="number"
+                  min="0"
+                  max="99.9"
+                  step="0.1"
+                  inputMode="decimal"
+                  value={values.vat_rate}
+                  aria-invalid={Boolean(issueFor("vat_rate"))}
+                  onChange={(event) => set("vat_rate", event.target.value)}
                 />
               </Field>
             </div>
