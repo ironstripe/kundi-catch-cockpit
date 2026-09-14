@@ -3,9 +3,13 @@
  *
  * Die verkaufte Menge ergibt sich ausschliesslich aus der manuell erfassten
  * Restmenge. Es werden keine Einzelverkäufe rekonstruiert.
+ *
+ * MWST: Der Food-Catch-Preis ist ein Bruttopreis. Umsatz und Deckungsbeitrag
+ * werden netto ausgewiesen, der Bruttoumsatz und die enthaltene MWST separat.
  */
 
 import { calculateCatch, type CalculationInput, type CalculationValues } from "@/lib/catch-calculation";
+import { netFromGross, resolveVatRate } from "@/lib/vat";
 
 export interface ReconciliationInput extends CalculationInput {
   remaining_quantity: number | null;
@@ -19,7 +23,14 @@ export interface ReconciliationValues {
   remaining_quantity: number;
   sold_quantity: number;
   sell_through_percentage: number | null;
+  /** Angewendeter MWST-Satz in Prozent. */
+  vat_rate: number;
+  /** Effektiver Umsatz ohne MWST — Basis für den Deckungsbeitrag. */
   effective_revenue: number;
+  /** Effektiver Umsatz inkl. MWST — was die Kundschaft bezahlt hat. */
+  effective_revenue_gross: number;
+  /** Im Bruttoumsatz enthaltene MWST. */
+  effective_vat: number;
   total_investment: number;
   effective_contribution_margin: number;
   remaining_inventory_value: number;
