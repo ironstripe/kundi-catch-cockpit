@@ -10,6 +10,7 @@ import {
   parseOfferDate,
   parseOfferNumber,
   parseTemperature,
+  vatBasisIncluded,
 } from "@/lib/supplier-offer-extraction";
 import { htmlToText } from "@/lib/supplier-offer-ai.server";
 import {
