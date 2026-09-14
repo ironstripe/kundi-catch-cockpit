@@ -49,8 +49,10 @@ import {
   saveCatch,
   type CatchFormValues,
 } from "@/lib/catches";
+import { fetchAppSettings } from "@/lib/app-settings";
 import { isoToZurichLocal } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { DEFAULT_VAT_RATE } from "@/lib/vat";
 
 interface CatchFormProps {
   mode: "create" | "edit";
