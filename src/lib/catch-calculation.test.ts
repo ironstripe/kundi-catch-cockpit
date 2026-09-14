@@ -66,7 +66,7 @@ describe("calculateCatch — Sonderfälle", () => {
     expect(v.delivery_cost_per_unit).toBeCloseTo(0.5, 6);
     expect(v.effective_cost_per_unit).toBeCloseTo(7, 6);
     expect(v.total_investment).toBeCloseTo(700, 6);
-    expect(v.maximum_contribution_margin).toBeCloseTo(90, 6);
+    expect(v.maximum_contribution_margin).toBeCloseTo((100 * 7.9) / 1.026 - 700, 6);
   });
 
   it("rechnet ohne Lieferkosten identisch", () => {
@@ -102,13 +102,13 @@ describe("calculateCatch — Sonderfälle", () => {
     ).values!;
     expect(v.quantity_unit).toBe("Stk");
     expect(v.total_investment).toBeCloseTo(160, 6);
-    expect(v.maximum_revenue).toBeCloseTo(240, 6);
+    expect(v.maximum_revenue).toBeCloseTo((40 * 6) / 1.026, 6);
   });
 
   it("rechnet mit Dezimalmengen", () => {
     const v = calculateCatch(input({ purchase_quantity: 12.5 })).values!;
     expect(v.total_investment).toBeCloseTo(81.25, 6);
-    expect(v.maximum_revenue).toBeCloseTo(98.75, 6);
+    expect(v.maximum_revenue).toBeCloseTo((12.5 * 7.9) / 1.026, 6);
   });
 
   it("zeigt bei unvollständigem Entwurf den neutralen Zustand", () => {
@@ -163,13 +163,14 @@ describe("aggregateCatches", () => {
 
   it("berechnet die gewichtete Rohmarge", () => {
     const totals = aggregateCatches([input({}), input({})]);
-    expect(totals.contribution_margin).toBeCloseTo(280, 6);
-    expect(totals.weighted_margin!.toFixed(1)).toBe("17.7");
+    expect(totals.contribution_margin).toBeCloseTo(2 * ((100 * 7.9) / 1.026 - 650), 6);
+    expect(totals.weighted_margin!.toFixed(1)).toBe("15.6");
   });
 
   it("ignoriert unvollständige Datensätze ohne Umsatz", () => {
     const totals = aggregateCatches([input({}), input({ catch_price: null })]);
-    expect(totals.revenue).toBeCloseTo(790, 6);
-    expect(totals.weighted_margin!.toFixed(1)).toBe("17.7");
+    expect(totals.revenue).toBeCloseTo((100 * 7.9) / 1.026, 6);
+    expect(totals.revenue_gross).toBeCloseTo(790, 6);
+    expect(totals.weighted_margin!.toFixed(1)).toBe("15.6");
   });
 });
