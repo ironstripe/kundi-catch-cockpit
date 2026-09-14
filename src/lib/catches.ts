@@ -68,6 +68,8 @@ export interface CatchListItem {
   delivery_cost: number;
   delivery_included: boolean;
   regular_price: number | null;
+  /** MWST-Satz in Prozent; null = globaler Standardsatz. */
+  vat_rate: number | null;
   updated_at: string;
   expected_sell_through: number | null;
   image_path: string | null;
@@ -124,7 +126,7 @@ export interface CatchDetail extends CatchListItem {
 const LIST_SELECT = `
   id, catch_number, product_name, temperature, status, available_from,
   purchase_quantity, quantity_unit, catch_price, expected_sell_through,
-  purchase_price, delivery_cost, delivery_included, regular_price, updated_at,
+  purchase_price, delivery_cost, delivery_included, regular_price, vat_rate, updated_at,
   published_at, published_text, published_image_path,
   supplier_id, remaining_quantity, inventory_counted_at, learning,
   closed_at, cancelled_at, cancellation_reason,
@@ -136,7 +138,7 @@ const LIST_SELECT = `
 const DETAIL_SELECT = `
   id, catch_number, product_name, temperature, status, description, packaging,
   expiry_date, supplier_id, purchase_quantity, quantity_unit, purchase_price,
-  delivery_cost, delivery_included, regular_price, catch_price, available_from,
+  delivery_cost, delivery_included, regular_price, catch_price, vat_rate, available_from,
   available_until, handicap_reason, handicap_story, internal_note,
   expected_sell_through, created_at, updated_at,
   published_at, published_by, published_text, published_image_path,
@@ -183,6 +185,8 @@ function mapList(row: any): CatchListItem {
     delivery_cost: Number(row.delivery_cost ?? 0),
     delivery_included: Boolean(row.delivery_included),
     regular_price: row.regular_price === null ? null : Number(row.regular_price),
+    vat_rate:
+      row.vat_rate === null || row.vat_rate === undefined ? null : Number(row.vat_rate),
     updated_at: row.updated_at,
     expected_sell_through:
       row.expected_sell_through === null ? null : Number(row.expected_sell_through),
@@ -328,6 +332,7 @@ export function catchDetailToForm(detail: CatchDetail): CatchFormValues {
     delivery_included: detail.delivery_included,
     regular_price: toText(detail.regular_price),
     catch_price: toText(detail.catch_price),
+    vat_rate: toText(detail.vat_rate),
     location_ids: detail.location_ids,
     available_from: detail.available_from ?? "",
     available_until: detail.available_until ?? "",
@@ -372,6 +377,7 @@ export async function saveCatch({ id, values, status, audit }: SaveArgs): Promis
     delivery_included: values.delivery_included,
     regular_price: num(values.regular_price),
     catch_price: num(values.catch_price),
+    vat_rate: parseVatRate(values.vat_rate),
     available_from: values.available_from ? zurichLocalToIso(values.available_from) : null,
     available_until: values.available_until ? zurichLocalToIso(values.available_until) : null,
     handicap_reason: values.handicap_reason || null,
