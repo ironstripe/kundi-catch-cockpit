@@ -114,15 +114,21 @@ export function ReconciliationCard({
                 strong
               />
               <Metric
-                label="Effektiver Umsatz (netto)"
+                label="Effektiver Nettoumsatz"
                 value={formatCurrency(v.effective_revenue)}
               />
-              <Metric label="Umsatz brutto" value={formatCurrency(v.effective_revenue_gross)} />
+              <Metric
+                label="Effektiver Bruttoumsatz"
+                value={formatCurrency(v.effective_revenue_gross)}
+              />
               <Metric
                 label={`Enthaltene MWST (${formatPercentValue(v.vat_rate)})`}
                 value={formatCurrency(v.effective_vat)}
               />
-              <Metric label="Gesamter Wareneinsatz" value={formatCurrency(v.total_investment)} />
+              <Metric
+                label="Nettoinvestition (Ware und Lieferung)"
+                value={formatCurrency(v.total_investment)}
+              />
               <Metric
                 label="Effektiver DB"
                 value={formatCurrency(v.effective_contribution_margin)}
@@ -182,8 +188,8 @@ export function ReconciliationCard({
                     actual={formatQuantity(v.sold_quantity, v.quantity_unit)}
                   />
                   <ComparisonRow
-                    label="Umsatz"
-                    planned={planned ? formatCurrency(planned.maximum_revenue) : "—"}
+                    label="Nettoumsatz"
+                    planned={planned ? formatCurrency(planned.maximum_net_revenue) : "—"}
                     actual={formatCurrency(v.effective_revenue)}
                   />
                   <ComparisonRow

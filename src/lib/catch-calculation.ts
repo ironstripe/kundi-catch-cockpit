@@ -6,12 +6,20 @@
  * bei der Anzeige.
  *
  * MWST: Kundenpreise (Food-Catch-Preis, Normalpreis) sind Bruttopreise inkl.
- * Schweizer MWST. Umsatz, Deckungsbeitrag und Rohmarge werden netto gerechnet.
- * Einkaufspreis und Lieferkosten sind Nettowerte.
+ * Schweizer MWST. Umsatz, Deckungsbeitrag, Rohmarge und Break-even werden netto
+ * gerechnet. Einkaufspreis und Lieferkosten tragen eine ausdrücklich erfasste
+ * Steuerbasis: sind sie brutto erfasst, wird die enthaltene Vorsteuer
+ * herausgerechnet — sie ist kein Warenaufwand.
  */
 
 import { DEFAULT_CATCH_THRESHOLDS, type CatchThresholds } from "@/lib/catch-thresholds";
-import { netFromGross, resolveVatRate } from "@/lib/vat";
+import {
+  DEFAULT_DELIVERY_VAT_RATE,
+  DEFAULT_PURCHASE_VAT_RATE,
+  netCost,
+  netFromGross,
+  resolveVatRate,
+} from "@/lib/vat";
 
 export interface CalculationInput {
   purchase_quantity: number | null;
@@ -20,8 +28,16 @@ export interface CalculationInput {
   delivery_cost: number | null;
   regular_price: number | null;
   catch_price: number | null;
-  /** MWST-Satz in Prozent; fehlt er, gilt der Standardsatz. */
+  /** Verkaufs-MWST-Satz in Prozent; fehlt er, gilt der Standardsatz. */
   vat_rate?: number | null;
+  /** TRUE = der erfasste Einkaufspreis ist ein Bruttopreis. */
+  purchase_price_includes_vat?: boolean | null;
+  /** MWST-Satz des Einkaufs in Prozent; fehlt er, gilt der Lebensmittelsatz. */
+  purchase_vat_rate?: number | null;
+  /** TRUE = die erfassten Lieferkosten sind ein Bruttobetrag. */
+  delivery_cost_includes_vat?: boolean | null;
+  /** MWST-Satz der Lieferkosten in Prozent; fehlt er, gilt der Normalsatz. */
+  delivery_vat_rate?: number | null;
 }
 
 export type DecisionLevel = "green" | "orange" | "red" | "incomplete";
@@ -29,26 +45,55 @@ export type DecisionLevel = "green" | "orange" | "red" | "incomplete";
 export interface CalculationValues {
   purchase_quantity: number;
   quantity_unit: string;
+  /** Erfasster Einkaufspreis pro Einheit, so wie eingegeben. */
   purchase_price: number;
+  /** Erfasste Lieferkosten, so wie eingegeben. */
   delivery_cost: number;
+  /** TRUE = der erfasste Einkaufspreis war ein Bruttopreis. */
+  purchase_price_includes_vat: boolean;
+  /** Angewendeter MWST-Satz des Einkaufs in Prozent. */
+  purchase_vat_rate: number;
+  /** Einkaufspreis pro Einheit ohne MWST — Basis der Kostenrechnung. */
+  net_purchase_price_per_unit: number;
+  /** TRUE = die erfassten Lieferkosten waren ein Bruttobetrag. */
+  delivery_cost_includes_vat: boolean;
+  /** Angewendeter MWST-Satz der Lieferkosten in Prozent. */
+  delivery_vat_rate: number;
+  /** Lieferkosten ohne MWST. */
+  net_delivery_cost: number;
   /** Kundenpreis inkl. MWST. */
   catch_price: number;
   /** Kundenpreis ohne MWST. */
   catch_price_net: number;
+  /** Kundenpreis inkl. MWST (eindeutig benannt). */
+  gross_sales_price_per_unit: number;
+  /** Kundenpreis ohne MWST (eindeutig benannt). */
+  net_sales_price_per_unit: number;
   /** Normalpreis inkl. MWST. */
   regular_price: number | null;
-  /** Angewendeter MWST-Satz in Prozent. */
+  /** Angewendeter Verkaufs-MWST-Satz in Prozent. */
   vat_rate: number;
   /** In einer Einheit enthaltene MWST. */
   vat_per_unit: number;
+  /** Nettoinvestition (Ware und Lieferung ohne MWST). */
   total_investment: number;
+  /** Nettoinvestition (eindeutig benannt). */
+  net_investment: number;
   /** Maximaler Umsatz ohne MWST — Basis für Deckungsbeitrag und Rohmarge. */
   maximum_revenue: number;
+  /** Maximaler Nettoumsatz (eindeutig benannt). */
+  maximum_net_revenue: number;
   /** Maximaler Umsatz inkl. MWST — was die Kundschaft zahlt. */
   maximum_revenue_gross: number;
+  /** Maximaler Bruttoumsatz (eindeutig benannt). */
+  maximum_gross_revenue: number;
   /** Im maximalen Bruttoumsatz enthaltene MWST. */
   maximum_vat: number;
+  /** Enthaltene Verkaufs-MWST (eindeutig benannt). */
+  maximum_sales_vat: number;
+  /** Anteilige Nettolieferkosten pro Einheit. */
   delivery_cost_per_unit: number | null;
+  /** Effektive Nettokosten pro Einheit inkl. anteiliger Lieferung. */
   effective_cost_per_unit: number;
   contribution_margin_per_unit: number;
   maximum_contribution_margin: number;
@@ -154,19 +199,27 @@ export function calculateCatch(
   const catchPriceNet = netFromGross(catchPrice, vatRate);
   const vatPerUnit = catchPrice - catchPriceNet;
 
-  const totalInvestment = quantity * purchasePrice + safeDelivery;
+  const purchaseIncludesVat = Boolean(input.purchase_price_includes_vat);
+  const purchaseVatRate = resolveVatRate(input.purchase_vat_rate, DEFAULT_PURCHASE_VAT_RATE);
+  const netPurchasePricePerUnit = netCost(purchasePrice, purchaseIncludesVat, purchaseVatRate);
+
+  const deliveryIncludesVat = Boolean(input.delivery_cost_includes_vat);
+  const deliveryVatRate = resolveVatRate(input.delivery_vat_rate, DEFAULT_DELIVERY_VAT_RATE);
+  const netDeliveryCost = netCost(safeDelivery, deliveryIncludesVat, deliveryVatRate);
+
+  const netInvestment = quantity * netPurchasePricePerUnit + netDeliveryCost;
   const maximumRevenueGross = quantity * catchPrice;
   const maximumRevenue = quantity * catchPriceNet;
   const maximumVat = maximumRevenueGross - maximumRevenue;
-  const deliveryCostPerUnit = safeDivide(safeDelivery, quantity);
-  const effectiveCostPerUnit = purchasePrice + (deliveryCostPerUnit ?? 0);
+  const deliveryCostPerUnit = safeDivide(netDeliveryCost, quantity);
+  const effectiveCostPerUnit = netPurchasePricePerUnit + (deliveryCostPerUnit ?? 0);
   const contributionMarginPerUnit = catchPriceNet - effectiveCostPerUnit;
-  const maximumContributionMargin = maximumRevenue - totalInvestment;
+  const maximumContributionMargin = maximumRevenue - netInvestment;
   const grossMarginPercentage =
     maximumRevenue > 0 ? (maximumContributionMargin / maximumRevenue) * 100 : null;
   const discountPercentage =
     regularPrice !== null ? ((regularPrice - catchPrice) / regularPrice) * 100 : null;
-  const breakEvenQuantity = catchPriceNet > 0 ? safeDivide(totalInvestment, catchPriceNet) : null;
+  const breakEvenQuantity = catchPriceNet > 0 ? safeDivide(netInvestment, catchPriceNet) : null;
   const breakEvenSellThrough =
     breakEvenQuantity !== null ? (breakEvenQuantity / quantity) * 100 : null;
 
@@ -175,15 +228,27 @@ export function calculateCatch(
     quantity_unit: input.quantity_unit,
     purchase_price: purchasePrice,
     delivery_cost: safeDelivery,
+    purchase_price_includes_vat: purchaseIncludesVat,
+    purchase_vat_rate: purchaseVatRate,
+    net_purchase_price_per_unit: netPurchasePricePerUnit,
+    delivery_cost_includes_vat: deliveryIncludesVat,
+    delivery_vat_rate: deliveryVatRate,
+    net_delivery_cost: netDeliveryCost,
     catch_price: catchPrice,
     catch_price_net: catchPriceNet,
+    gross_sales_price_per_unit: catchPrice,
+    net_sales_price_per_unit: catchPriceNet,
     regular_price: regularPrice,
     vat_rate: vatRate,
     vat_per_unit: vatPerUnit,
-    total_investment: totalInvestment,
+    total_investment: netInvestment,
+    net_investment: netInvestment,
     maximum_revenue: maximumRevenue,
+    maximum_net_revenue: maximumRevenue,
     maximum_revenue_gross: maximumRevenueGross,
+    maximum_gross_revenue: maximumRevenueGross,
     maximum_vat: maximumVat,
+    maximum_sales_vat: maximumVat,
     delivery_cost_per_unit: deliveryCostPerUnit,
     effective_cost_per_unit: effectiveCostPerUnit,
     contribution_margin_per_unit: contributionMarginPerUnit,
@@ -267,6 +332,18 @@ function explain(v: CalculationValues, t: CatchThresholds): string[] {
       ? `Der Food-Catch-Preis von CHF ${v.catch_price.toFixed(2)} enthält ${pct(v.vat_rate)} MWST. Gerechnet wird mit dem Nettopreis von CHF ${v.catch_price_net.toFixed(2)}.`
       : "Für diesen Catch ist kein Mehrwertsteuersatz hinterlegt. Brutto- und Nettopreis sind identisch.",
   );
+
+  out.push(
+    v.purchase_price_includes_vat
+      ? `Der Einkaufspreis von CHF ${v.purchase_price.toFixed(2)} ist inkl. ${pct(v.purchase_vat_rate)} MWST erfasst. Gerechnet wird mit CHF ${v.net_purchase_price_per_unit.toFixed(2)} netto.`
+      : "Der Einkaufspreis ist exkl. MWST erfasst und wird direkt als Warenaufwand gerechnet.",
+  );
+
+  if (v.delivery_cost > 0 && v.delivery_cost_includes_vat) {
+    out.push(
+      `Die Lieferkosten von CHF ${v.delivery_cost.toFixed(2)} sind inkl. ${pct(v.delivery_vat_rate)} MWST erfasst. Gerechnet wird mit CHF ${v.net_delivery_cost.toFixed(2)} netto.`,
+    );
+  }
 
   if (margin !== null) {
     out.push(

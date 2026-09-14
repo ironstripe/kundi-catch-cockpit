@@ -3,7 +3,12 @@ import { parseNumberInput, type CalculationInput } from "@/lib/catch-calculation
 import type { ReconciliationInput } from "@/lib/catch-reconciliation";
 import { ACTIVE_STATUSES, type CatchStatus, type Temperature } from "@/lib/catch-domain";
 import { zurichLocalToIso } from "@/lib/format";
-import { DEFAULT_VAT_RATE, parseVatRate } from "@/lib/vat";
+import {
+  DEFAULT_DELIVERY_VAT_RATE,
+  DEFAULT_PURCHASE_VAT_RATE,
+  DEFAULT_VAT_RATE,
+  parseVatRate,
+} from "@/lib/vat";
 
 export const CATCH_IMAGE_BUCKET = "catch-images";
 
@@ -17,12 +22,22 @@ export interface CatchFormValues {
   purchase_quantity: string;
   quantity_unit: string;
   purchase_price: string;
+  /** TRUE = der erfasste Einkaufspreis ist ein Bruttopreis. */
+  purchase_price_includes_vat: boolean;
+  /** MWST-Satz Einkauf in Prozent; leer = Lebensmittelsatz. */
+  purchase_vat_rate: string;
   delivery_cost: string;
   delivery_included: boolean;
+  /** TRUE = die erfassten Lieferkosten sind ein Bruttobetrag. */
+  delivery_cost_includes_vat: boolean;
+  /** MWST-Satz Lieferkosten in Prozent; leer = Normalsatz. */
+  delivery_vat_rate: string;
   regular_price: string;
   catch_price: string;
-  /** MWST-Satz in Prozent; leer = globaler Standardsatz. */
+  /** Verkaufs-MWST-Satz in Prozent; leer = globaler Standardsatz. */
   vat_rate: string;
+  /** Steuerbasis von Einkauf und Lieferung wurde bestätigt. */
+  vat_basis_confirmed: boolean;
   location_ids: string[];
   available_from: string;
   available_until: string;
@@ -41,11 +56,16 @@ export const EMPTY_CATCH_FORM: CatchFormValues = {
   purchase_quantity: "",
   quantity_unit: "kg",
   purchase_price: "",
+  purchase_price_includes_vat: false,
+  purchase_vat_rate: "",
   delivery_cost: "0.00",
   delivery_included: false,
+  delivery_cost_includes_vat: false,
+  delivery_vat_rate: "",
   regular_price: "",
   catch_price: "",
   vat_rate: "",
+  vat_basis_confirmed: false,
   location_ids: [],
   available_from: "",
   available_until: "",
@@ -68,8 +88,13 @@ export interface CatchListItem {
   delivery_cost: number;
   delivery_included: boolean;
   regular_price: number | null;
-  /** MWST-Satz in Prozent; null = globaler Standardsatz. */
+  /** Verkaufs-MWST-Satz in Prozent; null = globaler Standardsatz. */
   vat_rate: number | null;
+  purchase_price_includes_vat: boolean;
+  purchase_vat_rate: number | null;
+  delivery_cost_includes_vat: boolean;
+  delivery_vat_rate: number | null;
+  vat_basis_confirmed: boolean;
   updated_at: string;
   expected_sell_through: number | null;
   image_path: string | null;
@@ -126,7 +151,9 @@ export interface CatchDetail extends CatchListItem {
 const LIST_SELECT = `
   id, catch_number, product_name, temperature, status, available_from,
   purchase_quantity, quantity_unit, catch_price, expected_sell_through,
-  purchase_price, delivery_cost, delivery_included, regular_price, vat_rate, updated_at,
+  purchase_price, delivery_cost, delivery_included, regular_price, vat_rate,
+  purchase_price_includes_vat, purchase_vat_rate, delivery_cost_includes_vat,
+  delivery_vat_rate, vat_basis_confirmed, updated_at,
   published_at, published_text, published_image_path,
   supplier_id, remaining_quantity, inventory_counted_at, learning,
   closed_at, cancelled_at, cancellation_reason,
@@ -138,7 +165,9 @@ const LIST_SELECT = `
 const DETAIL_SELECT = `
   id, catch_number, product_name, temperature, status, description, packaging,
   expiry_date, supplier_id, purchase_quantity, quantity_unit, purchase_price,
-  delivery_cost, delivery_included, regular_price, catch_price, vat_rate, available_from,
+  delivery_cost, delivery_included, regular_price, catch_price, vat_rate,
+  purchase_price_includes_vat, purchase_vat_rate, delivery_cost_includes_vat,
+  delivery_vat_rate, vat_basis_confirmed, available_from,
   available_until, handicap_reason, handicap_story, internal_note,
   expected_sell_through, created_at, updated_at,
   published_at, published_by, published_text, published_image_path,
@@ -186,6 +215,17 @@ function mapList(row: any): CatchListItem {
     delivery_included: Boolean(row.delivery_included),
     regular_price: row.regular_price === null ? null : Number(row.regular_price),
     vat_rate: row.vat_rate === null || row.vat_rate === undefined ? null : Number(row.vat_rate),
+    purchase_price_includes_vat: Boolean(row.purchase_price_includes_vat),
+    purchase_vat_rate:
+      row.purchase_vat_rate === null || row.purchase_vat_rate === undefined
+        ? null
+        : Number(row.purchase_vat_rate),
+    delivery_cost_includes_vat: Boolean(row.delivery_cost_includes_vat),
+    delivery_vat_rate:
+      row.delivery_vat_rate === null || row.delivery_vat_rate === undefined
+        ? null
+        : Number(row.delivery_vat_rate),
+    vat_basis_confirmed: Boolean(row.vat_basis_confirmed),
     updated_at: row.updated_at,
     expected_sell_through:
       row.expected_sell_through === null ? null : Number(row.expected_sell_through),
@@ -327,11 +367,16 @@ export function catchDetailToForm(detail: CatchDetail): CatchFormValues {
     purchase_quantity: detail.purchase_quantity ? String(detail.purchase_quantity) : "",
     quantity_unit: detail.quantity_unit ?? "kg",
     purchase_price: toText(detail.purchase_price),
+    purchase_price_includes_vat: detail.purchase_price_includes_vat,
+    purchase_vat_rate: toText(detail.purchase_vat_rate),
     delivery_cost: detail.delivery_cost.toFixed(2),
     delivery_included: detail.delivery_included,
+    delivery_cost_includes_vat: detail.delivery_cost_includes_vat,
+    delivery_vat_rate: toText(detail.delivery_vat_rate),
     regular_price: toText(detail.regular_price),
     catch_price: toText(detail.catch_price),
     vat_rate: toText(detail.vat_rate),
+    vat_basis_confirmed: detail.vat_basis_confirmed,
     location_ids: detail.location_ids,
     available_from: detail.available_from ?? "",
     available_until: detail.available_until ?? "",
@@ -371,11 +416,18 @@ export async function saveCatch({ id, values, status, audit }: SaveArgs): Promis
     purchase_quantity: num(values.purchase_quantity) ?? 0,
     quantity_unit: values.quantity_unit,
     purchase_price: num(values.purchase_price),
+    purchase_price_includes_vat: values.purchase_price_includes_vat,
+    purchase_vat_rate: parseVatRate(values.purchase_vat_rate) ?? DEFAULT_PURCHASE_VAT_RATE,
     delivery_cost: values.delivery_included ? 0 : (num(values.delivery_cost) ?? 0),
     delivery_included: values.delivery_included,
+    delivery_cost_includes_vat: values.delivery_included
+      ? false
+      : values.delivery_cost_includes_vat,
+    delivery_vat_rate: parseVatRate(values.delivery_vat_rate) ?? DEFAULT_DELIVERY_VAT_RATE,
     regular_price: num(values.regular_price),
     catch_price: num(values.catch_price),
     vat_rate: parseVatRate(values.vat_rate),
+    vat_basis_confirmed: values.vat_basis_confirmed,
     available_from: values.available_from ? zurichLocalToIso(values.available_from) : null,
     available_until: values.available_until ? zurichLocalToIso(values.available_until) : null,
     handicap_reason: values.handicap_reason || null,
@@ -476,6 +528,10 @@ export function catchToCalculationInput(
     regular_price: item.regular_price,
     catch_price: item.catch_price,
     vat_rate: item.vat_rate ?? defaultVatRate,
+    purchase_price_includes_vat: item.purchase_price_includes_vat,
+    purchase_vat_rate: item.purchase_vat_rate,
+    delivery_cost_includes_vat: item.delivery_cost_includes_vat,
+    delivery_vat_rate: item.delivery_vat_rate,
   };
 }
 
@@ -492,5 +548,9 @@ export function formValuesToCalculationInput(
     regular_price: parseNumberInput(values.regular_price),
     catch_price: parseNumberInput(values.catch_price),
     vat_rate: parseVatRate(values.vat_rate) ?? defaultVatRate,
+    purchase_price_includes_vat: values.purchase_price_includes_vat,
+    purchase_vat_rate: parseVatRate(values.purchase_vat_rate),
+    delivery_cost_includes_vat: values.delivery_cost_includes_vat,
+    delivery_vat_rate: parseVatRate(values.delivery_vat_rate),
   };
 }

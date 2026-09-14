@@ -91,6 +91,8 @@ const SYSTEM_PROMPT = [
   "Widersprüche zwischen Quellen entscheidest du nicht: nenne sie in conflicts und lasse den strittigen Wert unverändert unsicher.",
   "Enthalten die Quellen mehrere verschiedene Produkte, setze multiple_products auf true und führe nichts zusammen.",
   "Nützliche Angaben ohne eigenes Feld gehören knapp und belegt in other_conditions — nie die ganze Spezifikation.",
+  "Die Steuerbasis darfst du nie raten: purchase_price_includes_vat und delivery_cost_includes_vat nur setzen, wenn die Quelle es ausdrücklich nennt («inkl. MWST» → 'inkl. MWST', «exkl. MWST» oder «zzgl. MWST» → 'exkl. MWST'), sonst null.",
+  "purchase_vat_rate und delivery_vat_rate nur übernehmen, wenn ein Satz ausdrücklich genannt ist. Der Verkaufs-MWST-Satz von Food Catch steht nie im Angebot.",
   "Antworte ausschliesslich mit dem JSON-Objekt.",
 ].join(" ");
 

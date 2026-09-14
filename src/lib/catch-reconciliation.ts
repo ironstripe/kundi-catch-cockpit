@@ -13,7 +13,13 @@ import {
   type CalculationInput,
   type CalculationValues,
 } from "@/lib/catch-calculation";
-import { netFromGross, resolveVatRate } from "@/lib/vat";
+import {
+  DEFAULT_DELIVERY_VAT_RATE,
+  DEFAULT_PURCHASE_VAT_RATE,
+  netCost,
+  netFromGross,
+  resolveVatRate,
+} from "@/lib/vat";
 
 export interface ReconciliationInput extends CalculationInput {
   remaining_quantity: number | null;
@@ -35,6 +41,7 @@ export interface ReconciliationValues {
   effective_revenue_gross: number;
   /** Im Bruttoumsatz enthaltene MWST. */
   effective_vat: number;
+  /** Nettoinvestition: Ware und Lieferung ohne MWST. */
   total_investment: number;
   effective_contribution_margin: number;
   remaining_inventory_value: number;
@@ -162,14 +169,26 @@ export function reconcileCatch(input: ReconciliationInput): ReconciliationResult
   const vatRate = resolveVatRate(input.vat_rate);
   const catchPriceNet = netFromGross(catchPrice, vatRate);
 
+  const purchaseVatRate = resolveVatRate(input.purchase_vat_rate, DEFAULT_PURCHASE_VAT_RATE);
+  const netPurchasePrice = netCost(
+    purchasePrice,
+    Boolean(input.purchase_price_includes_vat),
+    purchaseVatRate,
+  );
+  const netDeliveryCost = netCost(
+    deliveryCost,
+    Boolean(input.delivery_cost_includes_vat),
+    resolveVatRate(input.delivery_vat_rate, DEFAULT_DELIVERY_VAT_RATE),
+  );
+
   const soldQuantity = Math.max(0, purchaseQuantity - remaining);
   const sellThrough = purchaseQuantity > 0 ? (soldQuantity / purchaseQuantity) * 100 : null;
   const effectiveRevenueGross = soldQuantity * catchPrice;
   const effectiveRevenue = soldQuantity * catchPriceNet;
   const effectiveVat = effectiveRevenueGross - effectiveRevenue;
-  const totalInvestment = purchaseQuantity * purchasePrice + deliveryCost;
+  const totalInvestment = purchaseQuantity * netPurchasePrice + netDeliveryCost;
   const effectiveContributionMargin = effectiveRevenue - totalInvestment;
-  const remainingInventoryValue = remaining * purchasePrice;
+  const remainingInventoryValue = remaining * netPurchasePrice;
   const duration = durationMs(input.published_at, input.inventory_counted_at);
   const breakEven = planned.values?.break_even_sell_through ?? null;
   const result = breakEvenResult(sellThrough, breakEven);
