@@ -313,8 +313,13 @@ function explain(v: CalculationValues, t: CatchThresholds): string[] {
 /** Aggregierte Kennzahlen mehrerer Catches fürs Dashboard. */
 export interface CatchTotals {
   contribution_margin: number;
+  /** Maximaler Umsatz ohne MWST. */
   revenue: number;
-  /** Gewichtete Rohmarge in Prozent, null wenn kein Umsatz vorliegt. */
+  /** Maximaler Umsatz inkl. MWST. */
+  revenue_gross: number;
+  /** Summe der enthaltenen MWST. */
+  vat: number;
+  /** Gewichtete Rohmarge in Prozent (netto), null wenn kein Umsatz vorliegt. */
   weighted_margin: number | null;
   /** Geplante Einkaufsmenge je Einheit — nie einheitenübergreifend addiert. */
   quantity_by_unit: { unit: string; quantity: number }[];
@@ -323,6 +328,8 @@ export interface CatchTotals {
 export function aggregateCatches(inputs: CalculationInput[]): CatchTotals {
   let contribution = 0;
   let revenue = 0;
+  let revenueGross = 0;
+  let vat = 0;
   const byUnit = new Map<string, number>();
 
   for (const input of inputs) {
@@ -331,6 +338,8 @@ export function aggregateCatches(inputs: CalculationInput[]): CatchTotals {
       if (result.values.maximum_revenue > 0) {
         contribution += result.values.maximum_contribution_margin;
         revenue += result.values.maximum_revenue;
+        revenueGross += result.values.maximum_revenue_gross;
+        vat += result.values.maximum_vat;
       }
     }
     const quantity = input.purchase_quantity;
@@ -342,6 +351,8 @@ export function aggregateCatches(inputs: CalculationInput[]): CatchTotals {
   return {
     contribution_margin: contribution,
     revenue,
+    revenue_gross: revenueGross,
+    vat,
     weighted_margin: revenue > 0 ? (contribution / revenue) * 100 : null,
     quantity_by_unit: [...byUnit.entries()].map(([unit, quantity]) => ({ unit, quantity })),
   };
