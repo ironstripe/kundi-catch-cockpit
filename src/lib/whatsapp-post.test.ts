@@ -49,6 +49,7 @@ Unser Lieferant baut seinen Lagerbestand ab. Mit dem Fisch stimmt alles. Es ist 
 
 ~CHF 10.75/kg~ → *CHF 7.90/kg* 🔥
 26.5 % günstiger
+inkl. MWST
 
 MHD: 19.01.2027
 *Nur solange Vorrat.*
@@ -100,9 +101,7 @@ describe("generatePostText", () => {
       ...felchen,
       location_names: ["Hofladen Kundelfingerhof", "Stadtladen Schaffhausen"],
     });
-    expect(text).toContain(
-      "📍 Abholung:\n• Hofladen Kundelfingerhof\n• Stadtladen Schaffhausen",
-    );
+    expect(text).toContain("📍 Abholung:\n• Hofladen Kundelfingerhof\n• Stadtladen Schaffhausen");
   });
 
   it("ohne Verfügbarkeitsende keine Zeile «Verfügbar bis»", () => {

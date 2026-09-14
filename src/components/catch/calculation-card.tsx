@@ -7,8 +7,15 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import type { CalculationResult } from "@/lib/catch-calculation";
 import { formatCurrency, formatPercentValue, formatQuantity } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { vatBasisLabel } from "@/lib/vat";
 
 const HELP: Record<string, string> = {
+  "Angebotspreis inkl. MWST":
+    "Der Kundenpreis enthält immer die Mehrwertsteuer. Er wird so kommuniziert und publiziert.",
+  "Maximaler Nettoumsatz":
+    "Vor der Margenrechnung wird die enthaltene Mehrwertsteuer abgezogen. Deckungsbeitrag und Rohmarge beruhen auf diesem Nettoumsatz.",
+  Nettoinvestition:
+    "Ware und Lieferkosten ohne Mehrwertsteuer — je nach erfasster Steuerbasis umgerechnet.",
   "Maximaler DB":
     "Der maximale Deckungsbeitrag zeigt, was übrig bleibt, wenn die gesamte Einkaufsmenge zum Food-Catch-Preis verkauft wird.",
   Rohmarge: "Die Rohmarge ist der Anteil des maximalen Deckungsbeitrags am maximalen Umsatz.",
@@ -74,9 +81,36 @@ export function CalculationCard({
           </div>
         ) : v ? (
           <>
+            <dl className="space-y-1 rounded-md border bg-muted/20 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Kundensicht
+              </p>
+              <Secondary
+                label="Angebotspreis inkl. MWST"
+                value={`${formatCurrency(v.gross_sales_price_per_unit)} / ${unit}`}
+              />
+              <Secondary
+                label="Maximaler Bruttoumsatz"
+                value={formatCurrency(v.maximum_gross_revenue)}
+              />
+              <Secondary
+                label="Preisvorteil"
+                value={
+                  v.discount_percentage === null
+                    ? "Kein Vergleichspreis hinterlegt"
+                    : formatPercentValue(v.discount_percentage)
+                }
+                negative={(v.discount_percentage ?? 1) < 0}
+                muted={v.discount_percentage === null}
+              />
+            </dl>
+
             <dl className={cn("grid gap-2", compact ? "grid-cols-2" : "grid-cols-2")}>
-              <Primary label="Investition" value={formatCurrency(v.total_investment)} />
-              <Primary label="Maximaler Umsatz (netto)" value={formatCurrency(v.maximum_revenue)} />
+              <Primary label="Nettoinvestition" value={formatCurrency(v.net_investment)} />
+              <Primary
+                label="Maximaler Nettoumsatz"
+                value={formatCurrency(v.maximum_net_revenue)}
+              />
               <Primary
                 label="Maximaler DB"
                 value={formatCurrency(v.maximum_contribution_margin)}
@@ -94,13 +128,24 @@ export function CalculationCard({
             </dl>
 
             <dl className="space-y-1 border-t pt-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Interne Rechnung (netto)
+              </p>
               <Secondary
-                label={`Food-Catch-Preis netto (MWST ${formatPercentValue(v.vat_rate)})`}
-                value={`${formatCurrency(v.catch_price_net)} / ${unit}`}
+                label={`Nettopreis (MWST ${formatPercentValue(v.vat_rate)})`}
+                value={`${formatCurrency(v.net_sales_price_per_unit)} / ${unit}`}
               />
               <Secondary
-                label="Maximaler Umsatz brutto"
-                value={`${formatCurrency(v.maximum_revenue_gross)} (davon MWST ${formatCurrency(v.maximum_vat)})`}
+                label="Enthaltene MWST"
+                value={`${formatCurrency(v.maximum_sales_vat)} (${formatCurrency(v.vat_per_unit)} / ${unit})`}
+              />
+              <Secondary
+                label="Nettoeinkaufspreis"
+                value={`${formatCurrency(v.net_purchase_price_per_unit)} / ${unit} (${vatBasisLabel(v.purchase_price_includes_vat)} erfasst)`}
+              />
+              <Secondary
+                label="Nettolieferkosten"
+                value={`${formatCurrency(v.net_delivery_cost)} (${vatBasisLabel(v.delivery_cost_includes_vat)} erfasst)`}
               />
               <Secondary
                 label="Effektiver EK pro Einheit"
@@ -110,16 +155,6 @@ export function CalculationCard({
                 label="DB pro Einheit"
                 value={`${formatCurrency(v.contribution_margin_per_unit)} / ${unit}`}
                 negative={v.contribution_margin_per_unit <= 0}
-              />
-              <Secondary
-                label="Preisvorteil"
-                value={
-                  v.discount_percentage === null
-                    ? "Kein Vergleichspreis hinterlegt"
-                    : formatPercentValue(v.discount_percentage)
-                }
-                negative={(v.discount_percentage ?? 1) < 0}
-                muted={v.discount_percentage === null}
               />
               <Secondary
                 label="Break-even-Menge"

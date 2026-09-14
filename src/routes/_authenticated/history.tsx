@@ -395,7 +395,7 @@ function HistoryPage() {
                     <TableHead className="text-right">Rest</TableHead>
                     <TableHead className="text-right">Catch-Preis</TableHead>
                     <TableHead className="text-right">Abverkauf</TableHead>
-                    <TableHead className="text-right">Umsatz</TableHead>
+                    <TableHead className="text-right">Nettoumsatz</TableHead>
                     <TableHead className="text-right">Effektiver DB</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Post</TableHead>

@@ -23,8 +23,10 @@ import {
   missingRequiredFields,
   normaliseExtraction,
   OFFER_FIELD_LABELS,
+  vatBasisIncluded,
   type ExtractedOffer,
 } from "@/lib/supplier-offer-extraction";
+import { DEFAULT_DELIVERY_VAT_RATE, DEFAULT_PURCHASE_VAT_RATE } from "@/lib/vat";
 
 export interface CaseActionResult {
   status: string;
@@ -442,8 +444,17 @@ export const convertCaseToCatch = createServerFn({ method: "POST" })
         purchase_quantity: numberOrNull(fieldValue(offer, "available_quantity")) ?? 0,
         quantity_unit: (fieldValue(offer, "quantity_unit") as string | null) ?? "kg",
         purchase_price: numberOrNull(fieldValue(offer, "purchase_price")),
+        // Steuerbasis: nur übernehmen, wenn das Angebot sie ausdrücklich nennt.
+        purchase_price_includes_vat:
+          vatBasisIncluded(offer, "purchase_price_includes_vat") ?? false,
+        purchase_vat_rate:
+          numberOrNull(fieldValue(offer, "purchase_vat_rate")) ?? DEFAULT_PURCHASE_VAT_RATE,
         regular_price: numberOrNull(fieldValue(offer, "regular_price")),
         delivery_cost: numberOrNull(fieldValue(offer, "delivery_cost")) ?? 0,
+        delivery_cost_includes_vat: vatBasisIncluded(offer, "delivery_cost_includes_vat") ?? false,
+        delivery_vat_rate:
+          numberOrNull(fieldValue(offer, "delivery_vat_rate")) ?? DEFAULT_DELIVERY_VAT_RATE,
+        vat_basis_confirmed: false,
         available_from: typeof availableFrom === "string" ? `${availableFrom}T00:00:00Z` : null,
         handicap_reason: (fieldValue(offer, "offer_reason") as string | null) ?? null,
         internal_note: internalNote || null,

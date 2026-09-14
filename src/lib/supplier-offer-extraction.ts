@@ -26,9 +26,13 @@ export type OfferFieldKey =
   | "carton_count"
   | "available_quantity"
   | "purchase_price"
+  | "purchase_price_includes_vat"
+  | "purchase_vat_rate"
   | "regular_price"
   | "currency"
   | "delivery_cost"
+  | "delivery_cost_includes_vat"
+  | "delivery_vat_rate"
   | "delivery_location"
   | "available_from"
   | "expiry_date"
@@ -53,9 +57,13 @@ export const OFFER_FIELD_KEYS: OfferFieldKey[] = [
   "carton_count",
   "available_quantity",
   "purchase_price",
+  "purchase_price_includes_vat",
+  "purchase_vat_rate",
   "regular_price",
   "currency",
   "delivery_cost",
+  "delivery_cost_includes_vat",
+  "delivery_vat_rate",
   "delivery_location",
   "available_from",
   "expiry_date",
@@ -81,9 +89,13 @@ export const OFFER_FIELD_LABELS: Record<OfferFieldKey, string> = {
   carton_count: "Anzahl Kartons",
   available_quantity: "Verfügbare Menge",
   purchase_price: "Einkaufspreis",
+  purchase_price_includes_vat: "Steuerbasis Einkaufspreis",
+  purchase_vat_rate: "MWST-Satz Einkauf",
   regular_price: "Normalpreis",
   currency: "Währung",
   delivery_cost: "Lieferkosten",
+  delivery_cost_includes_vat: "Steuerbasis Lieferkosten",
+  delivery_vat_rate: "MWST-Satz Lieferkosten",
   delivery_location: "Liefer- oder Abholort",
   available_from: "Verfügbar ab",
   expiry_date: "Mindesthaltbarkeitsdatum",
@@ -99,7 +111,37 @@ export const NUMERIC_FIELDS: OfferFieldKey[] = [
   "purchase_price",
   "regular_price",
   "delivery_cost",
+  "purchase_vat_rate",
+  "delivery_vat_rate",
 ];
+
+/**
+ * Steuerbasis-Felder. Sie werden nur gesetzt, wenn die Quelle es ausdrücklich
+ * nennt — nie geraten. Werte: "inkl. MWST" oder "exkl. MWST".
+ */
+export const VAT_BASIS_FIELDS: OfferFieldKey[] = [
+  "purchase_price_includes_vat",
+  "delivery_cost_includes_vat",
+];
+
+/** Erkennt eine ausdrücklich genannte Steuerbasis; sonst null. */
+export function parseVatBasis(value: unknown): "inkl. MWST" | "exkl. MWST" | null {
+  if (typeof value === "boolean") return value ? "inkl. MWST" : "exkl. MWST";
+  const raw = typeof value === "string" ? value.toLowerCase() : null;
+  if (!raw) return null;
+  if (/(exkl|zzgl|ohne mwst|netto|excl|plus mwst|\+ mwst|false)/.test(raw)) return "exkl. MWST";
+  if (/(inkl|incl|einschliesslich|brutto|mwst enthalten|true)/.test(raw)) return "inkl. MWST";
+  return null;
+}
+
+/** Steuerbasis als Boolean für die Catch-Übernahme; null, wenn unbekannt. */
+export function vatBasisIncluded(offer: ExtractedOffer, key: OfferFieldKey): boolean | null {
+  const value = offer[key]?.value;
+  if (typeof value !== "string") return null;
+  if (value === "inkl. MWST") return true;
+  if (value === "exkl. MWST") return false;
+  return null;
+}
 
 /** Felder, die als Datum (YYYY-MM-DD) interpretiert werden. */
 export const DATE_FIELDS: OfferFieldKey[] = ["available_from", "expiry_date"];
@@ -202,6 +244,8 @@ function normaliseField(key: OfferFieldKey, input: unknown): ExtractedField {
     value = parseOfferNumber(rawValue);
   } else if (DATE_FIELDS.includes(key)) {
     value = parseOfferDate(rawValue);
+  } else if (VAT_BASIS_FIELDS.includes(key)) {
+    value = parseVatBasis(rawValue);
   } else if (key === "temperature") {
     value = parseTemperature(rawValue);
   } else {
@@ -273,6 +317,21 @@ export function extractionWarnings(offer: ExtractedOffer): string[] {
   }
   if (typeof cartons === "number" && typeof quantity === "number" && cartons > quantity) {
     warnings.push("Die Anzahl Kartons ist grösser als die verfügbare Menge.");
+  }
+  if (purchase !== null && vatBasisIncluded(offer, "purchase_price_includes_vat") === null) {
+    warnings.push(
+      "Steuerbasis Einkaufspreis: das Angebot sagt nicht, ob inkl. oder exkl. MWST — bitte bestätigen.",
+    );
+  }
+  const delivery = fieldValue(offer, "delivery_cost");
+  if (
+    typeof delivery === "number" &&
+    delivery > 0 &&
+    vatBasisIncluded(offer, "delivery_cost_includes_vat") === null
+  ) {
+    warnings.push(
+      "Steuerbasis Lieferkosten: das Angebot sagt nicht, ob inkl. oder exkl. MWST — bitte bestätigen.",
+    );
   }
   if (typeof currency === "string" && currency.toUpperCase() !== "CHF") {
     warnings.push(`Das Angebot ist in ${currency.toUpperCase()} — Umrechnung manuell prüfen.`);

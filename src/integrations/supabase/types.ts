@@ -255,7 +255,9 @@ export type Database = {
           created_at: string
           created_by: string | null
           delivery_cost: number
+          delivery_cost_includes_vat: boolean
           delivery_included: boolean
+          delivery_vat_rate: number | null
           description: string | null
           expected_sell_through: number | null
           expiry_date: string | null
@@ -290,7 +292,9 @@ export type Database = {
           published_image_path: string | null
           published_text: string | null
           purchase_price: number | null
+          purchase_price_includes_vat: boolean
           purchase_quantity: number
+          purchase_vat_rate: number | null
           quantity_unit: string
           reconciliation_snapshot: Json | null
           regular_price: number | null
@@ -304,6 +308,7 @@ export type Database = {
           supplier_id: string | null
           temperature: string
           updated_at: string
+          vat_basis_confirmed: boolean
           vat_rate: number | null
         }
         Insert: {
@@ -322,7 +327,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           delivery_cost?: number
+          delivery_cost_includes_vat?: boolean
           delivery_included?: boolean
+          delivery_vat_rate?: number | null
           description?: string | null
           expected_sell_through?: number | null
           expiry_date?: string | null
@@ -357,7 +364,9 @@ export type Database = {
           published_image_path?: string | null
           published_text?: string | null
           purchase_price?: number | null
+          purchase_price_includes_vat?: boolean
           purchase_quantity?: number
+          purchase_vat_rate?: number | null
           quantity_unit?: string
           reconciliation_snapshot?: Json | null
           regular_price?: number | null
@@ -371,6 +380,7 @@ export type Database = {
           supplier_id?: string | null
           temperature?: string
           updated_at?: string
+          vat_basis_confirmed?: boolean
           vat_rate?: number | null
         }
         Update: {
@@ -389,7 +399,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           delivery_cost?: number
+          delivery_cost_includes_vat?: boolean
           delivery_included?: boolean
+          delivery_vat_rate?: number | null
           description?: string | null
           expected_sell_through?: number | null
           expiry_date?: string | null
@@ -424,7 +436,9 @@ export type Database = {
           published_image_path?: string | null
           published_text?: string | null
           purchase_price?: number | null
+          purchase_price_includes_vat?: boolean
           purchase_quantity?: number
+          purchase_vat_rate?: number | null
           quantity_unit?: string
           reconciliation_snapshot?: Json | null
           regular_price?: number | null
@@ -438,6 +452,7 @@ export type Database = {
           supplier_id?: string | null
           temperature?: string
           updated_at?: string
+          vat_basis_confirmed?: boolean
           vat_rate?: number | null
         }
         Relationships: [

@@ -10,6 +10,26 @@
 /** Reduzierter Satz für Lebensmittel und Fisch zum menschlichen Verzehr. */
 export const DEFAULT_VAT_RATE = 2.6;
 
+/** Wareneinkauf von Lebensmitteln unterliegt demselben reduzierten Satz. */
+export const DEFAULT_PURCHASE_VAT_RATE = 2.6;
+
+/** Transportleistungen unterliegen dem Normalsatz. */
+export const DEFAULT_DELIVERY_VAT_RATE = 8.1;
+
+/**
+ * Nettowert einer Kostenposition. Ist der erfasste Betrag ein Bruttowert,
+ * wird die enthaltene Vorsteuer herausgerechnet — sie ist kein Warenaufwand.
+ */
+export function netCost(amount: number, includesVat: boolean, rate: number): number {
+  if (!Number.isFinite(amount)) return 0;
+  return includesVat ? netFromGross(amount, rate) : amount;
+}
+
+/** Beschriftung der erfassten Steuerbasis. */
+export function vatBasisLabel(includesVat: boolean): string {
+  return includesVat ? "inkl. MWST" : "exkl. MWST";
+}
+
 /** Zur Auswahl angebotene Schweizer Sätze. */
 export const VAT_RATE_OPTIONS = [
   { rate: 2.6, label: "2.6 % — Lebensmittel (reduziert)" },

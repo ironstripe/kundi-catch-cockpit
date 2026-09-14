@@ -48,10 +48,38 @@ export function validateReady(values: CatchFormValues, hasImage: boolean): Field
     });
   }
 
+  if (values.purchase_price_includes_vat) {
+    const purchaseVat = toNumber(values.purchase_vat_rate);
+    if (purchaseVat === null || purchaseVat < 0 || purchaseVat >= 100) {
+      issues.push({
+        field: "purchase_vat_rate",
+        message:
+          "MWST-Satz Einkauf zwischen 0 und 99.9 Prozent erfassen, weil der Einkaufspreis inkl. MWST erfasst ist.",
+      });
+    }
+  }
+
+  if (!values.vat_basis_confirmed) {
+    issues.push({
+      field: "vat_basis_confirmed",
+      message: "Steuerbasis von Einkaufspreis und Lieferkosten bestätigen.",
+    });
+  }
+
   if (!values.delivery_included) {
     const delivery = toNumber(values.delivery_cost);
     if (delivery !== null && delivery < 0) {
       issues.push({ field: "delivery_cost", message: "Lieferkosten dürfen nicht negativ sein." });
+    }
+    if (delivery !== null && delivery > 0 && values.delivery_cost_includes_vat) {
+      const deliveryVat = toNumber(values.delivery_vat_rate);
+      if (deliveryVat === null || deliveryVat < 0 || deliveryVat >= 100) {
+        issues.push({
+          field: "delivery_vat_rate",
+          message:
+            "MWST-Satz Lieferkosten zwischen 0 und 99.9 Prozent erfassen, weil die Lieferkosten inkl. MWST erfasst sind.",
+        });
+      }
     }
   }
 
@@ -63,6 +91,14 @@ export function validateReady(values: CatchFormValues, hasImage: boolean): Field
   const catchPrice = toNumber(values.catch_price);
   if (catchPrice === null || catchPrice <= 0) {
     issues.push({ field: "catch_price", message: "Food-Catch-Preis muss grösser als 0 sein." });
+  }
+
+  const salesVat = toNumber(values.vat_rate);
+  if (values.vat_rate.trim() !== "" && (salesVat === null || salesVat < 0 || salesVat >= 100)) {
+    issues.push({
+      field: "vat_rate",
+      message: "MWST-Satz Verkauf muss zwischen 0 und 99.9 Prozent liegen.",
+    });
   }
 
   if (values.location_ids.length === 0) {

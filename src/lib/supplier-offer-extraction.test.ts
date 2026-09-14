@@ -10,6 +10,7 @@ import {
   parseOfferDate,
   parseOfferNumber,
   parseTemperature,
+  vatBasisIncluded,
 } from "@/lib/supplier-offer-extraction";
 import { htmlToText } from "@/lib/supplier-offer-ai.server";
 import {
@@ -173,5 +174,29 @@ describe("Textaufbereitung", () => {
   it("entfernt Markup und Skripte", () => {
     const html = "<div><script>alert(1)</script><p>Dorade&nbsp;2&nbsp;kg</p><p>CHF 8.20</p></div>";
     expect(htmlToText(html)).toBe("Dorade 2 kg\nCHF 8.20");
+  });
+});
+
+describe("Steuerbasis aus dem Angebot", () => {
+  it("erkennt eine ausdrückliche Angabe inkl. MWST", () => {
+    const offer = normaliseExtraction({
+      purchase_price: { value: "CHF 6.50/kg" },
+      purchase_price_includes_vat: { value: "Preise inkl. MWST" },
+    });
+    expect(vatBasisIncluded(offer, "purchase_price_includes_vat")).toBe(true);
+  });
+
+  it("erkennt eine ausdrückliche Angabe exkl. MWST", () => {
+    const offer = normaliseExtraction({
+      purchase_price: { value: "6.50" },
+      purchase_price_includes_vat: { value: "zzgl. MWST" },
+    });
+    expect(vatBasisIncluded(offer, "purchase_price_includes_vat")).toBe(false);
+  });
+
+  it("lässt die Steuerbasis ohne Angabe leer und verlangt Bestätigung", () => {
+    const offer = normaliseExtraction({ purchase_price: { value: "6.50" } });
+    expect(vatBasisIncluded(offer, "purchase_price_includes_vat")).toBeNull();
+    expect(extractionWarnings(offer).join(" ")).toContain("Steuerbasis Einkaufspreis");
   });
 });

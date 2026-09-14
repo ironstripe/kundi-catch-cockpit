@@ -52,7 +52,12 @@ import {
 import { fetchAppSettings } from "@/lib/app-settings";
 import { isoToZurichLocal } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { DEFAULT_VAT_RATE } from "@/lib/vat";
+import {
+  DEFAULT_DELIVERY_VAT_RATE,
+  DEFAULT_PURCHASE_VAT_RATE,
+  DEFAULT_VAT_RATE,
+  vatBasisLabel,
+} from "@/lib/vat";
 
 interface CatchFormProps {
   mode: "create" | "edit";
@@ -70,9 +75,13 @@ const FIELD_LABELS: Record<string, string> = {
   supplier_id: "Lieferant",
   purchase_quantity: "Einkaufsmenge",
   purchase_price: "Einkaufspreis pro Einheit",
+  purchase_vat_rate: "MWST-Satz Einkauf",
   delivery_cost: "Lieferkosten",
-  regular_price: "Normalpreis",
-  catch_price: "Food-Catch-Preis",
+  delivery_vat_rate: "MWST-Satz Lieferkosten",
+  regular_price: "Normalpreis inkl. MWST",
+  catch_price: "Food-Catch-Preis inkl. MWST",
+  vat_rate: "MWST-Satz Verkauf",
+  vat_basis_confirmed: "Steuerbasis bestätigen",
   location_ids: "Abholort",
   available_from: "Verfügbar ab",
   available_until: "Verfügbar bis",
@@ -119,6 +128,9 @@ export function CatchForm({
 
   const suppliers = useQuery({ queryKey: ["suppliers"], queryFn: fetchSuppliers });
   const locations = useQuery({ queryKey: ["locations"], queryFn: fetchLocations });
+
+  const hasDeliveryCost =
+    !values.delivery_included && (Number(values.delivery_cost.replace(",", ".")) || 0) > 0;
 
   const dirty =
     JSON.stringify(values) !== JSON.stringify(baseline) || imagePath !== initialImagePath;
@@ -387,7 +399,7 @@ export function CatchForm({
                 </Select>
               </Field>
               <Field
-                label="Einkaufspreis pro Einheit"
+                label={`Einkaufspreis pro Einheit ${vatBasisLabel(values.purchase_price_includes_vat)}`}
                 required
                 error={issueFor("purchase_price")}
                 hint="CHF"
@@ -406,7 +418,57 @@ export function CatchForm({
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Lieferkosten" error={issueFor("delivery_cost")} hint="CHF">
+              <Field
+                label="Steuerbasis Einkaufspreis"
+                hint="So, wie der Lieferant den Preis nennt."
+              >
+                <ToggleGroup
+                  type="single"
+                  variant="outline"
+                  value={values.purchase_price_includes_vat ? "gross" : "net"}
+                  onValueChange={(next) => {
+                    if (next) set("purchase_price_includes_vat", next === "gross");
+                  }}
+                  className="justify-start"
+                >
+                  <ToggleGroupItem value="net" aria-label="Einkaufspreis exklusive Mehrwertsteuer">
+                    exkl. MWST
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="gross"
+                    aria-label="Einkaufspreis inklusive Mehrwertsteuer"
+                  >
+                    inkl. MWST
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </Field>
+              {values.purchase_price_includes_vat ? (
+                <Field
+                  label="MWST-Satz Einkauf"
+                  error={issueFor("purchase_vat_rate")}
+                  hint={`Prozent, leer = ${DEFAULT_PURCHASE_VAT_RATE} %`}
+                >
+                  <Input
+                    id="purchase_vat_rate"
+                    type="number"
+                    min="0"
+                    max="99.9"
+                    step="0.1"
+                    inputMode="decimal"
+                    value={values.purchase_vat_rate}
+                    aria-invalid={Boolean(issueFor("purchase_vat_rate"))}
+                    onChange={(event) => set("purchase_vat_rate", event.target.value)}
+                  />
+                </Field>
+              ) : null}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field
+                label={`Lieferkosten ${values.delivery_included ? "" : vatBasisLabel(values.delivery_cost_includes_vat)}`.trim()}
+                error={issueFor("delivery_cost")}
+                hint="CHF"
+              >
                 <Input
                   id="delivery_cost"
                   type="number"
@@ -429,6 +491,80 @@ export function CatchForm({
                 </label>
               </div>
             </div>
+
+            {hasDeliveryCost ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="Steuerbasis Lieferkosten">
+                  <ToggleGroup
+                    type="single"
+                    variant="outline"
+                    value={values.delivery_cost_includes_vat ? "gross" : "net"}
+                    onValueChange={(next) => {
+                      if (next) set("delivery_cost_includes_vat", next === "gross");
+                    }}
+                    className="justify-start"
+                  >
+                    <ToggleGroupItem value="net" aria-label="Lieferkosten exklusive Mehrwertsteuer">
+                      exkl. MWST
+                    </ToggleGroupItem>
+                    <ToggleGroupItem
+                      value="gross"
+                      aria-label="Lieferkosten inklusive Mehrwertsteuer"
+                    >
+                      inkl. MWST
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </Field>
+                {values.delivery_cost_includes_vat ? (
+                  <Field
+                    label="MWST-Satz Lieferkosten"
+                    error={issueFor("delivery_vat_rate")}
+                    hint={`Prozent, leer = ${DEFAULT_DELIVERY_VAT_RATE} % (Normalsatz)`}
+                  >
+                    <Input
+                      id="delivery_vat_rate"
+                      type="number"
+                      min="0"
+                      max="99.9"
+                      step="0.1"
+                      inputMode="decimal"
+                      value={values.delivery_vat_rate}
+                      aria-invalid={Boolean(issueFor("delivery_vat_rate"))}
+                      onChange={(event) => set("delivery_vat_rate", event.target.value)}
+                    />
+                  </Field>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div
+              id="vat_basis_confirmed"
+              tabIndex={-1}
+              className={cn(
+                "rounded-md border p-3",
+                issueFor("vat_basis_confirmed") && "border-destructive",
+              )}
+            >
+              <label className="flex items-start gap-2 text-sm">
+                <Checkbox
+                  checked={values.vat_basis_confirmed}
+                  onCheckedChange={(checked) => set("vat_basis_confirmed", checked === true)}
+                />
+                <span>
+                  Steuerbasis geprüft: Einkaufspreis{" "}
+                  {vatBasisLabel(values.purchase_price_includes_vat)}
+                  {hasDeliveryCost
+                    ? `, Lieferkosten ${vatBasisLabel(values.delivery_cost_includes_vat)}`
+                    : ""}
+                  .
+                  {issueFor("vat_basis_confirmed") ? (
+                    <span className="block text-destructive">
+                      {issueFor("vat_basis_confirmed")}
+                    </span>
+                  ) : null}
+                </span>
+              </label>
+            </div>
           </FormSection>
 
           <FormSection
@@ -437,7 +573,7 @@ export function CatchForm({
           >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field
-                label="Normalpreis"
+                label="Normalpreis inkl. MWST"
                 error={issueFor("regular_price")}
                 hint="CHF inkl. MWST, optional"
               >
@@ -452,7 +588,7 @@ export function CatchForm({
                 />
               </Field>
               <Field
-                label="Food-Catch-Preis"
+                label="Food-Catch-Preis inkl. MWST"
                 required
                 error={issueFor("catch_price")}
                 hint="CHF inkl. MWST"
@@ -469,7 +605,7 @@ export function CatchForm({
                 />
               </Field>
               <Field
-                label="Mehrwertsteuersatz"
+                label="MWST-Satz Verkauf"
                 error={issueFor("vat_rate")}
                 hint={`Prozent, leer = Standardsatz ${defaultVatRate} %`}
               >

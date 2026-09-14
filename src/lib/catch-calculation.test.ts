@@ -182,3 +182,43 @@ describe("aggregateCatches", () => {
     expect(totals.weighted_margin!.toFixed(1)).toBe("15.6");
   });
 });
+
+describe("Steuerbasis Einkauf und Lieferung", () => {
+  it("nimmt einen exkl. MWST erfassten Einkaufspreis unverändert", () => {
+    const v = calculateCatch(input({ purchase_price_includes_vat: false })).values!;
+    expect(v.net_purchase_price_per_unit).toBeCloseTo(6.5, 10);
+    expect(v.net_investment).toBeCloseTo(650, 10);
+    expect(v.maximum_net_revenue).toBeCloseTo(100 * (7.9 / 1.026), 10);
+    expect(v.maximum_contribution_margin).toBeCloseTo(100 * (7.9 / 1.026) - 650, 10);
+    expect(v.gross_margin_percentage!).toBeCloseTo(15.58, 2);
+    expect(v.break_even_quantity!).toBeCloseTo(84.42, 2);
+    expect(v.break_even_sell_through!).toBeCloseTo(84.42, 2);
+  });
+
+  it("rechnet einen inkl. MWST erfassten Einkaufspreis auf netto um", () => {
+    const v = calculateCatch(
+      input({ purchase_price_includes_vat: true, purchase_vat_rate: 2.6 }),
+    ).values!;
+    expect(v.net_purchase_price_per_unit).toBeCloseTo(6.5 / 1.026, 10);
+    expect(v.net_investment).toBeCloseTo((100 * 6.5) / 1.026, 10);
+  });
+
+  it("rechnet Lieferkosten mit 8.1 Prozent auf netto um", () => {
+    const v = calculateCatch(
+      input({ delivery_cost: 108.1, delivery_cost_includes_vat: true, delivery_vat_rate: 8.1 }),
+    ).values!;
+    expect(v.net_delivery_cost).toBeCloseTo(100, 8);
+    expect(v.net_investment).toBeCloseTo(750, 8);
+  });
+
+  it("lässt Lieferkosten von null unberührt", () => {
+    const v = calculateCatch(input({ delivery_cost: 0, delivery_cost_includes_vat: true })).values!;
+    expect(v.net_delivery_cost).toBe(0);
+    expect(v.net_investment).toBeCloseTo(650, 10);
+  });
+
+  it("vergleicht den Preisvorteil brutto gegen brutto", () => {
+    const v = calculateCatch(input({})).values!;
+    expect(v.discount_percentage!).toBeCloseTo(((10.75 - 7.9) / 10.75) * 100, 10);
+  });
+});
