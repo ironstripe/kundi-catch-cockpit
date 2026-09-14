@@ -103,6 +103,8 @@ export const DEFAULT_INSTAGRAM_SETTINGS: InstagramSettings = {
 export interface AppSettings {
   thresholds: CatchThresholds;
   thresholds_version: number;
+  vat: VatSettings;
+  vat_version: number;
   template: TemplateSettings;
   template_version: number;
   brand: BrandSettings;
@@ -125,6 +127,7 @@ export async function fetchAppSettings(): Promise<AppSettings> {
   if (error) throw error;
   const rows = new Map((data ?? []).map((row) => [row.key, row]));
   const thresholdRow = rows.get(SETTING_KEYS.thresholds);
+  const vatRow = rows.get(SETTING_KEYS.vat);
   const templateRow = rows.get(SETTING_KEYS.template);
   const brandRow = rows.get(SETTING_KEYS.brand);
   const iconRow = rows.get(SETTING_KEYS.brandIcon);
@@ -132,6 +135,8 @@ export async function fetchAppSettings(): Promise<AppSettings> {
   return {
     thresholds: merge(DEFAULT_CATCH_THRESHOLDS, thresholdRow?.value),
     thresholds_version: thresholdRow?.version ?? 1,
+    vat: merge(DEFAULT_VAT_SETTINGS, vatRow?.value),
+    vat_version: vatRow?.version ?? 1,
     template: merge(DEFAULT_TEMPLATE_SETTINGS, templateRow?.value),
     template_version: templateRow?.version ?? 1,
     brand: merge(DEFAULT_BRAND_SETTINGS, brandRow?.value),
