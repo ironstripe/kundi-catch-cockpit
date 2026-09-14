@@ -291,7 +291,14 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
                     : formatPercentValue(v.sell_through_percentage)
                 }
               />
-              <SourceRow label="Effektiver Umsatz" value={formatCurrency(v.effective_revenue)} />
+              <SourceRow
+                label="Effektiver Umsatz (netto)"
+                value={formatCurrency(v.effective_revenue)}
+              />
+              <SourceRow
+                label="Effektiver Umsatz (brutto)"
+                value={formatCurrency(v.effective_revenue_gross)}
+              />
               <SourceRow
                 label="Effektiver DB"
                 value={formatCurrency(v.effective_contribution_margin)}
