@@ -75,6 +75,41 @@ export function postPercent(percent: number): string {
   return `${percent.toFixed(1)} %`;
 }
 
+/** Adresse aus den Stammdaten in Zeilen zerlegen ("Kirchhofplatz 10, 8200 Schaffhausen"). */
+export function addressLines(address: string | null | undefined): string[] {
+  return (address ?? "")
+    .split(/\n|,/)
+    .map((part) => part.trim())
+    .filter((part) => part !== "");
+}
+
+/**
+ * Abholblock aus den Standort-Stammdaten.
+ * Ein Ort: Name und Adresse in Zeilen. Mehrere Orte: Aufzählung mit eingerückter Adresse.
+ * Ohne Adresse erscheint nur der Name — ohne Leerzeilen oder Platzhalter.
+ */
+export function pickupBlock(locations: PostLocation[], label: string): string | null {
+  const valid = locations.filter((location) => (location.name ?? "").trim() !== "");
+  if (valid.length === 0) return null;
+
+  if (valid.length === 1) {
+    const location = valid[0]!;
+    const lines = [label, location.name.trim(), ...addressLines(location.address)];
+    const note = (location.pickup_note ?? "").trim();
+    if (note !== "") lines.push(note);
+    return lines.join("\n");
+  }
+
+  const lines = [label];
+  for (const location of valid) {
+    lines.push(`• ${location.name.trim()}`);
+    for (const line of addressLines(location.address)) lines.push(`  ${line}`);
+    const note = (location.pickup_note ?? "").trim();
+    if (note !== "") lines.push(`  ${note}`);
+  }
+  return lines.join("\n");
+}
+
 function normalise(value: string): string {
   return value.toLowerCase().replace(/[\s\u2013\u2014-]+/g, " ").trim();
 }
