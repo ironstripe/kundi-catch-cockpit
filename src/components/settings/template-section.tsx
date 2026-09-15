@@ -53,7 +53,7 @@ const SAMPLE: PostSource = {
     { name: "Hofladen Kundelfingerhof", address: null, pickup_note: null },
     {
       name: "Stadtladen Schaffhausen",
-      address: "Kirchhofplatz 10, 8200 Schaffhausen",
+      address: "Kirchhofplatz 10",
       pickup_note: null,
     },
   ],
