@@ -285,3 +285,34 @@ describe("Teams-Gruppenchat-Link", () => {
     expect(looksLikeTeamsUrl("https://example.com/chat")).toBe(false);
   });
 });
+
+describe("Produktlink im Sounding", () => {
+  it("übernimmt Abholorte und Produktlink in den Steckbrief", () => {
+    const snapshot = buildSoundingSnapshot(
+      { ...catchItem, online_shop_url: "https://shop.example/silberlachs" },
+      calculateCatch(catchToCalculationInput(catchItem)),
+      "Anna Muster",
+    );
+    expect(snapshot.online_shop_url).toBe("https://shop.example/silberlachs");
+    expect(snapshot.locations[0]?.address).toBe("Kundelfingerhof 1, 8245 Feuerthalen");
+  });
+
+  it("nennt den Onlineshop in der Teams-Nachricht nur, wenn ein Link hinterlegt ist", () => {
+    const calculation = calculateCatch(catchToCalculationInput(catchItem));
+    const withLink = soundingMessage(
+      buildSoundingSnapshot(
+        { ...catchItem, online_shop_url: "https://shop.example/silberlachs" },
+        calculation,
+        null,
+      ),
+      "https://cockpit.example/catches/catch-1/review",
+    );
+    const withoutLink = soundingMessage(
+      buildSoundingSnapshot(catchItem, calculation, null),
+      "https://cockpit.example/catches/catch-1/review",
+    );
+    expect(withLink).toContain("Onlineshop: https://shop.example/silberlachs");
+    expect(withLink.trim().endsWith("https://cockpit.example/catches/catch-1/review")).toBe(true);
+    expect(withoutLink).not.toContain("Onlineshop:");
+  });
+});
