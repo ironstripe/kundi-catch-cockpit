@@ -138,12 +138,8 @@ export function generatePostText(
   blocks.push(stockLines.join("\n"));
 
   const actionLines: string[] = [];
-  const locations = source.location_names.filter((name) => clean(name));
-  if (locations.length === 1) {
-    actionLines.push(`${template.pickup_label} ${locations[0]}`);
-  } else if (locations.length > 1) {
-    actionLines.push(`${template.pickup_label}\n${locations.map((name) => `• ${name}`).join("\n")}`);
-  }
+  const pickup = pickupBlock(source.locations, template.pickup_label);
+  if (pickup) actionLines.push(pickup);
   if (source.available_from) {
     actionLines.push(`${template.available_from_label} ${postDateTime(source.available_from, "ab")}`);
   }
