@@ -261,7 +261,7 @@ describe("Abholorte und Produktlink", () => {
       ...felchen,
       locations: [{ name: "Hofladen Kundelfingerhof", address: null, pickup_note: null }],
     });
-    expect(text).toContain("📍 Abholung:\nHofladen Kundelfingerhof\n\n📅 Ab:");
+    expect(text).toContain("📍 Abholung:\nHofladen Kundelfingerhof\n📅 Ab:");
   });
 
   it("hängt einen vorhandenen Abholhinweis an", () => {
