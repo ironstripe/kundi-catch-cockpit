@@ -124,7 +124,7 @@ describe("generatePostText", () => {
       ],
     });
     expect(text).toContain(
-      "📍 Abholung:\n• Hofladen Kundelfingerhof\n• Stadtladen Schaffhausen\n  Kirchhofplatz 10\n  8200 Schaffhausen\n  Bitte an der Kasse melden.",
+      "📍 Abholung:\n• Hofladen Kundelfingerhof\n• Stadtladen Schaffhausen\n  Kirchhofplatz 10\n  Bitte an der Kasse melden.",
     );
   });
 
