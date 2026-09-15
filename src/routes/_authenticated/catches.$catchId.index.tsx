@@ -11,6 +11,8 @@ import { ReconciliationWorkspace } from "@/components/catch/reconciliation-works
 import { PublicationWorkspace } from "@/components/catch/publication-workspace";
 import { PublishedPostCard } from "@/components/catch/published-post-card";
 import { InstagramWorkspace } from "@/components/catch/instagram-workspace";
+import { ProductLink } from "@/components/catch/product-link";
+import { pickupSummary } from "@/lib/pickup-display";
 import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-badge";
 import { PageHeader, PageSection } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
