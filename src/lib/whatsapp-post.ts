@@ -217,7 +217,11 @@ export function postSourceSignature(source: PostSource): string {
     source.catch_price,
     source.quantity_unit,
     [...source.locations]
-      .map((location) => [location.name.trim(), clean(location.address), clean(location.pickup_note)])
+      .map((location) => [
+        location.name.trim(),
+        addressLines(location.address).join(", "),
+        clean(location.pickup_note),
+      ])
       .sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
     source.available_from,
     source.available_until,
