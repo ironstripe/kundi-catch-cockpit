@@ -33,6 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import type { CatchDetail } from "@/lib/catches";
+import { pickupSummary } from "@/lib/pickup-display";
 import { formatDateTime } from "@/lib/format";
 import {
   catchToPostSource,
