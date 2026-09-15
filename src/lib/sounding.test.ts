@@ -290,7 +290,7 @@ describe("Produktlink im Sounding", () => {
   it("übernimmt Abholorte und Produktlink in den Steckbrief", () => {
     const snapshot = buildSoundingSnapshot(
       { ...catchItem, online_shop_url: "https://shop.example/silberlachs" },
-      calculateCatch(catchToCalculationInput(catchItem)),
+      calculation,
       "Anna Muster",
     );
     expect(snapshot.online_shop_url).toBe("https://shop.example/silberlachs");
@@ -298,7 +298,6 @@ describe("Produktlink im Sounding", () => {
   });
 
   it("nennt den Onlineshop in der Teams-Nachricht nur, wenn ein Link hinterlegt ist", () => {
-    const calculation = calculateCatch(catchToCalculationInput(catchItem));
     const withLink = soundingMessage(
       buildSoundingSnapshot(
         { ...catchItem, online_shop_url: "https://shop.example/silberlachs" },
