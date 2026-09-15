@@ -274,7 +274,7 @@ describe("Abholorte und Produktlink", () => {
         },
       ],
     });
-    expect(text).toContain("8200 Schaffhausen\nBitte an der Kasse melden.");
+    expect(text).toContain("Kirchhofplatz 10\nBitte an der Kasse melden.");
   });
 
   it("nennt den Onlineshop nur bei hinterlegtem Produktlink", () => {
