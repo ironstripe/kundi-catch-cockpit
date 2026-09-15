@@ -404,6 +404,7 @@ export type Database = {
           internal_note: string | null
           inventory_counted_at: string | null
           learning: string | null
+          online_shop_url: string | null
           packaging: string | null
           post_final_text: string | null
           post_generated_at: string | null
@@ -481,6 +482,7 @@ export type Database = {
           internal_note?: string | null
           inventory_counted_at?: string | null
           learning?: string | null
+          online_shop_url?: string | null
           packaging?: string | null
           post_final_text?: string | null
           post_generated_at?: string | null
@@ -558,6 +560,7 @@ export type Database = {
           internal_note?: string | null
           inventory_counted_at?: string | null
           learning?: string | null
+          online_shop_url?: string | null
           packaging?: string | null
           post_final_text?: string | null
           post_generated_at?: string | null

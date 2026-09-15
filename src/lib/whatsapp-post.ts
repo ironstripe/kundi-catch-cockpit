@@ -16,10 +16,17 @@ export const BRAND_CLAIM = "Guter Fisch. Kleines Handicap. Grosser Fang.";
 export const BRAND_PURPOSE = "Gut essen. Food Waste vermeiden.";
 
 /** Version der deterministischen Vorlage. Erhöhen, wenn sich der Aufbau ändert. */
-export const POST_TEMPLATE_VERSION = 3;
+export const POST_TEMPLATE_VERSION = 4;
 
 /** Kundenpreise sind Bruttopreise — im Post kurz und einmalig ausgewiesen. */
 export const VAT_NOTE = "inkl. MWST";
+
+/** Abholort aus den Standort-Stammdaten — Adresse und Hinweis kommen immer von dort. */
+export interface PostLocation {
+  name: string;
+  address: string | null;
+  pickup_note: string | null;
+}
 
 export interface PostSource {
   product_name: string;
@@ -29,11 +36,13 @@ export interface PostSource {
   regular_price: number | null;
   catch_price: number | null;
   quantity_unit: string;
-  location_names: string[];
+  locations: PostLocation[];
   available_from: string | null;
   available_until: string | null;
   handicap_story: string | null;
   image_path: string | null;
+  /** Optionaler Direktlink zum Produkt im Onlineshop. */
+  online_shop_url: string | null;
 }
 
 /** Anzeigeeinheit für den Post (nie interne Datenbankwerte). */
@@ -64,6 +73,41 @@ export function postDateTime(value: string, prefix: "ab" | "bis"): string {
 /** Prozentwert im Post: "26.5 %". */
 export function postPercent(percent: number): string {
   return `${percent.toFixed(1)} %`;
+}
+
+/** Adresse aus den Stammdaten in Zeilen zerlegen ("Kirchhofplatz 10, 8200 Schaffhausen"). */
+export function addressLines(address: string | null | undefined): string[] {
+  return (address ?? "")
+    .split(/\n|,/)
+    .map((part) => part.trim())
+    .filter((part) => part !== "");
+}
+
+/**
+ * Abholblock aus den Standort-Stammdaten.
+ * Ein Ort: Name und Adresse in Zeilen. Mehrere Orte: Aufzählung mit eingerückter Adresse.
+ * Ohne Adresse erscheint nur der Name — ohne Leerzeilen oder Platzhalter.
+ */
+export function pickupBlock(locations: PostLocation[], label: string): string | null {
+  const valid = locations.filter((location) => (location.name ?? "").trim() !== "");
+  if (valid.length === 0) return null;
+
+  if (valid.length === 1) {
+    const location = valid[0]!;
+    const lines = [label, location.name.trim(), ...addressLines(location.address)];
+    const note = (location.pickup_note ?? "").trim();
+    if (note !== "") lines.push(note);
+    return lines.join("\n");
+  }
+
+  const lines = [label];
+  for (const location of valid) {
+    lines.push(`• ${location.name.trim()}`);
+    for (const line of addressLines(location.address)) lines.push(`  ${line}`);
+    const note = (location.pickup_note ?? "").trim();
+    if (note !== "") lines.push(`  ${note}`);
+  }
+  return lines.join("\n");
 }
 
 function normalise(value: string): string {
@@ -129,12 +173,8 @@ export function generatePostText(
   blocks.push(stockLines.join("\n"));
 
   const actionLines: string[] = [];
-  const locations = source.location_names.filter((name) => clean(name));
-  if (locations.length === 1) {
-    actionLines.push(`${template.pickup_label} ${locations[0]}`);
-  } else if (locations.length > 1) {
-    actionLines.push(`${template.pickup_label}\n${locations.map((name) => `• ${name}`).join("\n")}`);
-  }
+  const pickup = pickupBlock(source.locations, template.pickup_label);
+  if (pickup) actionLines.push(pickup);
   if (source.available_from) {
     actionLines.push(`${template.available_from_label} ${postDateTime(source.available_from, "ab")}`);
   }
@@ -142,6 +182,9 @@ export function generatePostText(
     actionLines.push(`📅 Verfügbar bis: ${postDateTime(source.available_until, "bis")}`);
   }
   if (actionLines.length > 0) blocks.push(actionLines.join("\n"));
+
+  const shopUrl = clean(source.online_shop_url);
+  if (shopUrl) blocks.push(`🛒 Im Onlineshop bestellen:\n${shopUrl}`);
 
   blocks.push(`*${BRAND_PURPOSE}*`);
 
@@ -161,11 +204,14 @@ export function postSourceSignature(source: PostSource): string {
     source.regular_price,
     source.catch_price,
     source.quantity_unit,
-    [...source.location_names].sort(),
+    [...source.locations]
+      .map((location) => [location.name.trim(), clean(location.address), clean(location.pickup_note)])
+      .sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
     source.available_from,
     source.available_until,
     clean(source.handicap_story),
     source.image_path,
+    clean(source.online_shop_url),
     POST_TEMPLATE_VERSION,
   ]);
 }

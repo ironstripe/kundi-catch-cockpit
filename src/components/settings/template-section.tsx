@@ -49,11 +49,19 @@ const SAMPLE: PostSource = {
   regular_price: 10.75,
   catch_price: 7.9,
   quantity_unit: "kg",
-  location_names: ["Hofladen Kundelfingerhof", "Stadtladen Schaffhausen"],
+  locations: [
+    { name: "Hofladen Kundelfingerhof", address: null, pickup_note: null },
+    {
+      name: "Stadtladen Schaffhausen",
+      address: "Kirchhofplatz 10, 8200 Schaffhausen",
+      pickup_note: null,
+    },
+  ],
   available_from: "2026-09-04T12:00:00.000Z",
   available_until: "2026-09-06T14:00:00.000Z",
   handicap_story: "Etwas ungleichmässig geschnitten — geschmacklich einwandfrei.",
   image_path: null,
+  online_shop_url: "https://shop.kundelfingerhof.ch/felchenfilets",
 };
 
 export function TemplateSection() {

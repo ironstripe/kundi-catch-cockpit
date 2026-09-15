@@ -92,6 +92,7 @@ const FIELD_LABELS: Record<string, string> = {
   available_until: "Verfügbar bis",
   handicap_reason: "Grund für den Catch",
   handicap_story: "Handicap-Story",
+  online_shop_url: "Produktlink im Onlineshop",
 };
 
 export function CatchForm({
@@ -673,7 +674,14 @@ export function CatchForm({
                         )
                       }
                     />
-                    {location.name}
+                    <span>
+                      {location.name}
+                      {location.address ? (
+                        <span className="block text-xs text-muted-foreground">
+                          {location.address}
+                        </span>
+                      ) : null}
+                    </span>
                   </label>
                 ))}
                 {(locations.data ?? []).length === 0 ? (
@@ -704,6 +712,27 @@ export function CatchForm({
                 />
               </Field>
             </div>
+
+            <Field
+              label="Produktlink im Onlineshop"
+              error={issueFor("online_shop_url")}
+              hint="optional"
+            >
+              <Input
+                id="online_shop_url"
+                type="url"
+                inputMode="url"
+                placeholder="https://..."
+                value={values.online_shop_url}
+                aria-invalid={Boolean(issueFor("online_shop_url"))}
+                aria-describedby="online_shop_url_hint"
+                onChange={(event) => set("online_shop_url", event.target.value)}
+              />
+              <p id="online_shop_url_hint" className="text-xs text-muted-foreground">
+                Optionaler Direktlink zum Produkt. Wird im WhatsApp-Post angezeigt, wenn eine gültige
+                URL hinterlegt ist.
+              </p>
+            </Field>
           </FormSection>
 
           <FormSection

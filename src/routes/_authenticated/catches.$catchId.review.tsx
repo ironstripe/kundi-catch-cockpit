@@ -15,6 +15,8 @@ import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-ba
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ProductLink } from "@/components/catch/product-link";
+import { pickupSummary } from "@/lib/pickup-display";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -187,11 +189,12 @@ function ReviewPage() {
                 label="Verfügbar bis"
                 value={item.available_until ? formatDateTime(item.available_until) : null}
               />
-              <Row
-                label="Abholort"
-                value={item.location_names.length > 0 ? item.location_names.join(", ") : null}
-              />
+              <Row label="Abholort" value={pickupSummary(item.locations)} />
               <Row label="Handicap-Story" value={item.handicap_story} />
+              <div className="flex items-baseline justify-between gap-4">
+                <span className="text-xs text-muted-foreground">Onlineshop</span>
+                <ProductLink url={item.online_shop_url} />
+              </div>
             </CardContent>
           </Card>
 

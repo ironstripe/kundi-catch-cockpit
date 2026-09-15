@@ -23,6 +23,7 @@ import { useRoles } from "@/hooks/use-role";
 import { parseNumberInput } from "@/lib/catch-calculation";
 import { cancelCatch, closeCatch } from "@/lib/catch-lifecycle";
 import { reconcileCatch, isIntegerUnit } from "@/lib/catch-reconciliation";
+import { pickupSummary } from "@/lib/pickup-display";
 import { catchToCalculationInput, type CatchDetail } from "@/lib/catches";
 import {
   formatCurrency,
@@ -174,7 +175,7 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
             />
             <SourceRow
               label="Abholorte"
-              value={item.location_names.length > 0 ? item.location_names.join(", ") : "—"}
+              value={pickupSummary(item.locations) ?? "—"}
             />
           </div>
 

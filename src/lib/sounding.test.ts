@@ -64,6 +64,10 @@ const catchItem: CatchDetail = {
   image_path: "catch-1/bild.jpg",
   location_names: ["Kundelfingerhof"],
   location_ids: ["loc-1"],
+  locations: [
+    { id: "loc-1", name: "Kundelfingerhof", address: "Kundelfingerhof 1, 8245 Feuerthalen", pickup_note: null },
+  ],
+  online_shop_url: null,
   supplier_id: "sup-1",
   supplier_name: "Fischhandel Nord",
   published_at: null,
@@ -279,5 +283,35 @@ describe("Teams-Gruppenchat-Link", () => {
   it("erkennt Microsoft-Teams-Adressen", () => {
     expect(looksLikeTeamsUrl("https://teams.microsoft.com/l/chat/1")).toBe(true);
     expect(looksLikeTeamsUrl("https://example.com/chat")).toBe(false);
+  });
+});
+
+describe("Produktlink im Sounding", () => {
+  it("übernimmt Abholorte und Produktlink in den Steckbrief", () => {
+    const snapshot = buildSoundingSnapshot(
+      { ...catchItem, online_shop_url: "https://shop.example/silberlachs" },
+      calculation,
+      "Anna Muster",
+    );
+    expect(snapshot.online_shop_url).toBe("https://shop.example/silberlachs");
+    expect(snapshot.locations[0]?.address).toBe("Kundelfingerhof 1, 8245 Feuerthalen");
+  });
+
+  it("nennt den Onlineshop in der Teams-Nachricht nur, wenn ein Link hinterlegt ist", () => {
+    const withLink = soundingMessage(
+      buildSoundingSnapshot(
+        { ...catchItem, online_shop_url: "https://shop.example/silberlachs" },
+        calculation,
+        null,
+      ),
+      "https://cockpit.example/catches/catch-1/review",
+    );
+    const withoutLink = soundingMessage(
+      buildSoundingSnapshot(catchItem, calculation, null),
+      "https://cockpit.example/catches/catch-1/review",
+    );
+    expect(withLink).toContain("Onlineshop: https://shop.example/silberlachs");
+    expect(withLink.trim().endsWith("https://cockpit.example/catches/catch-1/review")).toBe(true);
+    expect(withoutLink).not.toContain("Onlineshop:");
   });
 });

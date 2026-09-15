@@ -59,7 +59,8 @@ const CATCH_SELECT = `
   handicap_story, published_at, closed_at, remaining_quantity, inventory_counted_at,
   learning, created_at, updated_at,
   suppliers ( name ),
-  catch_locations ( locations ( name ) )
+  online_shop_url,
+  catch_locations ( locations ( name, address, pickup_note ) )
 `;
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -101,10 +102,18 @@ function catchRow(row: any) {
     inventory_counted_at: row.inventory_counted_at ?? null,
   });
   const values = reconciliation.values;
-  const locations = (row.catch_locations ?? [])
-    .map((entry: any) => entry?.locations?.name)
+  const locationRecords = (row.catch_locations ?? [])
+    .map((entry: any) => entry?.locations)
+    .filter(Boolean);
+  const locations = locationRecords.map((entry: any) => entry.name).filter(Boolean).join(", ");
+  const locationAddresses = locationRecords
+    .map((entry: any) => entry.address)
     .filter(Boolean)
-    .join(", ");
+    .join(" | ");
+  const pickupNotes = locationRecords
+    .map((entry: any) => entry.pickup_note)
+    .filter(Boolean)
+    .join(" | ");
 
   return {
     catch_number: row.catch_number ?? "",
@@ -123,6 +132,9 @@ function catchRow(row: any) {
     regular_price: row.regular_price ?? null,
     catch_price: row.catch_price ?? null,
     locations,
+    location_addresses: locationAddresses,
+    pickup_notes: pickupNotes,
+    online_shop_url: row.online_shop_url ?? "",
     available_from: toDate(row.available_from),
     available_until: toDate(row.available_until),
     handicap_story: row.handicap_story ?? "",
@@ -186,6 +198,9 @@ const CATCH_COLUMNS: Column[] = [
   { header: "Max. MWST", key: "maximum_sales_vat", width: 14, numFmt: CHF },
   { header: "Max. DB netto", key: "maximum_margin", width: 16, numFmt: CHF },
   { header: "Standorte", key: "locations", width: 26 },
+  { header: "Abholadressen", key: "location_addresses", width: 34 },
+  { header: "Abholhinweise", key: "pickup_notes", width: 34 },
+  { header: "Produktlink Onlineshop", key: "online_shop_url", width: 40 },
   { header: "Verfügbar ab", key: "available_from", width: 18, numFmt: DATETIME },
   { header: "Verfügbar bis", key: "available_until", width: 18, numFmt: DATETIME },
   { header: "Handicap-Story", key: "handicap_story", width: 40 },
