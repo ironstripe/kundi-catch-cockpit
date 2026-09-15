@@ -64,6 +64,19 @@ function authErrorMessage(err: unknown): string {
 
 type Mode = "signin" | "forgot" | "recovery";
 
+/**
+ * Zielpfad nach der Anmeldung: nur eigene, relative Pfade werden akzeptiert,
+ * damit der Link nicht auf fremde Adressen umgeleitet werden kann.
+ */
+function safeRedirectTarget(): string | null {
+  if (typeof window === "undefined") return null;
+  const raw = new URLSearchParams(window.location.search).get("redirect");
+  if (!raw) return null;
+  if (!raw.startsWith("/") || raw.startsWith("//")) return null;
+  if (raw.startsWith("/auth")) return null;
+  return raw;
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("signin");
@@ -84,7 +97,7 @@ function AuthPage() {
         setMode("recovery");
         return;
       }
-      if (data.session) void navigate({ to: "/" });
+      if (data.session) goAfterAuth();
     });
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
