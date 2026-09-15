@@ -8,6 +8,7 @@ import { InboundDiagnosticsSection } from "@/components/settings/inbound-diagnos
 import { InstagramSection } from "@/components/settings/instagram-section";
 import { CategoriesSection } from "@/components/settings/categories-section";
 import { LocationsSection } from "@/components/settings/locations-section";
+import { SoundingSection } from "@/components/settings/sounding-section";
 import { SuppliersSection } from "@/components/settings/suppliers-section";
 import { TemplateSection } from "@/components/settings/template-section";
 import { ThresholdsSection } from "@/components/settings/thresholds-section";
@@ -52,6 +53,7 @@ function SettingsPage() {
           <TabsTrigger value="master-data">Stammdaten</TabsTrigger>
           <TabsTrigger value="calculation">Kalkulation</TabsTrigger>
           <TabsTrigger value="template">WhatsApp-Vorlage</TabsTrigger>
+          {isAdmin ? <TabsTrigger value="sounding">Sounding</TabsTrigger> : null}
           {isAdmin ? <TabsTrigger value="instagram">Instagram</TabsTrigger> : null}
           {isAdmin ? <TabsTrigger value="users">Nutzer und Rollen</TabsTrigger> : null}
           {isAdmin ? <TabsTrigger value="brand">Marke</TabsTrigger> : null}
@@ -79,6 +81,12 @@ function SettingsPage() {
         <TabsContent value="template">
           <TemplateSection />
         </TabsContent>
+
+        {isAdmin ? (
+          <TabsContent value="sounding">
+            <SoundingSection />
+          </TabsContent>
+        ) : null}
 
         {isAdmin ? (
           <TabsContent value="instagram">

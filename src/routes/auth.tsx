@@ -85,6 +85,16 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /** Nach erfolgreicher Anmeldung zum gewünschten Ziel oder aufs Dashboard. */
+  function goAfterAuth() {
+    const target = safeRedirectTarget();
+    if (target) {
+      window.location.assign(target);
+      return;
+    }
+    void navigate({ to: "/" });
+  }
+
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") setMode("recovery");
@@ -127,7 +137,7 @@ function AuthPage() {
         const { error: updateError } = await supabase.auth.updateUser({ password: parsed.data });
         if (updateError) throw updateError;
         toast.success("Passwort aktualisiert.");
-        void navigate({ to: "/" });
+        goAfterAuth();
         return;
       }
 
@@ -154,7 +164,7 @@ function AuthPage() {
         .from("profiles")
         .update({ last_login_at: new Date().toISOString() })
         .eq("id", data.user.id);
-      void navigate({ to: "/" });
+      goAfterAuth();
     } catch (err) {
       setError(authErrorMessage(err));
     } finally {
