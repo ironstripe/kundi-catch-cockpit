@@ -202,10 +202,7 @@ function CatchDetailPage() {
           </Section>
 
           <Section title="Aktion">
-            <Row
-              label="Abholorte"
-              value={item.location_names.length > 0 ? item.location_names.join(", ") : null}
-            />
+            <Row label="Abholorte" value={pickupSummary(item.locations)} />
             <Row
               label="Verfügbar ab"
               value={item.available_from ? formatDateTime(item.available_from) : null}
@@ -214,6 +211,10 @@ function CatchDetailPage() {
               label="Verfügbar bis"
               value={item.available_until ? formatDateTime(item.available_until) : null}
             />
+            <div className="flex items-baseline justify-between gap-4 py-1">
+              <span className="text-xs text-muted-foreground">Onlineshop</span>
+              <ProductLink url={item.online_shop_url} />
+            </div>
           </Section>
 
           <Section title="Handicap-Story">
