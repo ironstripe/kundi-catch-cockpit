@@ -1,4 +1,5 @@
 import type { CatchFormValues } from "@/lib/catches";
+import { validateProductUrl } from "@/lib/product-link";
 
 export interface FieldIssue {
   field: string;
@@ -21,6 +22,8 @@ export function validateDraft(values: CatchFormValues): FieldIssue[] {
   if (values.product_name.trim().length > 120) {
     issues.push({ field: "product_name", message: "Produktname ist zu lang (max. 120 Zeichen)." });
   }
+  const urlProblem = validateProductUrl(values.online_shop_url);
+  if (urlProblem) issues.push({ field: "online_shop_url", message: urlProblem });
   return issues;
 }
 

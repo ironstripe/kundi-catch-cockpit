@@ -100,6 +100,10 @@ export interface SoundingSnapshot {
   available_from: string | null;
   available_until: string | null;
   location_names: string[];
+  /** Abholorte mit Adresse und Abholhinweis aus den Stammdaten. */
+  locations: CatchLocation[];
+  /** Optionaler Direktlink zum Produkt im Onlineshop. */
+  online_shop_url: string | null;
   handicap_story: string | null;
   sample_check_status: SampleCheckStatus;
   sample_checked_by_name: string | null;
@@ -141,6 +145,8 @@ export function buildSoundingSnapshot(
     available_from: item.available_from,
     available_until: item.available_until,
     location_names: item.location_names,
+    locations: item.locations,
+    online_shop_url: item.online_shop_url,
     handicap_story: item.handicap_story ?? null,
     sample_check_status: item.sample_check_status,
     sample_checked_by_name: checkedByName,
@@ -194,6 +200,9 @@ export function soundingMessage(snapshot: SoundingSnapshot, reviewUrl: string): 
     "Bitte Feedback im Cockpit erfassen:",
     reviewUrl,
   ];
+  if (snapshot.online_shop_url) {
+    lines.splice(lines.length - 3, 0, `Onlineshop: ${snapshot.online_shop_url}`, "");
+  }
   if (snapshot.article_number) {
     lines.splice(3, 0, `Artikelnummer: ${snapshot.article_number}`);
   }
