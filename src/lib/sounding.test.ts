@@ -226,7 +226,11 @@ describe("Rückmeldungen", () => {
 
 describe("Steckbrief und Teams-Nachricht", () => {
   const snapshot = buildSoundingSnapshot(catchItem, calculation, "Ivo Streiff");
-  const message = soundingMessage(snapshot, reviewUrlFor("catch-1", "https://cockpit.example"));
+  /** Schweizer Formate nutzen geschützte Leerzeichen — für Vergleiche normalisieren. */
+  const message = soundingMessage(
+    snapshot,
+    reviewUrlFor("catch-1", "https://cockpit.example"),
+  ).replace(/[\u00a0\u202f]/g, " ");
 
   it("hält die geprüften Werte fest", () => {
     expect(snapshot.gross_catch_price).toBe(7.9);
