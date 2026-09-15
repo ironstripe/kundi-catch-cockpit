@@ -93,7 +93,9 @@ export function SampleCheckCard({
           {status !== "pending" ? (
             <span className="text-xs text-muted-foreground">
               Geprüft von: {checker.data ?? "unbekannt"}
-              {item.sample_checked_at ? ` · Geprüft am: ${formatDateTime(item.sample_checked_at)}` : ""}
+              {item.sample_checked_at
+                ? ` · Geprüft am: ${formatDateTime(item.sample_checked_at)}`
+                : ""}
             </span>
           ) : null}
         </div>
@@ -124,11 +126,7 @@ export function SampleCheckCard({
               onChange={(event) => setNote(event.target.value)}
             />
             <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                disabled={record.isPending}
-                onClick={() => record.mutate("passed")}
-              >
+              <Button size="sm" disabled={record.isPending} onClick={() => record.mutate("passed")}>
                 {record.isPending ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
                 Bestanden
               </Button>

@@ -23,11 +23,7 @@ export const SAMPLE_CHECK_LABELS: Record<SampleCheckStatus, string> = {
 };
 
 export type ReviewRoundStatus =
-  | "requested"
-  | "feedback_received"
-  | "completed"
-  | "outdated"
-  | "cancelled";
+  "requested" | "feedback_received" | "completed" | "outdated" | "cancelled";
 
 export const REVIEW_ROUND_STATUS_LABELS: Record<ReviewRoundStatus, string> = {
   requested: "Angefragt",

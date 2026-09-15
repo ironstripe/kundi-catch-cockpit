@@ -143,8 +143,6 @@ function CatchDetailPage() {
         <span className="font-mono text-xs text-muted-foreground">{item.catch_number}</span>
       </div>
 
-
-
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
           <CalculationCard
@@ -181,7 +179,10 @@ function CatchDetailPage() {
                   : null
               }
             />
-            <Row label="Einheit" value={QUANTITY_UNIT_LABELS[item.quantity_unit] ?? item.quantity_unit} />
+            <Row
+              label="Einheit"
+              value={QUANTITY_UNIT_LABELS[item.quantity_unit] ?? item.quantity_unit}
+            />
             <Row
               label="Einkaufspreis pro Einheit"
               value={item.purchase_price === null ? null : formatCurrency(item.purchase_price)}
@@ -272,7 +273,6 @@ function CatchDetailPage() {
               <Row label="Zuletzt geändert" value={formatDateTime(item.updated_at)} />
             </CardContent>
           </Card>
-
         </div>
       </div>
 
@@ -355,7 +355,6 @@ function CatchDetailPage() {
         </PageSection>
       ) : null}
 
-
       {item.status === "closed" || item.status === "cancelled" ? null : (
         <PageSection
           id="instagram"
@@ -390,4 +389,3 @@ function Row({ label, value }: { label: string; value: string | null | undefined
     </div>
   );
 }
-

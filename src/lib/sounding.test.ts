@@ -127,7 +127,9 @@ const calculation = calculateCatch({
 
 describe("Musterprüfung als Voraussetzung", () => {
   it("blockiert das Sounding, solange die Musterprüfung aussteht", () => {
-    expect(soundingStartBlockReason("pending", true)).toBe("Die Musterprüfung ist noch ausstehend.");
+    expect(soundingStartBlockReason("pending", true)).toBe(
+      "Die Musterprüfung ist noch ausstehend.",
+    );
   });
 
   it("blockiert das Sounding nach nicht bestandener Musterprüfung", () => {

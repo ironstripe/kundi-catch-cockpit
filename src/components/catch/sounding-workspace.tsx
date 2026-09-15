@@ -168,7 +168,9 @@ export function SoundingWorkspace({
                 </Badge>
                 <span className="text-xs text-muted-foreground">
                   Gestartet am {formatDateTime(round.requested_at)}
-                  {round.completed_at ? ` · abgeschlossen am ${formatDateTime(round.completed_at)}` : ""}
+                  {round.completed_at
+                    ? ` · abgeschlossen am ${formatDateTime(round.completed_at)}`
+                    : ""}
                 </span>
               </div>
 
@@ -203,7 +205,12 @@ export function SoundingWorkspace({
                     <ClipboardCopy />
                     Text kopieren
                   </Button>
-                  <Button size="sm" variant="outline" asChild={Boolean(teamsUrl)} disabled={!teamsUrl}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    asChild={Boolean(teamsUrl)}
+                    disabled={!teamsUrl}
+                  >
                     {teamsUrl ? (
                       <a href={teamsUrl} target="_blank" rel="noreferrer noopener">
                         <ExternalLink />

@@ -258,7 +258,9 @@ function ReviewPage() {
                   <div className="space-y-1.5">
                     <Label htmlFor="comment" className="text-xs">
                       Kommentar
-                      {decision && responseCommentRequired(decision) ? " (erforderlich)" : " (optional)"}
+                      {decision && responseCommentRequired(decision)
+                        ? " (erforderlich)"
+                        : " (optional)"}
                     </Label>
                     <Textarea
                       id="comment"
@@ -298,9 +300,7 @@ function ReviewPage() {
                   <div key={response.id} className="rounded-md border p-2 text-sm">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium">{response.user_name ?? "Unbekannt"}</span>
-                      <Badge variant="outline">
-                        {REVIEW_DECISION_LABELS[response.decision]}
-                      </Badge>
+                      <Badge variant="outline">{REVIEW_DECISION_LABELS[response.decision]}</Badge>
                       <span className="text-xs text-muted-foreground">
                         {formatDateTime(response.updated_at)}
                       </span>
