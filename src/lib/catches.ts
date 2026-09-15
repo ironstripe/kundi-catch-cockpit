@@ -46,6 +46,16 @@ export interface CatchFormValues {
   handicap_reason: string;
   handicap_story: string;
   internal_note: string;
+  /** Optionaler Direktlink zum Produkt im Onlineshop. */
+  online_shop_url: string;
+}
+
+/** Abholort mit vollständigen Stammdaten. */
+export interface CatchLocation {
+  id: string;
+  name: string;
+  address: string | null;
+  pickup_note: string | null;
 }
 
 export const EMPTY_CATCH_FORM: CatchFormValues = {
@@ -75,6 +85,7 @@ export const EMPTY_CATCH_FORM: CatchFormValues = {
   handicap_reason: "",
   handicap_story: "",
   internal_note: "",
+  online_shop_url: "",
 };
 
 export interface CatchListItem {
