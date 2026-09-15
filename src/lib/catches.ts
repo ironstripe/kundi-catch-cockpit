@@ -374,6 +374,7 @@ export function catchDetailToForm(detail: CatchDetail): CatchFormValues {
     value === null || value === undefined ? "" : String(value);
   return {
     product_name: detail.product_name ?? "",
+    article_number: detail.article_number ?? "",
     temperature: detail.temperature,
     description: detail.description ?? "",
     packaging: detail.packaging ?? "",
@@ -423,6 +424,7 @@ export async function saveCatch({ id, values, status, audit }: SaveArgs): Promis
 
   const payload = {
     product_name: values.product_name.trim(),
+    article_number: values.article_number.trim() || null,
     temperature: values.temperature,
     description: values.description.trim() || null,
     packaging: values.packaging.trim() || null,
