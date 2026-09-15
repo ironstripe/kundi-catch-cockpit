@@ -92,6 +92,7 @@ const FIELD_LABELS: Record<string, string> = {
   available_until: "Verfügbar bis",
   handicap_reason: "Grund für den Catch",
   handicap_story: "Handicap-Story",
+  online_shop_url: "Produktlink im Onlineshop",
 };
 
 export function CatchForm({
@@ -673,7 +674,14 @@ export function CatchForm({
                         )
                       }
                     />
-                    {location.name}
+                    <span>
+                      {location.name}
+                      {location.address ? (
+                        <span className="block text-xs text-muted-foreground">
+                          {location.address}
+                        </span>
+                      ) : null}
+                    </span>
                   </label>
                 ))}
                 {(locations.data ?? []).length === 0 ? (
