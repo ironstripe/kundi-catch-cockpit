@@ -387,10 +387,6 @@ export function SoundingWorkspace({
 }
 
 function RoundDetail({ round }: { round: ReviewRound }) {
-  const open = round.responses.filter(
-    (response) => !round.recipients.some((recipient) => recipient.user_id === response.user_id),
-  );
-  void open;
   return (
     <div className="space-y-2">
       <p className="text-xs text-muted-foreground">
