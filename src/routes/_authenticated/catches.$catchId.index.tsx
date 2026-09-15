@@ -4,6 +4,8 @@ import { ArrowLeft, Pencil, Scale } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 
 import { CalculationCard } from "@/components/catch/calculation-card";
+import { SampleCheckCard } from "@/components/catch/sample-check-card";
+import { SoundingWorkspace } from "@/components/catch/sounding-workspace";
 import { CompletedSummary } from "@/components/catch/completed-summary";
 import { ReconciliationWorkspace } from "@/components/catch/reconciliation-workspace";
 import { PublicationWorkspace } from "@/components/catch/publication-workspace";
@@ -141,48 +143,6 @@ function CatchDetailPage() {
         <span className="font-mono text-xs text-muted-foreground">{item.catch_number}</span>
       </div>
 
-      <PageSection
-        id="publikation"
-        title="WhatsApp-Post"
-        description="Post vorbereiten, Bild und Text kopieren und den Catch manuell als publiziert markieren."
-      >
-        <p className="text-xs text-muted-foreground">
-          WhatsApp-Status:{" "}
-          <span className="font-medium text-foreground">
-            {WHATSAPP_STATUS_LABELS[whatsappStatus(item)]}
-          </span>
-        </p>
-
-        {item.status === "closed" || item.status === "cancelled" ? (
-          <PublishedPostCard item={item} />
-        ) : item.status === "draft" ? (
-          <Card>
-            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
-              <p className="text-sm text-muted-foreground">
-                Sobald der Catch vollständig und auf «Bereit» gesetzt ist, wird hier der
-                WhatsApp-Post erstellt.
-              </p>
-              <Button size="sm" asChild>
-                <Link to="/catches/$catchId/edit" params={{ catchId }}>
-                  <Pencil />
-                  Catch vervollständigen und WhatsApp-Post vorbereiten
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : canEdit ? (
-          <PublicationWorkspace item={item} onChanged={invalidate} />
-        ) : item.published_text ? (
-          <PublishedPostCard item={item} />
-        ) : (
-          <Card>
-            <CardContent className="py-4 text-sm text-muted-foreground">
-              Der WhatsApp-Post wird von der Redaktion vorbereitet. Sobald er publiziert ist, kannst
-              du ihn hier ansehen und kopieren.
-            </CardContent>
-          </Card>
-        )}
-      </PageSection>
 
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -315,6 +275,65 @@ function CatchDetailPage() {
 
         </div>
       </div>
+
+      <PageSection
+        id="musterpruefung"
+        title="Musterprüfung"
+        description="Vor dem internen Sounding muss ein aufgetautes Produktmuster geprüft werden."
+      >
+        <SampleCheckCard item={item} onChanged={invalidate} />
+      </PageSection>
+
+      <PageSection
+        id="sounding"
+        title="Internes Sounding"
+        description="Prüfende auswählen, Nachricht in Teams senden und Rückmeldungen im Cockpit erfassen."
+      >
+        <SoundingWorkspace item={item} calculation={calculation} onChanged={invalidate} />
+      </PageSection>
+
+      <PageSection
+        id="publikation"
+        title="WhatsApp-Post"
+        description="Post vorbereiten, Bild und Text kopieren und den Catch manuell als publiziert markieren."
+      >
+        <p className="text-xs text-muted-foreground">
+          WhatsApp-Status:{" "}
+          <span className="font-medium text-foreground">
+            {WHATSAPP_STATUS_LABELS[whatsappStatus(item)]}
+          </span>
+        </p>
+
+        {item.status === "closed" || item.status === "cancelled" ? (
+          <PublishedPostCard item={item} />
+        ) : item.status === "draft" ? (
+          <Card>
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+              <p className="text-sm text-muted-foreground">
+                Sobald der Catch vollständig und auf «Bereit» gesetzt ist, wird hier der
+                WhatsApp-Post erstellt.
+              </p>
+              <Button size="sm" asChild>
+                <Link to="/catches/$catchId/edit" params={{ catchId }}>
+                  <Pencil />
+                  Catch vervollständigen und WhatsApp-Post vorbereiten
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : canEdit ? (
+          <PublicationWorkspace item={item} onChanged={invalidate} />
+        ) : item.published_text ? (
+          <PublishedPostCard item={item} />
+        ) : (
+          <Card>
+            <CardContent className="py-4 text-sm text-muted-foreground">
+              Der WhatsApp-Post wird von der Redaktion vorbereitet. Sobald er publiziert ist, kannst
+              du ihn hier ansehen und kopieren.
+            </CardContent>
+          </Card>
+        )}
+      </PageSection>
 
       {item.status === "closed" || item.status === "cancelled" ? (
         <PageSection
