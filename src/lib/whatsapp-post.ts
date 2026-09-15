@@ -16,10 +16,17 @@ export const BRAND_CLAIM = "Guter Fisch. Kleines Handicap. Grosser Fang.";
 export const BRAND_PURPOSE = "Gut essen. Food Waste vermeiden.";
 
 /** Version der deterministischen Vorlage. Erhöhen, wenn sich der Aufbau ändert. */
-export const POST_TEMPLATE_VERSION = 3;
+export const POST_TEMPLATE_VERSION = 4;
 
 /** Kundenpreise sind Bruttopreise — im Post kurz und einmalig ausgewiesen. */
 export const VAT_NOTE = "inkl. MWST";
+
+/** Abholort aus den Standort-Stammdaten — Adresse und Hinweis kommen immer von dort. */
+export interface PostLocation {
+  name: string;
+  address: string | null;
+  pickup_note: string | null;
+}
 
 export interface PostSource {
   product_name: string;
@@ -29,11 +36,13 @@ export interface PostSource {
   regular_price: number | null;
   catch_price: number | null;
   quantity_unit: string;
-  location_names: string[];
+  locations: PostLocation[];
   available_from: string | null;
   available_until: string | null;
   handicap_story: string | null;
   image_path: string | null;
+  /** Optionaler Direktlink zum Produkt im Onlineshop. */
+  online_shop_url: string | null;
 }
 
 /** Anzeigeeinheit für den Post (nie interne Datenbankwerte). */
