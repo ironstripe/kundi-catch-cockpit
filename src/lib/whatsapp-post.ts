@@ -211,6 +211,7 @@ export function postSourceSignature(source: PostSource): string {
     source.available_until,
     clean(source.handicap_story),
     source.image_path,
+    clean(source.online_shop_url),
     POST_TEMPLATE_VERSION,
   ]);
 }

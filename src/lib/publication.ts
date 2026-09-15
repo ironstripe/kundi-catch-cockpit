@@ -29,11 +29,16 @@ export function catchToPostSource(item: CatchDetail): PostSource {
     regular_price: item.regular_price,
     catch_price: item.catch_price,
     quantity_unit: item.quantity_unit,
-    location_names: item.location_names,
+    locations: item.locations.map((location) => ({
+      name: location.name,
+      address: location.address,
+      pickup_note: location.pickup_note,
+    })),
     available_from: item.available_from,
     available_until: item.available_until,
     handicap_story: item.handicap_story,
     image_path: item.image_path,
+    online_shop_url: item.online_shop_url,
   };
 }
 
