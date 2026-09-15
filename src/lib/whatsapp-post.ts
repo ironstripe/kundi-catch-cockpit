@@ -183,6 +183,9 @@ export function generatePostText(
   }
   if (actionLines.length > 0) blocks.push(actionLines.join("\n"));
 
+  const shopUrl = clean(source.online_shop_url);
+  if (shopUrl) blocks.push(`🛒 Im Onlineshop bestellen:\n${shopUrl}`);
+
   blocks.push(`*${BRAND_PURPOSE}*`);
 
   return blocks.join("\n\n");
@@ -201,7 +204,9 @@ export function postSourceSignature(source: PostSource): string {
     source.regular_price,
     source.catch_price,
     source.quantity_unit,
-    [...source.location_names].sort(),
+    [...source.locations]
+      .map((location) => [location.name.trim(), clean(location.address), clean(location.pickup_note)])
+      .sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
     source.available_from,
     source.available_until,
     clean(source.handicap_story),
