@@ -3,6 +3,7 @@ import { parseNumberInput, type CalculationInput } from "@/lib/catch-calculation
 import type { ReconciliationInput } from "@/lib/catch-reconciliation";
 import { ACTIVE_STATUSES, type CatchStatus, type Temperature } from "@/lib/catch-domain";
 import { zurichLocalToIso } from "@/lib/format";
+import { normaliseProductUrl } from "@/lib/product-link";
 import {
   DEFAULT_DELIVERY_VAT_RATE,
   DEFAULT_PURCHASE_VAT_RATE,
@@ -114,6 +115,10 @@ export interface CatchListItem {
   image_path: string | null;
   location_names: string[];
   location_ids: string[];
+  /** Abholorte mit Adresse und Abholhinweis aus den Stammdaten. */
+  locations: CatchLocation[];
+  /** Optionaler Direktlink zum Produkt im Onlineshop. */
+  online_shop_url: string | null;
   supplier_id: string | null;
   supplier_name: string | null;
   published_at: string | null;
@@ -176,10 +181,10 @@ const LIST_SELECT = `
   delivery_vat_rate, vat_basis_confirmed, updated_at,
   published_at, published_text, published_image_path,
   supplier_id, remaining_quantity, inventory_counted_at, learning,
-  closed_at, cancelled_at, cancellation_reason,
+  closed_at, cancelled_at, cancellation_reason, online_shop_url,
   suppliers ( id, name ),
   catch_images ( storage_path, is_primary, sort_order ),
-  catch_locations ( location_id, locations ( id, name ) )
+  catch_locations ( location_id, locations ( id, name, address, pickup_note ) )
 `;
 
 const DETAIL_SELECT = `
@@ -200,10 +205,10 @@ const DETAIL_SELECT = `
   remaining_quantity, inventory_counted_at, learning,
   closed_at, closed_by, reopened_at, reopened_by, reopen_reason,
   cancelled_at, cancelled_by, cancellation_reason,
-  reconciliation_snapshot,
+  reconciliation_snapshot, online_shop_url,
   suppliers ( id, name ),
   catch_images ( storage_path, is_primary, sort_order ),
-  catch_locations ( location_id, locations ( id, name ) )
+  catch_locations ( location_id, locations ( id, name, address, pickup_note ) )
 `;
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -269,6 +274,15 @@ function mapList(row: any): CatchListItem {
       .map((cl: any) => cl.locations?.name)
       .filter(Boolean),
     location_ids: (row.catch_locations ?? []).map((cl: any) => cl.location_id),
+    locations: (row.catch_locations ?? [])
+      .filter((cl: any) => cl.locations)
+      .map((cl: any) => ({
+        id: cl.locations.id,
+        name: cl.locations.name,
+        address: cl.locations.address ?? null,
+        pickup_note: cl.locations.pickup_note ?? null,
+      })),
+    online_shop_url: row.online_shop_url ?? null,
   };
 }
 
@@ -373,7 +387,7 @@ export async function fetchSuppliers() {
 export async function fetchLocations() {
   const { data, error } = await supabase
     .from("locations")
-    .select("id, name")
+    .select("id, name, address, pickup_note")
     .eq("is_active", true)
     .order("name");
   if (error) throw error;
@@ -410,6 +424,7 @@ export function catchDetailToForm(detail: CatchDetail): CatchFormValues {
     handicap_reason: detail.handicap_reason ?? "",
     handicap_story: detail.handicap_story ?? "",
     internal_note: detail.internal_note ?? "",
+    online_shop_url: detail.online_shop_url ?? "",
   };
 }
 
@@ -461,6 +476,7 @@ export async function saveCatch({ id, values, status, audit }: SaveArgs): Promis
     handicap_reason: values.handicap_reason || null,
     handicap_story: values.handicap_story.trim() || null,
     internal_note: values.internal_note.trim() || null,
+    online_shop_url: normaliseProductUrl(values.online_shop_url),
     status,
   };
 
