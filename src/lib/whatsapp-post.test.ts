@@ -70,7 +70,6 @@ MHD: 19.01.2027
 📍 Abholung:
 Stadtladen Schaffhausen
 Kirchhofplatz 10
-8200 Schaffhausen
 📅 Ab: 04.09.2026 ab 14:00 Uhr
 
 *Gut essen. Food Waste vermeiden.*`;
