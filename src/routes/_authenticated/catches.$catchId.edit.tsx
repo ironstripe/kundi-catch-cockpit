@@ -3,11 +3,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ArrowLeft } from "lucide-react";
 
 import { CatchForm } from "@/components/catch/catch-form";
+import { SampleCheckCard } from "@/components/catch/sample-check-card";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { catchDetailToForm, fetchCatch } from "@/lib/catches";
+import { currentRound, fetchReviewRounds, readyBlockReason } from "@/lib/sounding";
 
 export const Route = createFileRoute("/_authenticated/catches/$catchId/edit")({
   head: () => ({
@@ -33,6 +35,10 @@ function EditCatchPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["catch", catchId], queryFn: () => fetchCatch(catchId) });
+  const rounds = useQuery({
+    queryKey: ["review-rounds", catchId],
+    queryFn: () => fetchReviewRounds(catchId),
+  });
 
   if (query.isLoading) return <Skeleton className="h-64 w-full" />;
 
@@ -77,12 +83,28 @@ function EditCatchPage() {
         </div>
       ) : null}
 
+      <SampleCheckCard
+        item={item}
+        onChanged={() => {
+          void queryClient.invalidateQueries({ queryKey: ["catch", catchId] });
+          void rounds.refetch();
+        }}
+      />
+
       <CatchForm
         mode="edit"
         catchId={catchId}
         initialValues={catchDetailToForm(item)}
         initialImagePath={item.image_path}
         currentStatus={item.status}
+        readyBlock={
+          item.status === "draft"
+            ? readyBlockReason(
+                item.sample_check_status,
+                rounds.data ? currentRound(rounds.data) : null,
+              )
+            : null
+        }
         onSaved={(id, savedStatus) => {
           void queryClient.invalidateQueries({ queryKey: ["catch", id] });
           void queryClient.invalidateQueries({ queryKey: ["catches"] });
