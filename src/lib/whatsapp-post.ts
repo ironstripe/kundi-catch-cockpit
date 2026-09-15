@@ -16,7 +16,7 @@ export const BRAND_CLAIM = "Guter Fisch. Kleines Handicap. Grosser Fang.";
 export const BRAND_PURPOSE = "Gut essen. Food Waste vermeiden.";
 
 /** Version der deterministischen Vorlage. Erhöhen, wenn sich der Aufbau ändert. */
-export const POST_TEMPLATE_VERSION = 4;
+export const POST_TEMPLATE_VERSION = 5;
 
 /** Kundenpreise sind Bruttopreise — im Post kurz und einmalig ausgewiesen. */
 export const VAT_NOTE = "inkl. MWST";
@@ -75,12 +75,24 @@ export function postPercent(percent: number): string {
   return `${percent.toFixed(1)} %`;
 }
 
-/** Adresse aus den Stammdaten in Zeilen zerlegen ("Kirchhofplatz 10, 8200 Schaffhausen"). */
+/** Stadt/Postleitzahl aus einer Adresse entfernen ("8200 Schaffhausen"). */
+function stripCityPart(part: string): string | null {
+  const trimmed = part.trim();
+  // Schweizer Postleitzahl + Ort am Ende oder als eigener Teil
+  if (/^\d{4}\s+\S/.test(trimmed)) return null;
+  return trimmed;
+}
+
+/**
+ * Adresse aus den Stammdaten in Zeilen zerlegen.
+ * Postleitzahl und Ort («8200 Schaffhausen») entfallen im Post, da dort nur
+ * Standortname und Strasse erscheinen sollen.
+ */
 export function addressLines(address: string | null | undefined): string[] {
   return (address ?? "")
     .split(/\n|,/)
-    .map((part) => part.trim())
-    .filter((part) => part !== "");
+    .map((part) => stripCityPart(part))
+    .filter((part): part is string => part !== null && part !== "");
 }
 
 /**
@@ -205,7 +217,11 @@ export function postSourceSignature(source: PostSource): string {
     source.catch_price,
     source.quantity_unit,
     [...source.locations]
-      .map((location) => [location.name.trim(), clean(location.address), clean(location.pickup_note)])
+      .map((location) => [
+        location.name.trim(),
+        addressLines(location.address).join(", "),
+        clean(location.pickup_note),
+      ])
       .sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
     source.available_from,
     source.available_until,

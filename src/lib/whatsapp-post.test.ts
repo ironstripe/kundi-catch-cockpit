@@ -70,7 +70,6 @@ MHD: 19.01.2027
 📍 Abholung:
 Stadtladen Schaffhausen
 Kirchhofplatz 10
-8200 Schaffhausen
 📅 Ab: 04.09.2026 ab 14:00 Uhr
 
 *Gut essen. Food Waste vermeiden.*`;
@@ -125,7 +124,7 @@ describe("generatePostText", () => {
       ],
     });
     expect(text).toContain(
-      "📍 Abholung:\n• Hofladen Kundelfingerhof\n• Stadtladen Schaffhausen\n  Kirchhofplatz 10\n  8200 Schaffhausen\n  Bitte an der Kasse melden.",
+      "📍 Abholung:\n• Hofladen Kundelfingerhof\n• Stadtladen Schaffhausen\n  Kirchhofplatz 10\n  Bitte an der Kasse melden.",
     );
   });
 
@@ -275,7 +274,7 @@ describe("Abholorte und Produktlink", () => {
         },
       ],
     });
-    expect(text).toContain("8200 Schaffhausen\nBitte an der Kasse melden.");
+    expect(text).toContain("Kirchhofplatz 10\nBitte an der Kasse melden.");
   });
 
   it("nennt den Onlineshop nur bei hinterlegtem Produktlink", () => {
