@@ -265,7 +265,7 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
                 />
                 <Fact
                   label="Abholorte"
-                  value={item.location_names.join(", ") || "—"}
+                  value={pickupSummary(item.locations) ?? "—"}
                 />
                 <Fact
                   label="Verfügbar ab"

@@ -174,7 +174,7 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
             />
             <SourceRow
               label="Abholorte"
-              value={item.location_names.length > 0 ? item.location_names.join(", ") : "—"}
+              value={pickupSummary(item.locations) ?? "—"}
             />
           </div>
 

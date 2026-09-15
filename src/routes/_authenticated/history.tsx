@@ -16,6 +16,7 @@ import { useEffect, useMemo, useState } from "react";
 import { KpiCard } from "@/components/catch/kpi-card";
 import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-badge";
 import { EmptyState } from "@/components/layout/empty-state";
+import { pickupSummary } from "@/lib/pickup-display";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -511,7 +512,7 @@ function HistoryRow({ row }: { row: CatchListItem }) {
       </TableCell>
       <TableCell className="text-muted-foreground">{row.supplier_name ?? "—"}</TableCell>
       <TableCell className="text-muted-foreground">
-        {row.location_names.length > 0 ? row.location_names.join(", ") : "—"}
+        {pickupSummary(row.locations) ?? "—"}
       </TableCell>
       <TableCell className="whitespace-nowrap">
         {row.published_at ? formatDateTime(row.published_at) : "—"}
