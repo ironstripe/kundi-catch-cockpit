@@ -14,6 +14,8 @@ export const CATCH_IMAGE_BUCKET = "catch-images";
 
 export interface CatchFormValues {
   product_name: string;
+  /** Optionale Artikelnummer des Lieferanten — Teil der Produktidentität. */
+  article_number: string;
   temperature: Temperature;
   description: string;
   packaging: string;
@@ -48,6 +50,7 @@ export interface CatchFormValues {
 
 export const EMPTY_CATCH_FORM: CatchFormValues = {
   product_name: "",
+  article_number: "",
   temperature: "fresh",
   description: "",
   packaging: "",
