@@ -9,7 +9,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { CalculationResult } from "@/lib/catch-calculation";
-import type { CatchDetail } from "@/lib/catches";
+import type { CatchDetail, CatchLocation } from "@/lib/catches";
 import { formatCurrency, formatDate, formatPercentValue, formatQuantity } from "@/lib/format";
 
 /* ------------------------------------------------------------------ Typen */
