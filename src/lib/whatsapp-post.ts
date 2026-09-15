@@ -75,12 +75,24 @@ export function postPercent(percent: number): string {
   return `${percent.toFixed(1)} %`;
 }
 
-/** Adresse aus den Stammdaten in Zeilen zerlegen ("Kirchhofplatz 10, 8200 Schaffhausen"). */
+/** Stadt/Postleitzahl aus einer Adresse entfernen ("8200 Schaffhausen"). */
+function stripCityPart(part: string): string | null {
+  const trimmed = part.trim();
+  // Schweizer Postleitzahl + Ort am Ende oder als eigener Teil
+  if (/^\d{4}\s+\S/.test(trimmed)) return null;
+  return trimmed;
+}
+
+/**
+ * Adresse aus den Stammdaten in Zeilen zerlegen.
+ * Postleitzahl und Ort («8200 Schaffhausen») entfallen im Post, da dort nur
+ * Standortname und Strasse erscheinen sollen.
+ */
 export function addressLines(address: string | null | undefined): string[] {
   return (address ?? "")
     .split(/\n|,/)
-    .map((part) => part.trim())
-    .filter((part) => part !== "");
+    .map((part) => stripCityPart(part))
+    .filter((part): part is string => part !== null && part !== "");
 }
 
 /**
