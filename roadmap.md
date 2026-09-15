@@ -80,3 +80,9 @@
 - [x] Einstellungs-Tab «Sounding» mit Teams-Gruppenchat-Link und Standard-Prüfenden
 - [x] Kundenkommunikation über WhatsApp unverändert
 - [ ] Teams-Gruppenchat-Link in den Einstellungen hinterlegen (nur der Admin kennt die Adresse)
+
+## Abholadressen und Produktlink
+
+- Stadtladen Schaffhausen: Kirchhofplatz 10, 8200 Schaffhausen hinterlegt (kein Duplikat).
+- Optionaler Produktlink im Onlineshop pro Catch (nur https, kein Pflichtfeld).
+- Offen: Link zum Teams-Gruppenchat unter Einstellungen > Sounding hinterlegen.
