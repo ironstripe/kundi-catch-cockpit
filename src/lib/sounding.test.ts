@@ -64,6 +64,10 @@ const catchItem: CatchDetail = {
   image_path: "catch-1/bild.jpg",
   location_names: ["Kundelfingerhof"],
   location_ids: ["loc-1"],
+  locations: [
+    { id: "loc-1", name: "Kundelfingerhof", address: "Kundelfingerhof 1, 8245 Feuerthalen", pickup_note: null },
+  ],
+  online_shop_url: null,
   supplier_id: "sup-1",
   supplier_name: "Fischhandel Nord",
   published_at: null,
