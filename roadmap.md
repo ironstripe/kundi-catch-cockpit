@@ -70,3 +70,13 @@
 - [x] Einmalige Übernahme als Catch-Entwurf inkl. Bildübernahme, Verweis auf das Angebot und Audit
 - [x] Admin-Diagnose in den Einstellungen: Einrichtung und Zustellprotokoll
 - [ ] `RESEND_WEBHOOK_SECRET` und `RESEND_API_KEY` hinterlegen, Webhook in Resend auf `email.received` einrichten
+
+## Musterprüfung und internes Sounding (abgeschlossen)
+- [x] Additive Migration: `article_number`, Musterprüfungsfelder, Tabellen `catch_review_rounds`, `catch_review_recipients`, `catch_review_responses` inkl. RLS, Grants und Trigger
+- [x] Musterprüfung (Ausstehend/Bestanden/Nicht bestanden) mit serverseitiger Person und Zeit, Rücksetzung bei geänderter Produktidentität
+- [x] Sounding: Prüfende wählen, unveränderlicher Steckbrief, Teams-Nachricht kopieren, Teams öffnen, Rückmeldungen, Abschluss, neue Runde
+- [x] Geschützte Review-Seite `/catches/{id}/review` inkl. Rückkehr nach der Anmeldung
+- [x] Freigabe auf «Bereit» nur nach bestandener Musterprüfung und abgeschlossenem, aktuellem Sounding (UI und Datenbank)
+- [x] Einstellungs-Tab «Sounding» mit Teams-Gruppenchat-Link und Standard-Prüfenden
+- [x] Kundenkommunikation über WhatsApp unverändert
+- [ ] Teams-Gruppenchat-Link in den Einstellungen hinterlegen (nur der Admin kennt die Adresse)

@@ -14,6 +14,7 @@ export const SETTING_KEYS = {
   brand: "brand_logo",
   brandIcon: "brand_icon",
   instagram: "instagram",
+  sounding: "sounding",
 } as const;
 
 /**
@@ -27,6 +28,7 @@ export const SETTING_AUDIT_IDS: Record<string, string> = {
   brand_logo: "71584ba9-bd72-aad3-fcef-ece5523cfb9e",
   brand_icon: "6670d0fb-13c2-aafe-843a-a872fe540e1e",
   instagram: "0f2c1c1e-6a2b-4d5e-9d54-8c8c2a1f7b30",
+  sounding: "6c9a41d2-77b5-4f0e-9c3a-2d1b8e5f4a07",
 };
 
 /** Reihenfolge der optionalen Produktdetailzeilen im Post. */
@@ -100,6 +102,18 @@ export const DEFAULT_INSTAGRAM_SETTINGS: InstagramSettings = {
   default_publish_hour: "09:00",
 };
 
+export interface SoundingSettings {
+  /** Adresse des bestehenden Microsoft-Teams-Gruppenchats. */
+  teams_chat_url: string;
+  /** Standardmässig vorausgewählte prüfende Personen. */
+  default_reviewer_ids: string[];
+}
+
+export const DEFAULT_SOUNDING_SETTINGS: SoundingSettings = {
+  teams_chat_url: "",
+  default_reviewer_ids: [],
+};
+
 export interface AppSettings {
   thresholds: CatchThresholds;
   thresholds_version: number;
@@ -113,6 +127,8 @@ export interface AppSettings {
   brand_icon_version: number;
   instagram: InstagramSettings;
   instagram_version: number;
+  sounding: SoundingSettings;
+  sounding_version: number;
 }
 
 function merge<T extends object>(fallback: T, value: unknown): T {
@@ -130,6 +146,7 @@ export async function fetchAppSettings(): Promise<AppSettings> {
   const brandRow = rows.get(SETTING_KEYS.brand);
   const iconRow = rows.get(SETTING_KEYS.brandIcon);
   const instagramRow = rows.get(SETTING_KEYS.instagram);
+  const soundingRow = rows.get(SETTING_KEYS.sounding);
   return {
     thresholds: merge(DEFAULT_CATCH_THRESHOLDS, thresholdRow?.value),
     thresholds_version: thresholdRow?.version ?? 1,
@@ -143,6 +160,8 @@ export async function fetchAppSettings(): Promise<AppSettings> {
     brand_icon_version: iconRow?.version ?? 1,
     instagram: merge(DEFAULT_INSTAGRAM_SETTINGS, instagramRow?.value),
     instagram_version: instagramRow?.version ?? 1,
+    sounding: merge(DEFAULT_SOUNDING_SETTINGS, soundingRow?.value),
+    sounding_version: soundingRow?.version ?? 1,
   };
 }
 

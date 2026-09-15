@@ -238,9 +238,133 @@ export type Database = {
         }
         Relationships: []
       }
+      catch_review_recipients: {
+        Row: {
+          created_at: string
+          id: string
+          review_round_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          review_round_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          review_round_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catch_review_recipients_review_round_id_fkey"
+            columns: ["review_round_id"]
+            isOneToOne: false
+            referencedRelation: "catch_review_rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catch_review_responses: {
+        Row: {
+          comment: string | null
+          created_at: string
+          decision: string
+          id: string
+          review_round_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          decision: string
+          id?: string
+          review_round_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          decision?: string
+          id?: string
+          review_round_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catch_review_responses_review_round_id_fkey"
+            columns: ["review_round_id"]
+            isOneToOne: false
+            referencedRelation: "catch_review_rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catch_review_rounds: {
+        Row: {
+          catch_id: string
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          outdated_at: string | null
+          requested_at: string
+          requested_by: string | null
+          round_number: number
+          snapshot: Json
+          source_signature: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          catch_id: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          outdated_at?: string | null
+          requested_at?: string
+          requested_by?: string | null
+          round_number?: number
+          snapshot?: Json
+          source_signature?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          catch_id?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          outdated_at?: string | null
+          requested_at?: string
+          requested_by?: string | null
+          round_number?: number
+          snapshot?: Json
+          source_signature?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catch_review_rounds_catch_id_fkey"
+            columns: ["catch_id"]
+            isOneToOne: false
+            referencedRelation: "catches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catches: {
         Row: {
           actual_sell_through: number | null
+          article_number: string | null
           available_from: string | null
           available_until: string | null
           cancellation_reason: string | null
@@ -302,6 +426,10 @@ export type Database = {
           reopen_reason: string | null
           reopened_at: string | null
           reopened_by: string | null
+          sample_check_note: string | null
+          sample_check_status: string
+          sample_checked_at: string | null
+          sample_checked_by: string | null
           source_case_id: string | null
           source_offer_id: string | null
           status: string
@@ -313,6 +441,7 @@ export type Database = {
         }
         Insert: {
           actual_sell_through?: number | null
+          article_number?: string | null
           available_from?: string | null
           available_until?: string | null
           cancellation_reason?: string | null
@@ -374,6 +503,10 @@ export type Database = {
           reopen_reason?: string | null
           reopened_at?: string | null
           reopened_by?: string | null
+          sample_check_note?: string | null
+          sample_check_status?: string
+          sample_checked_at?: string | null
+          sample_checked_by?: string | null
           source_case_id?: string | null
           source_offer_id?: string | null
           status?: string
@@ -385,6 +518,7 @@ export type Database = {
         }
         Update: {
           actual_sell_through?: number | null
+          article_number?: string | null
           available_from?: string | null
           available_until?: string | null
           cancellation_reason?: string | null
@@ -446,6 +580,10 @@ export type Database = {
           reopen_reason?: string | null
           reopened_at?: string | null
           reopened_by?: string | null
+          sample_check_note?: string | null
+          sample_check_status?: string
+          sample_checked_at?: string | null
+          sample_checked_by?: string | null
           source_case_id?: string | null
           source_offer_id?: string | null
           status?: string
@@ -953,6 +1091,7 @@ export type Database = {
     }
     Functions: {
       can_edit: { Args: never; Returns: boolean }
+      catch_source_signature: { Args: { _catch_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -962,6 +1101,19 @@ export type Database = {
       }
       is_active_user: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      is_review_recipient: {
+        Args: { _round_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_review_round_open: { Args: { _round_id: string }; Returns: boolean }
+      mark_review_rounds_outdated: {
+        Args: { _catch_id: string }
+        Returns: undefined
+      }
+      reset_sample_check: {
+        Args: { _catch_id: string; _reason: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "editor" | "viewer"

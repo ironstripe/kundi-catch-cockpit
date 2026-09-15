@@ -14,6 +14,8 @@ export const CATCH_IMAGE_BUCKET = "catch-images";
 
 export interface CatchFormValues {
   product_name: string;
+  /** Optionale Artikelnummer des Lieferanten — Teil der Produktidentität. */
+  article_number: string;
   temperature: Temperature;
   description: string;
   packaging: string;
@@ -48,6 +50,7 @@ export interface CatchFormValues {
 
 export const EMPTY_CATCH_FORM: CatchFormValues = {
   product_name: "",
+  article_number: "",
   temperature: "fresh",
   description: "",
   packaging: "",
@@ -114,6 +117,12 @@ export interface CatchListItem {
 }
 
 export interface CatchDetail extends CatchListItem {
+  article_number: string | null;
+  /** Musterprüfung: pending | passed | failed. */
+  sample_check_status: "pending" | "passed" | "failed";
+  sample_checked_at: string | null;
+  sample_checked_by: string | null;
+  sample_check_note: string | null;
   description: string | null;
   packaging: string | null;
   expiry_date: string | null;
@@ -163,7 +172,8 @@ const LIST_SELECT = `
 `;
 
 const DETAIL_SELECT = `
-  id, catch_number, product_name, temperature, status, description, packaging,
+  id, catch_number, product_name, article_number, temperature, status, description, packaging,
+  sample_check_status, sample_checked_at, sample_checked_by, sample_check_note,
   expiry_date, supplier_id, purchase_quantity, quantity_unit, purchase_price,
   delivery_cost, delivery_included, regular_price, catch_price, vat_rate,
   purchase_price_includes_vat, purchase_vat_rate, delivery_cost_includes_vat,
@@ -254,6 +264,11 @@ function mapList(row: any): CatchListItem {
 function mapDetail(row: any): CatchDetail {
   return {
     ...mapList(row),
+    article_number: row.article_number ?? null,
+    sample_check_status: (row.sample_check_status ?? "pending") as "pending" | "passed" | "failed",
+    sample_checked_at: row.sample_checked_at ?? null,
+    sample_checked_by: row.sample_checked_by ?? null,
+    sample_check_note: row.sample_check_note ?? null,
     description: row.description,
     packaging: row.packaging,
     expiry_date: row.expiry_date,
@@ -359,6 +374,7 @@ export function catchDetailToForm(detail: CatchDetail): CatchFormValues {
     value === null || value === undefined ? "" : String(value);
   return {
     product_name: detail.product_name ?? "",
+    article_number: detail.article_number ?? "",
     temperature: detail.temperature,
     description: detail.description ?? "",
     packaging: detail.packaging ?? "",
@@ -408,6 +424,7 @@ export async function saveCatch({ id, values, status, audit }: SaveArgs): Promis
 
   const payload = {
     product_name: values.product_name.trim(),
+    article_number: values.article_number.trim() || null,
     temperature: values.temperature,
     description: values.description.trim() || null,
     packaging: values.packaging.trim() || null,

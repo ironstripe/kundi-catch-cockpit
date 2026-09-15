@@ -66,6 +66,11 @@ interface CatchFormProps {
   initialImagePath: string | null;
   /** Aktueller Status, damit ein publizierter Catch beim Speichern publiziert bleibt. */
   currentStatus?: "draft" | "ready" | "published" | "closed" | "cancelled";
+  /**
+   * Grund, weshalb der Catch nicht auf «Bereit» gesetzt werden darf
+   * (Musterprüfung oder Sounding offen). Verbindlich prüft die Datenbank.
+   */
+  readyBlock?: string | null;
   onSaved: (catchId: string, savedStatus: "draft" | "ready") => void;
 }
 
@@ -95,6 +100,7 @@ export function CatchForm({
   initialValues,
   initialImagePath,
   currentStatus,
+  readyBlock = null,
   onSaved,
 }: CatchFormProps) {
   const navigate = useNavigate();
@@ -152,6 +158,10 @@ export function CatchForm({
   }
 
   async function persist(status: "draft" | "ready", confirmedCritical = false) {
+    if (status === "ready" && readyBlock) {
+      toast.error("Freigabe nicht möglich", { description: readyBlock });
+      return;
+    }
     const found =
       status === "draft" ? validateDraft(values) : validateReady(values, Boolean(imagePath));
     setIssues(found);
@@ -296,6 +306,19 @@ export function CatchForm({
                 aria-invalid={Boolean(issueFor("product_name"))}
                 onChange={(event) => set("product_name", event.target.value)}
                 placeholder="z. B. Felchenfilets"
+              />
+            </Field>
+
+            <Field
+              label="Artikelnummer"
+              hint="optional; Teil der Produktidentität für die Musterprüfung"
+            >
+              <Input
+                id="article_number"
+                value={values.article_number}
+                maxLength={60}
+                onChange={(event) => set("article_number", event.target.value)}
+                placeholder="z. B. ART-4711"
               />
             </Field>
 
@@ -774,12 +797,16 @@ export function CatchForm({
             <Button
               type="button"
               className="w-full"
-              disabled={saving || uploading}
+              disabled={saving || uploading || Boolean(readyBlock)}
+              title={readyBlock ?? undefined}
               onClick={() => void persist("ready")}
             >
               <CheckCircle2 />
               Speichern und WhatsApp-Post vorbereiten
             </Button>
+            {readyBlock ? (
+              <p className="text-[11px] font-medium text-muted-foreground">{readyBlock}</p>
+            ) : null}
             <Button
               type="button"
               variant="secondary"

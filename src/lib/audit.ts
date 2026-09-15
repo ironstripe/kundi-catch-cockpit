@@ -51,7 +51,17 @@ export type AuditAction =
   | "offer_converted"
   | "offer_ignored"
   | "offer_reopened"
-  | "offer_image_selected";
+  | "offer_image_selected"
+  | "sample_check_passed"
+  | "sample_check_failed"
+  | "sample_check_invalidated"
+  | "sounding_started"
+  | "reviewer_assigned"
+  | "review_feedback_submitted"
+  | "review_feedback_updated"
+  | "sounding_completed"
+  | "sounding_invalidated"
+  | "sounding_settings_updated";
 
 export const AUDIT_ACTION_LABELS: Record<string, string> = {
   created: "Erstellt",
@@ -100,6 +110,16 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   offer_ignored: "Angebot abgelegt",
   offer_reopened: "Angebot wieder geöffnet",
   offer_image_selected: "Angebotsbild gewählt",
+  sample_check_passed: "Musterprüfung bestanden",
+  sample_check_failed: "Musterprüfung nicht bestanden",
+  sample_check_invalidated: "Musterprüfung zurückgesetzt",
+  sounding_started: "Sounding gestartet",
+  reviewer_assigned: "Prüfende Person zugewiesen",
+  review_feedback_submitted: "Rückmeldung erfasst",
+  review_feedback_updated: "Rückmeldung geändert",
+  sounding_completed: "Sounding abgeschlossen",
+  sounding_invalidated: "Sounding überholt",
+  sounding_settings_updated: "Sounding-Einstellungen geändert",
 };
 
 export const AUDIT_ENTITY_LABELS: Record<string, string> = {

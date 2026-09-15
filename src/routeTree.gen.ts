@@ -19,6 +19,7 @@ import { Route as AuthenticatedOffersIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedOffersCaseIdRouteImport } from './routes/_authenticated/offers.$caseId'
 import { Route as AuthenticatedCatchesCatchIdIndexRouteImport } from './routes/_authenticated/catches.$catchId.index'
 import { Route as AuthenticatedCatchesCatchIdEditRouteImport } from './routes/_authenticated/catches.$catchId.edit'
+import { Route as AuthenticatedCatchesCatchIdReviewRouteImport } from './routes/_authenticated/catches.$catchId.review'
 import { Route as ApiPublicInstagramCallbackRouteImport } from './routes/api/public/instagram/callback'
 import { Route as ApiPublicWebhooksResendRouteImport } from './routes/api/public/webhooks/resend'
 
@@ -75,6 +76,12 @@ const AuthenticatedCatchesCatchIdEditRoute =
     path: '/catches/$catchId/edit',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCatchesCatchIdReviewRoute =
+  AuthenticatedCatchesCatchIdReviewRouteImport.update({
+    id: '/catches/$catchId/review',
+    path: '/catches/$catchId/review',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicInstagramCallbackRoute =
   ApiPublicInstagramCallbackRouteImport.update({
     id: '/api/public/instagram/callback',
@@ -96,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/offers/$caseId': typeof AuthenticatedOffersCaseIdRoute
   '/offers/': typeof AuthenticatedOffersIndexRoute
   '/catches/$catchId/edit': typeof AuthenticatedCatchesCatchIdEditRoute
+  '/catches/$catchId/review': typeof AuthenticatedCatchesCatchIdReviewRoute
   '/api/public/instagram/callback': typeof ApiPublicInstagramCallbackRoute
   '/api/public/webhooks/resend': typeof ApiPublicWebhooksResendRoute
   '/catches/$catchId/': typeof AuthenticatedCatchesCatchIdIndexRoute
@@ -109,6 +117,7 @@ export interface FileRoutesByTo {
   '/offers/$caseId': typeof AuthenticatedOffersCaseIdRoute
   '/offers': typeof AuthenticatedOffersIndexRoute
   '/catches/$catchId/edit': typeof AuthenticatedCatchesCatchIdEditRoute
+  '/catches/$catchId/review': typeof AuthenticatedCatchesCatchIdReviewRoute
   '/api/public/instagram/callback': typeof ApiPublicInstagramCallbackRoute
   '/api/public/webhooks/resend': typeof ApiPublicWebhooksResendRoute
   '/catches/$catchId': typeof AuthenticatedCatchesCatchIdIndexRoute
@@ -124,6 +133,7 @@ export interface FileRoutesById {
   '/_authenticated/offers/$caseId': typeof AuthenticatedOffersCaseIdRoute
   '/_authenticated/offers/': typeof AuthenticatedOffersIndexRoute
   '/_authenticated/catches/$catchId/edit': typeof AuthenticatedCatchesCatchIdEditRoute
+  '/_authenticated/catches/$catchId/review': typeof AuthenticatedCatchesCatchIdReviewRoute
   '/api/public/instagram/callback': typeof ApiPublicInstagramCallbackRoute
   '/api/public/webhooks/resend': typeof ApiPublicWebhooksResendRoute
   '/_authenticated/catches/$catchId/': typeof AuthenticatedCatchesCatchIdIndexRoute
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/offers/$caseId'
     | '/offers/'
     | '/catches/$catchId/edit'
+    | '/catches/$catchId/review'
     | '/api/public/instagram/callback'
     | '/api/public/webhooks/resend'
     | '/catches/$catchId/'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/offers/$caseId'
     | '/offers'
     | '/catches/$catchId/edit'
+    | '/catches/$catchId/review'
     | '/api/public/instagram/callback'
     | '/api/public/webhooks/resend'
     | '/catches/$catchId'
@@ -166,6 +178,7 @@ export interface FileRouteTypes {
     | '/_authenticated/offers/$caseId'
     | '/_authenticated/offers/'
     | '/_authenticated/catches/$catchId/edit'
+    | '/_authenticated/catches/$catchId/review'
     | '/api/public/instagram/callback'
     | '/api/public/webhooks/resend'
     | '/_authenticated/catches/$catchId/'
@@ -250,6 +263,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCatchesCatchIdEditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/catches/$catchId/review': {
+      id: '/_authenticated/catches/$catchId/review'
+      path: '/catches/$catchId/review'
+      fullPath: '/catches/$catchId/review'
+      preLoaderRoute: typeof AuthenticatedCatchesCatchIdReviewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/instagram/callback': {
       id: '/api/public/instagram/callback'
       path: '/api/public/instagram/callback'
@@ -275,6 +295,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOffersCaseIdRoute: typeof AuthenticatedOffersCaseIdRoute
   AuthenticatedOffersIndexRoute: typeof AuthenticatedOffersIndexRoute
   AuthenticatedCatchesCatchIdEditRoute: typeof AuthenticatedCatchesCatchIdEditRoute
+  AuthenticatedCatchesCatchIdReviewRoute: typeof AuthenticatedCatchesCatchIdReviewRoute
   AuthenticatedCatchesCatchIdIndexRoute: typeof AuthenticatedCatchesCatchIdIndexRoute
 }
 
@@ -286,6 +307,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOffersCaseIdRoute: AuthenticatedOffersCaseIdRoute,
   AuthenticatedOffersIndexRoute: AuthenticatedOffersIndexRoute,
   AuthenticatedCatchesCatchIdEditRoute: AuthenticatedCatchesCatchIdEditRoute,
+  AuthenticatedCatchesCatchIdReviewRoute:
+    AuthenticatedCatchesCatchIdReviewRoute,
   AuthenticatedCatchesCatchIdIndexRoute: AuthenticatedCatchesCatchIdIndexRoute,
 }
 

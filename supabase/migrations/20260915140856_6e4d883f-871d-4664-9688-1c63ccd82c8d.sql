@@ -1,0 +1,16 @@
+REVOKE EXECUTE ON FUNCTION public.catch_source_signature(uuid) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.mark_review_rounds_outdated(uuid) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.reset_sample_check(uuid, text) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.prepare_review_round() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.guard_review_round_update() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.audit_review_round_insert() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.guard_review_response() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.audit_review_recipient() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.handle_catch_identity_change() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.sync_review_rounds_after_catch_change() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.sync_review_rounds_after_image_change() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.sync_review_rounds_after_location_change() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.is_review_recipient(uuid, uuid) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.is_review_round_open(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_review_recipient(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_review_round_open(uuid) TO authenticated;
