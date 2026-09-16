@@ -334,3 +334,11 @@ describe("Abholorte in der Cockpit-Anzeige", () => {
     expect(pickupSummary([])).toBeNull();
   });
 });
+
+describe("Interne Kennzahlen bleiben intern", () => {
+  it("nennt weder DB II noch internen Aufwand im Kundenpost", () => {
+    const text = buildPostText(SOURCE, TEMPLATE);
+    expect(text).not.toContain("DB");
+    expect(text).not.toContain("Aufwand");
+  });
+});
