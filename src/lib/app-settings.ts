@@ -195,6 +195,8 @@ export async function fetchAppSettings(): Promise<AppSettings> {
   return {
     thresholds: merge(DEFAULT_CATCH_THRESHOLDS, thresholdRow?.value),
     thresholds_version: thresholdRow?.version ?? 1,
+    calculation_defaults: merge(DEFAULT_CALCULATION_DEFAULTS, defaultsRow?.value),
+    calculation_defaults_version: defaultsRow?.version ?? 1,
     vat: merge(DEFAULT_VAT_SETTINGS, vatRow?.value),
     vat_version: vatRow?.version ?? 1,
     template: merge(DEFAULT_TEMPLATE_SETTINGS, templateRow?.value),
