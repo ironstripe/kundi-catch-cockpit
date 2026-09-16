@@ -82,7 +82,7 @@ export function SampleCheckCard({
             variant="outline"
             className={
               status === "passed"
-                ? "border-success/40 bg-success/10 text-success-foreground"
+                ? "border-success/40 bg-success/10 text-black"
                 : status === "failed"
                   ? "border-destructive/40 bg-destructive/10 text-destructive"
                   : "border-warning/40 bg-warning/10"
