@@ -22,9 +22,12 @@ planned_db_ii                = maximum_contribution_margin − internal_handling
 planned_db_ii_margin_percent = planned_db_ii ÷ maximum_net_revenue × 100
 effective_db_ii              = effective_contribution_margin − internal_handling_cost_total
 effective_db_ii_margin_percent = effective_db_ii ÷ effective_revenue × 100
+planned_internal_handling_cost_share_percent   = internal_handling_cost_total ÷ maximum_net_revenue × 100
+effective_internal_handling_cost_share_percent = internal_handling_cost_total ÷ effective_revenue × 100
 ```
 
-- Nettoerlös 0 oder fehlend → Marge bleibt `null`, Anzeige «—». Keine Division durch Null.
+- Der Anteil wird stets auf den Nettoerlös (ohne MWST) gerechnet; die Kosten selbst bleiben CHF pro vorbereiteter Einheit — kein prozentualer Kostenansatz.
+- Nettoerlös 0 oder fehlend → Marge und Anteil bleiben `null`, Anzeige «—». Keine Division durch Null.
 - Unverkaufte Menge senkt den internen Aufwand nicht: immer die vorbereitete Menge.
 - Ohne erfassten Satz bleiben DB II und Marge `null`; Anzeige «Interner Aufwand nicht erfasst». Kein stiller Rückfall auf CHF 2.50.
 - Volle Präzision im Rechenkern, Rundung nur in der Anzeige (bestehende Formatierer).
