@@ -9,6 +9,7 @@ import { DEFAULT_VAT_SETTINGS, type VatSettings } from "@/lib/vat";
 
 export const SETTING_KEYS = {
   thresholds: "calculation_thresholds",
+  calculationDefaults: "calculation_defaults",
   vat: "vat",
   template: "whatsapp_template",
   brand: "brand_logo",
@@ -23,6 +24,7 @@ export const SETTING_KEYS = {
  */
 export const SETTING_AUDIT_IDS: Record<string, string> = {
   calculation_thresholds: "feadc928-d0ce-51a6-7cb8-3372da8ee481",
+  calculation_defaults: "9a4c7f18-3b56-4d21-8e7a-1c5b90fd4e62",
   vat: "2f1d6a3c-40b7-4d92-9c1e-71f0a3d5b8c4",
   whatsapp_template: "b5bfa745-2936-cd06-683a-47da4f293467",
   brand_logo: "71584ba9-bd72-aad3-fcef-ece5523cfb9e",
