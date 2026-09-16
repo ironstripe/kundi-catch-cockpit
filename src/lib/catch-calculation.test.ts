@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { aggregateCatches, calculateCatch, type CalculationInput } from "@/lib/catch-calculation";
+import {
+  aggregateCatches,
+  calculateCatch,
+  DEFAULT_INTERNAL_HANDLING_COST,
+  type CalculationInput,
+} from "@/lib/catch-calculation";
 
 function input(partial: Partial<CalculationInput>): CalculationInput {
   return {
