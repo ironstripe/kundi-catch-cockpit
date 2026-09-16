@@ -44,6 +44,18 @@ export interface ReconciliationValues {
   /** Nettoinvestition: Ware und Lieferung ohne MWST. */
   total_investment: number;
   effective_contribution_margin: number;
+  /** DB I effektiv (Alias auf effective_contribution_margin). */
+  db_i: number;
+  /** Erfasster interner Aufwand pro vorbereiteter Einheit, null = nicht erfasst. */
+  internal_handling_cost_per_unit: number | null;
+  /** Interner Aufwand total auf Basis der vorbereiteten Menge. */
+  internal_handling_cost_total: number | null;
+  /** Diagnosekennzahl: interner Aufwand in Prozent des effektiven Nettoerlöses. */
+  internal_handling_cost_share_percentage: number | null;
+  /** DB II effektiv. */
+  db_ii: number | null;
+  /** DB-II-Marge effektiv in Prozent des Nettoerlöses. */
+  db_ii_margin_percentage: number | null;
   remaining_inventory_value: number;
   /** Dauer in Millisekunden, null ohne Publikationszeitpunkt. */
   action_duration_ms: number | null;
