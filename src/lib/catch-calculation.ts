@@ -111,6 +111,18 @@ export interface CalculationValues {
   discount_percentage: number | null;
   break_even_quantity: number | null;
   break_even_sell_through: number | null;
+  /** DB I — Deckungsbeitrag nach Waren- und Lieferkosten (Alias, netto). */
+  db_i: number;
+  /** Erfasster interner Aufwand pro vorbereiteter Einheit, null = nicht erfasst. */
+  internal_handling_cost_per_unit: number | null;
+  /** Interner Aufwand total = vorbereitete Menge × Satz, null = nicht erfasst. */
+  internal_handling_cost_total: number | null;
+  /** Diagnosekennzahl: interner Aufwand in Prozent des Nettoerlöses. */
+  internal_handling_cost_share_percentage: number | null;
+  /** DB II — DB I nach direkt zurechenbarem internem Aufwand. */
+  db_ii: number | null;
+  /** DB-II-Marge in Prozent auf Nettobasis. */
+  db_ii_margin_percentage: number | null;
 }
 
 export interface CalculationResult {
