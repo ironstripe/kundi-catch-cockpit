@@ -19,7 +19,6 @@ import {
 } from "@/lib/catches";
 import { formatCurrency, formatPercentValue, formatQuantity } from "@/lib/format";
 
-
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
@@ -41,14 +40,15 @@ export const Route = createFileRoute("/_authenticated/")({
 
 function DashboardPage() {
   const running = useQuery({ queryKey: ["catches", "running"], queryFn: fetchRunningCatches });
-  const closed = useQuery({ queryKey: ["catches", "closed"], queryFn: () => fetchClosedCatches(5) });
+  const closed = useQuery({
+    queryKey: ["catches", "closed"],
+    queryFn: () => fetchClosedCatches(5),
+  });
   const runningCatches = running.data ?? [];
   const closedCatches = closed.data ?? [];
   const history = useQuery({ queryKey: ["history"], queryFn: fetchHistoryCatches });
   const historyTotals = aggregateReconciliations(
-    (history.data ?? [])
-      .filter((item) => item.status === "closed")
-      .map(catchToReconciliationInput),
+    (history.data ?? []).filter((item) => item.status === "closed").map(catchToReconciliationInput),
   );
   const sellThroughText =
     historyTotals.by_unit.length === 0
@@ -108,7 +108,6 @@ function DashboardPage() {
     },
   ];
 
-
   return (
     <>
       <PageHeader
@@ -130,10 +129,7 @@ function DashboardPage() {
         ))}
       </div>
 
-      <PageSection
-        title="Laufende Catches"
-        description="Status Entwurf, Bereit und Publiziert."
-      >
+      <PageSection title="Laufende Catches" description="Status Entwurf, Bereit und Publiziert.">
         {running.isLoading ? (
           <Skeleton className="h-32 w-full" />
         ) : runningCatches.length === 0 ? (

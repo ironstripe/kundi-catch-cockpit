@@ -32,6 +32,8 @@ export type AuditAction =
   | "category_created"
   | "category_updated"
   | "thresholds_updated"
+  | "calculation_defaults_updated"
+  | "internal_handling_applied"
   | "vat_updated"
   | "template_updated"
   | "logo_replaced"
@@ -93,6 +95,9 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   category_created: "Kategorie erstellt",
   category_updated: "Kategorie geändert",
   thresholds_updated: "Kalkulationsregeln geändert",
+  vat_updated: "Mehrwertsteuersatz geändert",
+  calculation_defaults_updated: "Standardwert interner Aufwand geändert",
+  internal_handling_applied: "Standardwert interner Aufwand übernommen",
   template_updated: "WhatsApp-Vorlage geändert",
   logo_replaced: "Logo ersetzt",
   settings_reset: "Auf Standardwerte zurückgesetzt",

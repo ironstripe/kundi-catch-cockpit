@@ -130,8 +130,7 @@ export function BrandSection() {
         size: file.size,
       };
       const key = target === "icon" ? SETTING_KEYS.brandIcon : SETTING_KEYS.brand;
-      const version =
-        target === "icon" ? settings.brand_icon_version : settings.brand_version;
+      const version = target === "icon" ? settings.brand_icon_version : settings.brand_version;
       await saveSetting(key, next, version);
       await recordAudit({
         entityType: "settings",

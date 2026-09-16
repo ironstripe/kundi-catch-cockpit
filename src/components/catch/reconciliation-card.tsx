@@ -113,10 +113,7 @@ export function ReconciliationCard({
                 }
                 strong
               />
-              <Metric
-                label="Effektiver Nettoumsatz"
-                value={formatCurrency(v.effective_revenue)}
-              />
+              <Metric label="Effektiver Nettoumsatz" value={formatCurrency(v.effective_revenue)} />
               <Metric
                 label="Effektiver Bruttoumsatz"
                 value={formatCurrency(v.effective_revenue_gross)}

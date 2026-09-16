@@ -3,13 +3,7 @@
  * Interne Werte sind englisch, die Anzeige ist deutsch.
  */
 
-export const CATCH_STATUSES = [
-  "draft",
-  "ready",
-  "published",
-  "closed",
-  "cancelled",
-] as const;
+export const CATCH_STATUSES = ["draft", "ready", "published", "closed", "cancelled"] as const;
 
 export type CatchStatus = (typeof CATCH_STATUSES)[number];
 
@@ -90,6 +84,5 @@ export const HANDICAP_REASON_SENTENCES: Record<HandicapReason, string> = {
     "Die Verpackung dieser Charge ist nicht perfekt. Der Inhalt schon — deshalb gibt es ihn günstiger.",
   surplus_lot:
     "Ein Restposten aus einem Sonderlos. Begrenzte Menge, guter Fisch, kleines Handicap.",
-  other:
-    "Dieser Fisch hat ein kleines Handicap und wird deshalb als Catch angeboten.",
+  other: "Dieser Fisch hat ein kleines Handicap und wird deshalb als Catch angeboten.",
 };

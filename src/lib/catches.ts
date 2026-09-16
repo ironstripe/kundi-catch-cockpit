@@ -89,8 +89,24 @@ export const EMPTY_CATCH_FORM: CatchFormValues = {
   handicap_story: "",
   internal_note: "",
   online_shop_url: "",
-  internal_handling_cost_per_unit: "2.50",
+  internal_handling_cost_per_unit: "",
 };
+
+/**
+ * Setzt den globalen Standardwert für den internen Aufwand als Ausgangswert ein.
+ * Bereits erfasste Eingaben bleiben unverändert — auch wenn die Einstellungen
+ * erst nach dem Tippen geladen werden.
+ */
+export function withInternalHandlingDefault(
+  values: CatchFormValues,
+  defaultRate: number | null | undefined,
+): CatchFormValues {
+  if (values.internal_handling_cost_per_unit.trim() !== "") return values;
+  if (defaultRate === null || defaultRate === undefined || !Number.isFinite(defaultRate)) {
+    return values;
+  }
+  return { ...values, internal_handling_cost_per_unit: defaultRate.toFixed(2) };
+}
 
 export interface CatchListItem {
   id: string;
@@ -519,10 +535,42 @@ export async function saveCatch({ id, values, status, audit }: SaveArgs): Promis
     entity_id: catchId,
     action: id ? "updated" : "created",
     actor_id: userId,
-    payload: { status, ...(audit ?? {}) },
+    payload: {
+      status,
+      internal_handling_cost_per_unit: payload.internal_handling_cost_per_unit,
+      ...(audit ?? {}),
+    },
   });
 
   return catchId;
+}
+
+/**
+ * Übernimmt den aktuellen globalen Standardwert für den internen Aufwand
+ * explizit auf einen einzelnen Catch. Rechte und Sounding-Invalidierung
+ * laufen über die bestehenden Datenbankregeln und Trigger.
+ */
+export async function applyInternalHandlingDefault(catchId: string, rate: number): Promise<void> {
+  if (!Number.isFinite(rate) || rate < 0) {
+    throw new Error("Der Standardwert ist ungültig.");
+  }
+  const { error } = await supabase
+    .from("catches")
+    .update({ internal_handling_cost_per_unit: rate })
+    .eq("id", catchId)
+    .is("internal_handling_cost_per_unit", null);
+  if (error) throw error;
+
+  await supabase.from("audit_events").insert({
+    entity_type: "catch",
+    entity_id: catchId,
+    action: "internal_handling_applied",
+    payload: {
+      previous: { internal_handling_cost_per_unit: null },
+      next: { internal_handling_cost_per_unit: rate },
+      summary: "Standardwert interner Aufwand übernommen",
+    } as never,
+  });
 }
 
 async function syncLocations(catchId: string, locationIds: string[]) {

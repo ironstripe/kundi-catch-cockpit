@@ -113,7 +113,6 @@ export function CompletedSummary({ item, onChanged }: Props) {
             <p className="text-xs text-muted-foreground">
               Wiederöffnen ist Administratoren vorbehalten.
             </p>
-
           )}
         </CardContent>
       </Card>

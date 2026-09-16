@@ -105,7 +105,10 @@ function catchRow(row: any) {
   const locationRecords = (row.catch_locations ?? [])
     .map((entry: any) => entry?.locations)
     .filter(Boolean);
-  const locations = locationRecords.map((entry: any) => entry.name).filter(Boolean).join(", ");
+  const locations = locationRecords
+    .map((entry: any) => entry.name)
+    .filter(Boolean)
+    .join(", ");
   const locationAddresses = locationRecords
     .map((entry: any) => entry.address)
     .filter(Boolean)

@@ -9,6 +9,7 @@ import { DEFAULT_VAT_SETTINGS, type VatSettings } from "@/lib/vat";
 
 export const SETTING_KEYS = {
   thresholds: "calculation_thresholds",
+  calculationDefaults: "calculation_defaults",
   vat: "vat",
   template: "whatsapp_template",
   brand: "brand_logo",
@@ -23,6 +24,7 @@ export const SETTING_KEYS = {
  */
 export const SETTING_AUDIT_IDS: Record<string, string> = {
   calculation_thresholds: "feadc928-d0ce-51a6-7cb8-3372da8ee481",
+  calculation_defaults: "9a4c7f18-3b56-4d21-8e7a-1c5b90fd4e62",
   vat: "2f1d6a3c-40b7-4d92-9c1e-71f0a3d5b8c4",
   whatsapp_template: "b5bfa745-2936-cd06-683a-47da4f293467",
   brand_logo: "71584ba9-bd72-aad3-fcef-ece5523cfb9e",
@@ -114,9 +116,51 @@ export const DEFAULT_SOUNDING_SETTINGS: SoundingSettings = {
   default_reviewer_ids: [],
 };
 
+/**
+ * Kalkulationsstandards für neu erfasste Catches.
+ * Der Wert wird beim Anlegen kopiert; bestehende Catches bleiben unberührt.
+ */
+export interface CalculationDefaults {
+  /** Interner Aufwand in CHF pro vorbereiteter Einheit. */
+  internal_handling_cost_per_unit: number;
+}
+
+export const DEFAULT_INTERNAL_HANDLING_COST = 2.5;
+
+export const DEFAULT_CALCULATION_DEFAULTS: CalculationDefaults = {
+  internal_handling_cost_per_unit: DEFAULT_INTERNAL_HANDLING_COST,
+};
+
+/** Eingabefeld -> Zahl in CHF; leer oder ungültig ergibt null. */
+export function parseInternalHandlingInput(
+  value: string | number | null | undefined,
+): number | null {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (value === null || value === undefined) return null;
+  const trimmed = String(value).trim().replace(",", ".");
+  if (trimmed === "") return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+/** Deutsche Fehlermeldung oder null. Der Standardwert ist Pflicht. */
+export function validateInternalHandlingDefault(value: number | null): string | null {
+  if (value === null) return "Bitte einen Standardwert in CHF erfassen.";
+  if (!Number.isFinite(value) || value < 0) {
+    return "Der interne Aufwand muss ein Betrag von 0 CHF oder mehr sein.";
+  }
+  if (value > 1000) return "Der interne Aufwand darf 1000 CHF pro Einheit nicht überschreiten.";
+  if (Math.round(value * 100) !== Number((value * 100).toFixed(6))) {
+    return "Bitte höchstens zwei Dezimalstellen erfassen.";
+  }
+  return null;
+}
+
 export interface AppSettings {
   thresholds: CatchThresholds;
   thresholds_version: number;
+  calculation_defaults: CalculationDefaults;
+  calculation_defaults_version: number;
   vat: VatSettings;
   vat_version: number;
   template: TemplateSettings;
@@ -141,6 +185,7 @@ export async function fetchAppSettings(): Promise<AppSettings> {
   if (error) throw error;
   const rows = new Map((data ?? []).map((row) => [row.key, row]));
   const thresholdRow = rows.get(SETTING_KEYS.thresholds);
+  const defaultsRow = rows.get(SETTING_KEYS.calculationDefaults);
   const vatRow = rows.get(SETTING_KEYS.vat);
   const templateRow = rows.get(SETTING_KEYS.template);
   const brandRow = rows.get(SETTING_KEYS.brand);
@@ -150,6 +195,8 @@ export async function fetchAppSettings(): Promise<AppSettings> {
   return {
     thresholds: merge(DEFAULT_CATCH_THRESHOLDS, thresholdRow?.value),
     thresholds_version: thresholdRow?.version ?? 1,
+    calculation_defaults: merge(DEFAULT_CALCULATION_DEFAULTS, defaultsRow?.value),
+    calculation_defaults_version: defaultsRow?.version ?? 1,
     vat: merge(DEFAULT_VAT_SETTINGS, vatRow?.value),
     vat_version: vatRow?.version ?? 1,
     template: merge(DEFAULT_TEMPLATE_SETTINGS, templateRow?.value),

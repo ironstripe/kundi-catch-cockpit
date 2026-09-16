@@ -72,7 +72,9 @@ export function CaseAssignDialog({
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Dossiers werden geladen …</p>
           ) : options.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Kein passendes Angebotsdossier gefunden.</p>
+            <p className="text-sm text-muted-foreground">
+              Kein passendes Angebotsdossier gefunden.
+            </p>
           ) : (
             options.map((option) => (
               <button

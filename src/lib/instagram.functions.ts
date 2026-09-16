@@ -105,7 +105,11 @@ export const unselectForInstagram = createServerFn({ method: "POST" })
     }
     const { error } = await supabaseAdmin
       .from("catches")
-      .update({ instagram_selected: false, instagram_status: "not_selected", instagram_error: null })
+      .update({
+        instagram_selected: false,
+        instagram_status: "not_selected",
+        instagram_error: null,
+      })
       .eq("id", data.catchId);
     if (error) throw error;
     return { status: "not_selected", message: "Auswahl aufgehoben." };
@@ -134,11 +138,14 @@ export const saveInstagramCaption = createServerFn({ method: "POST" })
 
 async function dispatch(catchId: string, userId: string, retry: boolean, publishAt: string | null) {
   const { row, supabaseAdmin } = await loadCatch(catchId);
-  if (!row.published_at) throw new Error("Instagram ist erst nach der WhatsApp-Publikation verfügbar.");
+  if (!row.published_at)
+    throw new Error("Instagram ist erst nach der WhatsApp-Publikation verfügbar.");
   if (!row.instagram_selected) throw new Error("Dieser Catch ist nicht für Instagram ausgewählt.");
-  if (row.instagram_status === "published") throw new Error("Dieser Catch wurde bereits veröffentlicht.");
+  if (row.instagram_status === "published")
+    throw new Error("Dieser Catch wurde bereits veröffentlicht.");
   if (row.instagram_status === "publishing") throw new Error("Die Veröffentlichung läuft bereits.");
-  if (retry && row.instagram_status !== "failed") throw new Error("Es gibt keinen fehlgeschlagenen Versuch.");
+  if (retry && row.instagram_status !== "failed")
+    throw new Error("Es gibt keinen fehlgeschlagenen Versuch.");
   if (!row.instagram_caption?.trim()) throw new Error("Es ist kein Instagram-Text vorhanden.");
   if (!row.instagram_asset_path) throw new Error("Es ist kein Instagram-Bild vorhanden.");
 

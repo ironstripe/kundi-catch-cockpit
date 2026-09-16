@@ -404,7 +404,7 @@ function HistoryPage() {
                     <TableHead className="text-right">Abverkauf</TableHead>
                     <TableHead className="text-right">Nettoumsatz</TableHead>
                     <TableHead className="text-right">DB I</TableHead>
-                   <TableHead className="text-right">DB II</TableHead>
+                    <TableHead className="text-right">DB II</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Post</TableHead>
                   </TableRow>
@@ -518,9 +518,7 @@ function HistoryRow({ row }: { row: CatchListItem }) {
         <TemperatureBadge temperature={row.temperature} />
       </TableCell>
       <TableCell className="text-muted-foreground">{row.supplier_name ?? "—"}</TableCell>
-      <TableCell className="text-muted-foreground">
-        {pickupSummary(row.locations) ?? "—"}
-      </TableCell>
+      <TableCell className="text-muted-foreground">{pickupSummary(row.locations) ?? "—"}</TableCell>
       <TableCell className="whitespace-nowrap">
         {row.published_at ? formatDateTime(row.published_at) : "—"}
       </TableCell>

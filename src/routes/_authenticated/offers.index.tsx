@@ -42,7 +42,8 @@ export const Route = createFileRoute("/_authenticated/offers/")({
       { property: "og:title", content: "Angebotseingang — Food Catch Cockpit" },
       {
         property: "og:description",
-        content: "Angebotsdossiers aus Lieferanten-E-Mails prüfen und in Catch-Entwürfe übernehmen.",
+        content:
+          "Angebotsdossiers aus Lieferanten-E-Mails prüfen und in Catch-Entwürfe übernehmen.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

@@ -66,7 +66,12 @@ const catchItem: CatchDetail = {
   location_names: ["Kundelfingerhof"],
   location_ids: ["loc-1"],
   locations: [
-    { id: "loc-1", name: "Kundelfingerhof", address: "Kundelfingerhof 1, 8245 Feuerthalen", pickup_note: null },
+    {
+      id: "loc-1",
+      name: "Kundelfingerhof",
+      address: "Kundelfingerhof 1, 8245 Feuerthalen",
+      pickup_note: null,
+    },
   ],
   online_shop_url: null,
   supplier_id: "sup-1",

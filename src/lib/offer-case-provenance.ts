@@ -6,7 +6,10 @@ import { OFFER_FIELD_KEYS, type ExtractedOffer } from "@/lib/supplier-offer-extr
 import type { OfferExtractionSource } from "@/lib/supplier-offer-sources";
 
 /** Ordnet jedem ausgewerteten Wert die E-Mail zu, aus der seine Quelle stammt. */
-export function stampProvenance(data: ExtractedOffer, sources: OfferExtractionSource[]): ExtractedOffer {
+export function stampProvenance(
+  data: ExtractedOffer,
+  sources: OfferExtractionSource[],
+): ExtractedOffer {
   const byName = new Map(sources.map((source) => [source.source_name.toLowerCase(), source]));
   for (const key of OFFER_FIELD_KEYS) {
     const field = data[key];
@@ -26,4 +29,3 @@ export function stampProvenance(data: ExtractedOffer, sources: OfferExtractionSo
   }
   return data;
 }
-

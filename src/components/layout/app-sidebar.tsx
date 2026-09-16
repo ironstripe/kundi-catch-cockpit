@@ -65,9 +65,7 @@ export function AppSidebar() {
       <SidebarFooter className="border-t">
         <div className="flex items-start gap-2 px-1 py-1.5 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
           <Fish className="mt-0.5 size-3.5 shrink-0 text-primary" />
-          <p className="leading-snug">
-            Guter Fisch. Kleines Handicap. Grosser Fang.
-          </p>
+          <p className="leading-snug">Guter Fisch. Kleines Handicap. Grosser Fang.</p>
         </div>
       </SidebarFooter>
     </Sidebar>

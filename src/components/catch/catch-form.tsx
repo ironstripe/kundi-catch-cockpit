@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ArrowLeft, CheckCircle2, Save } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { CalculationCard } from "@/components/catch/calculation-card";
@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -49,7 +50,7 @@ import {
   saveCatch,
   type CatchFormValues,
 } from "@/lib/catches";
-import { fetchAppSettings } from "@/lib/app-settings";
+import { DEFAULT_INTERNAL_HANDLING_COST, fetchAppSettings } from "@/lib/app-settings";
 import { isoToZurichLocal } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
@@ -127,6 +128,21 @@ export function CatchForm({
 
   const settings = useQuery({ queryKey: ["app-settings"], queryFn: fetchAppSettings });
   const defaultVatRate = settings.data?.vat.rate ?? DEFAULT_VAT_RATE;
+  const defaultHandlingRate =
+    settings.data?.calculation_defaults.internal_handling_cost_per_unit ??
+    DEFAULT_INTERNAL_HANDLING_COST;
+
+  /** Deep-Link «#interner-aufwand» zuverlässig anspringen. */
+  useEffect(() => {
+    if (typeof window === "undefined" || window.location.hash !== "#interner-aufwand") return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(() => {
+      const element = document.getElementById("interner-aufwand");
+      element?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+      document.getElementById("internal_handling_cost_per_unit")?.focus();
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const calculation = useMemo(
     () => calculateCatch(formValuesToCalculationInput(values, defaultVatRate)),
@@ -589,36 +605,6 @@ export function CatchForm({
                 </span>
               </label>
             </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field
-                label="Interner Aufwand pro vorbereitete Einheit"
-                error={issueFor("internal_handling_cost_per_unit")}
-                hint={`CHF / ${values.quantity_unit}, optional`}
-              >
-                <Input
-                  id="internal_handling_cost_per_unit"
-                  type="number"
-                  min="0"
-                  step="0.05"
-                  inputMode="decimal"
-                  placeholder="2.50"
-                  value={values.internal_handling_cost_per_unit}
-                  aria-invalid={Boolean(issueFor("internal_handling_cost_per_unit"))}
-                  onChange={(event) =>
-                    set("internal_handling_cost_per_unit", event.target.value)
-                  }
-                />
-              </Field>
-              <p className="self-end pb-1 text-xs text-muted-foreground">
-                Pauschale für direkt zurechenbare Logistik, Bereitstellung, Etikettierung und
-                Verpackung. Enthalten sind Wareneingang, interner Transport, Vorbereitung,
-                Umpacken, Etikettierung, catchbezogene Administration sowie Verpackungs- und
-                Etikettenmaterial. Nicht enthalten sind Miete, Energie, allgemeine Administration,
-                normale Ladenarbeit, Marketing, Frequenz- und Cross-Selling-Effekte sowie andere
-                Gemeinkosten.
-              </p>
-            </div>
           </FormSection>
 
           <FormSection
@@ -759,8 +745,8 @@ export function CatchForm({
                 onChange={(event) => set("online_shop_url", event.target.value)}
               />
               <p id="online_shop_url_hint" className="text-xs text-muted-foreground">
-                Optionaler Direktlink zum Produkt. Wird im WhatsApp-Post angezeigt, wenn eine gültige
-                URL hinterlegt ist.
+                Optionaler Direktlink zum Produkt. Wird im WhatsApp-Post angezeigt, wenn eine
+                gültige URL hinterlegt ist.
               </p>
             </Field>
           </FormSection>
@@ -845,6 +831,53 @@ export function CatchForm({
               />
             </div>
           </FormSection>
+
+          <div id="interner-aufwand" tabIndex={-1} className="scroll-mt-24">
+            <FormSection
+              title="Interner Aufwand / DB II"
+              description="Direkt zurechenbarer Catch-Aufwand — Grundlage für DB II."
+            >
+              <Field
+                label="Interner Aufwand pro vorbereitete Einheit"
+                error={issueFor("internal_handling_cost_per_unit")}
+                hint={`CHF / ${values.quantity_unit}`}
+              >
+                <Input
+                  id="internal_handling_cost_per_unit"
+                  type="number"
+                  min="0"
+                  step="0.05"
+                  inputMode="decimal"
+                  placeholder={defaultHandlingRate.toFixed(2)}
+                  value={values.internal_handling_cost_per_unit}
+                  aria-invalid={Boolean(issueFor("internal_handling_cost_per_unit"))}
+                  onChange={(event) => set("internal_handling_cost_per_unit", event.target.value)}
+                />
+              </Field>
+              <p className="text-xs text-muted-foreground">
+                Vorbelegt aus den Einstellungen und für diesen Catch überschreibbar. Der
+                gespeicherte Wert gilt für alle vorbereiteten Einheiten, auch wenn nicht alle
+                verkauft werden.
+              </p>
+              <Collapsible>
+                <CollapsibleTrigger className="text-xs font-medium underline underline-offset-4">
+                  Was ist enthalten?
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2 space-y-2 rounded-md border bg-muted/20 p-3 text-xs text-muted-foreground">
+                  <p>
+                    <span className="font-medium text-foreground">Enthalten:</span> Wareneingang,
+                    interner Transport, Vorbereitung, Umpacken, Etikettierung, catchbezogene
+                    Administration sowie direktes Verpackungs- und Etikettenmaterial.
+                  </p>
+                  <p>
+                    <span className="font-medium text-foreground">Nicht enthalten:</span> Miete,
+                    Energie, allgemeine Administration, normale Ladenarbeit, allgemeines Marketing,
+                    Frequenz- und Cross-Selling-Effekte sowie übrige Gemeinkosten.
+                  </p>
+                </CollapsibleContent>
+              </Collapsible>
+            </FormSection>
+          </div>
 
           <CalculationCard
             result={calculation}

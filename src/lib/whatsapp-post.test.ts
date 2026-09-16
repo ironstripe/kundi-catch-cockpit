@@ -8,11 +8,7 @@ import {
 } from "@/lib/whatsapp-image";
 import { PROTECTED_BRAND_TEXTS } from "@/lib/app-settings";
 import { pickupSummary } from "@/lib/pickup-display";
-import {
-  isValidProductUrl,
-  normaliseProductUrl,
-  validateProductUrl,
-} from "@/lib/product-link";
+import { isValidProductUrl, normaliseProductUrl, validateProductUrl } from "@/lib/product-link";
 import {
   BRAND_CLAIM,
   BRAND_PURPOSE,
@@ -330,7 +326,9 @@ describe("Abholorte in der Cockpit-Anzeige", () => {
         { name: "Stadtladen Schaffhausen", address: "Kirchhofplatz 10, 8200 Schaffhausen" },
         { name: "Hofladen Kundelfingerhof", address: null },
       ]),
-    ).toBe("Stadtladen Schaffhausen, Kirchhofplatz 10, 8200 Schaffhausen · Hofladen Kundelfingerhof");
+    ).toBe(
+      "Stadtladen Schaffhausen, Kirchhofplatz 10, 8200 Schaffhausen · Hofladen Kundelfingerhof",
+    );
     expect(pickupSummary([])).toBeNull();
   });
 });
