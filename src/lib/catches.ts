@@ -49,6 +49,8 @@ export interface CatchFormValues {
   internal_note: string;
   /** Optionaler Direktlink zum Produkt im Onlineshop. */
   online_shop_url: string;
+  /** Interner Aufwand in CHF pro vorbereiteter Einheit; leer = nicht erfasst. */
+  internal_handling_cost_per_unit: string;
 }
 
 /** Abholort mit vollständigen Stammdaten. */
@@ -87,6 +89,7 @@ export const EMPTY_CATCH_FORM: CatchFormValues = {
   handicap_story: "",
   internal_note: "",
   online_shop_url: "",
+  internal_handling_cost_per_unit: "2.50",
 };
 
 export interface CatchListItem {
@@ -119,6 +122,8 @@ export interface CatchListItem {
   locations: CatchLocation[];
   /** Optionaler Direktlink zum Produkt im Onlineshop. */
   online_shop_url: string | null;
+  /** Interner Aufwand pro vorbereiteter Einheit in CHF; null = nicht erfasst. */
+  internal_handling_cost_per_unit: number | null;
   supplier_id: string | null;
   supplier_name: string | null;
   published_at: string | null;
