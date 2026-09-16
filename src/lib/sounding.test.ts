@@ -43,6 +43,7 @@ const catchItem: CatchDetail = {
   catch_number: "KC-2026-001",
   product_name: "Silberlachs-Filet",
   article_number: "ART-4711",
+  internal_handling_cost_per_unit: 2.5,
   temperature: "frozen",
   status: "draft",
   available_from: "2026-09-18T08:00:00.000Z",
