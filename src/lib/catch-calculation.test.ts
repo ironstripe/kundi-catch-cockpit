@@ -264,7 +264,7 @@ describe("DB II – interner Catch-Aufwand", () => {
       internal_handling_cost_per_unit: 2.5,
     }).values!;
     expect(v.net_sales_price_per_unit).toBeCloseTo(12.18, 2);
-    expect(v.db_ii_margin_percentage).toBeCloseTo(20.5, 1);
+    expect(v.internal_handling_cost_share_percentage).toBeCloseTo(20.5, 1);
   });
 
   it("meldet negative DB II ohne Fehler", () => {
