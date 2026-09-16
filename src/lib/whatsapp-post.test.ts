@@ -337,7 +337,7 @@ describe("Abholorte in der Cockpit-Anzeige", () => {
 
 describe("Interne Kennzahlen bleiben intern", () => {
   it("nennt weder DB II noch internen Aufwand im Kundenpost", () => {
-    const text = buildPostText(SOURCE, TEMPLATE);
+    const text = generatePostText(felchen);
     expect(text).not.toContain("DB");
     expect(text).not.toContain("Aufwand");
   });
