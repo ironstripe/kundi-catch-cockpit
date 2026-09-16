@@ -1,0 +1,20 @@
+ALTER TABLE public.audit_events DROP CONSTRAINT IF EXISTS audit_events_action_valid;
+ALTER TABLE public.audit_events ADD CONSTRAINT audit_events_action_valid CHECK (action = ANY (ARRAY[
+  'created','updated','status_changed','published','deleted','closed','reconciliation_changed',
+  'reopened','cancelled','calculation_decision','critical_calculation_confirmed','user_created',
+  'user_updated','role_changed','user_activated','user_deactivated','password_reset_sent',
+  'user_deleted','initial_password_set','supplier_created','supplier_updated','location_created',
+  'location_updated','category_created','category_updated','thresholds_updated','vat_updated',
+  'template_updated','logo_replaced','settings_reset','export_created','backup_sent',
+  'instagram_selected','instagram_approved','instagram_published','instagram_failed',
+  'instagram_retried','instagram_settings_updated','offer_received','offer_extracted',
+  'offer_extraction_failed','offer_edited','offer_converted','offer_ignored','offer_reopened',
+  'offer_image_selected','sample_check_passed','sample_check_failed','sample_check_invalidated',
+  'sounding_started','reviewer_assigned','review_feedback_submitted','review_feedback_updated',
+  'sounding_completed','sounding_invalidated','sounding_settings_updated',
+  'calculation_defaults_updated','internal_handling_applied'
+]));
+
+INSERT INTO public.application_settings (key, value, version)
+VALUES ('calculation_defaults', jsonb_build_object('internal_handling_cost_per_unit', 2.5), 1)
+ON CONFLICT (key) DO NOTHING;
