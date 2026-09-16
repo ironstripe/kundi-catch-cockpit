@@ -1,8 +1,11 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { CatchForm } from "@/components/catch/catch-form";
 import { PageHeader } from "@/components/layout/page-header";
-import { EMPTY_CATCH_FORM } from "@/lib/catches";
+import { Skeleton } from "@/components/ui/skeleton";
+import { fetchAppSettings } from "@/lib/app-settings";
+import { EMPTY_CATCH_FORM, withInternalHandlingDefault } from "@/lib/catches";
 
 export const Route = createFileRoute("/_authenticated/catches/new")({
   head: () => ({
@@ -25,6 +28,7 @@ export const Route = createFileRoute("/_authenticated/catches/new")({
 
 function NewCatchPage() {
   const navigate = useNavigate();
+  const settings = useQuery({ queryKey: ["app-settings"], queryFn: fetchAppSettings });
 
   return (
     <>
@@ -32,18 +36,27 @@ function NewCatchPage() {
         title="Neuer Catch"
         description="Produkt, Bild, Beschaffung und Aktionsrahmen erfassen."
       />
-      <CatchForm
-        mode="create"
-        initialValues={EMPTY_CATCH_FORM}
-        initialImagePath={null}
-        onSaved={(catchId, savedStatus) =>
-          void navigate({
-            to: "/catches/$catchId",
-            params: { catchId },
-            ...(savedStatus === "ready" ? { hash: "publikation" } : {}),
-          })
-        }
-      />
+      {/* Erst nach dem Laden der Einstellungen rendern, damit der Standardwert
+          keine bereits erfasste Eingabe überschreibt. */}
+      {settings.isLoading ? (
+        <Skeleton className="h-64 w-full" />
+      ) : (
+        <CatchForm
+          mode="create"
+          initialValues={withInternalHandlingDefault(
+            EMPTY_CATCH_FORM,
+            settings.data?.calculation_defaults.internal_handling_cost_per_unit ?? null,
+          )}
+          initialImagePath={null}
+          onSaved={(catchId, savedStatus) =>
+            void navigate({
+              to: "/catches/$catchId",
+              params: { catchId },
+              ...(savedStatus === "ready" ? { hash: "publikation" } : {}),
+            })
+          }
+        />
+      )}
     </>
   );
 }
