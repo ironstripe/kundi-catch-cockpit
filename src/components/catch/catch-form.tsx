@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -127,6 +128,21 @@ export function CatchForm({
 
   const settings = useQuery({ queryKey: ["app-settings"], queryFn: fetchAppSettings });
   const defaultVatRate = settings.data?.vat.rate ?? DEFAULT_VAT_RATE;
+  const defaultHandlingRate =
+    settings.data?.calculation_defaults.internal_handling_cost_per_unit ??
+    DEFAULT_INTERNAL_HANDLING_COST;
+
+  /** Deep-Link «#interner-aufwand» zuverlässig anspringen. */
+  useEffect(() => {
+    if (typeof window === "undefined" || window.location.hash !== "#interner-aufwand") return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(() => {
+      const element = document.getElementById("interner-aufwand");
+      element?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+      document.getElementById("internal_handling_cost_per_unit")?.focus();
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const calculation = useMemo(
     () => calculateCatch(formValuesToCalculationInput(values, defaultVatRate)),
