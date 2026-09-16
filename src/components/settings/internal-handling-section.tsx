@@ -103,7 +103,10 @@ export function InternalHandlingSection() {
             ).toFixed(2)}
           </span>
         </p>
-        <NoAccess />
+        <p className="text-xs text-muted-foreground">
+          Diesen Standardwert ändert die Administration. Pro Catch kann die Redaktion den Wert
+          überschreiben.
+        </p>
       </SectionShell>
     );
   }
