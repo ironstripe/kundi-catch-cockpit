@@ -245,9 +245,15 @@ function HistoryPage() {
       icon: Wallet,
     },
     {
-      label: "Effektiver Gesamt-DB",
+      label: "Effektiver Gesamt-DB I",
       value: formatCurrency(totals.contribution_margin),
       hint: "Nur abgeschlossene Catches",
+      icon: TrendingUp,
+    },
+    {
+      label: "Effektiver Gesamt-DB II",
+      value: formatCurrency(totals.contribution_margin_ii),
+      hint: `Nach internem Aufwand ${formatCurrency(totals.internal_handling_cost)}`,
       icon: TrendingUp,
     },
     {
