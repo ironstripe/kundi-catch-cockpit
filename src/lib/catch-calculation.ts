@@ -284,6 +284,8 @@ export function calculateCatch(
     discount_percentage: discountPercentage,
     break_even_quantity: breakEvenQuantity,
     break_even_sell_through: breakEvenSellThrough,
+    db_i: maximumContributionMargin,
+    ...handling,
   };
 
   const decision = decide(values, thresholds);
