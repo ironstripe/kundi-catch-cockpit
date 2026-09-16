@@ -4,6 +4,7 @@ import { ArrowLeft, Pencil, Scale } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 
 import { CalculationCard } from "@/components/catch/calculation-card";
+import { InternalHandlingActions } from "@/components/catch/internal-handling-actions";
 import { SampleCheckCard } from "@/components/catch/sample-check-card";
 import { SoundingWorkspace } from "@/components/catch/sounding-workspace";
 import { CompletedSummary } from "@/components/catch/completed-summary";
@@ -151,12 +152,15 @@ function CatchDetailPage() {
             result={calculation}
             description={`Berechnete Werte aus den gespeicherten Eingaben · Stand ${formatDateTime(item.updated_at)}`}
             footer={
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/catches/$catchId/edit" params={{ catchId }}>
-                  <Pencil />
-                  Catch bearbeiten
-                </Link>
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/catches/$catchId/edit" params={{ catchId }}>
+                    <Pencil />
+                    Catch bearbeiten
+                  </Link>
+                </Button>
+                <InternalHandlingActions item={item} onChanged={invalidate} />
+              </div>
             }
           />
 
