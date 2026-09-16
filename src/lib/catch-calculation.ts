@@ -38,7 +38,15 @@ export interface CalculationInput {
   delivery_cost_includes_vat?: boolean | null;
   /** MWST-Satz der Lieferkosten in Prozent; fehlt er, gilt der Normalsatz. */
   delivery_vat_rate?: number | null;
+  /**
+   * Interner Aufwand in CHF pro vorbereiteter Verkaufseinheit. null = nicht
+   * erfasst; dann bleiben DB II und die zugehörigen Kennzahlen null.
+   */
+  internal_handling_cost_per_unit?: number | null;
 }
+
+/** Standardsatz für neu erfasste Catches — nie als Rückfall für Altbestand. */
+export const DEFAULT_INTERNAL_HANDLING_COST = 2.5;
 
 export type DecisionLevel = "green" | "orange" | "red" | "incomplete";
 
