@@ -280,6 +280,7 @@ export function aggregateReconciliations(inputs: ReconciliationInput[]): History
   let revenueGross = 0;
   let vat = 0;
   let margin = 0;
+  let handlingCost = 0;
   let durationSum = 0;
   let durationCount = 0;
   let count = 0;
@@ -297,6 +298,7 @@ export function aggregateReconciliations(inputs: ReconciliationInput[]): History
     revenueGross += v.effective_revenue_gross;
     vat += v.effective_vat;
     margin += v.effective_contribution_margin;
+    handlingCost += v.internal_handling_cost_total ?? 0;
     if (v.action_duration_ms !== null) {
       durationSum += v.action_duration_ms;
       durationCount += 1;
