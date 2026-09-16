@@ -205,6 +205,12 @@ export function reconcileCatch(input: ReconciliationInput): ReconciliationResult
   const duration = durationMs(input.published_at, input.inventory_counted_at);
   const breakEven = planned.values?.break_even_sell_through ?? null;
   const result = breakEvenResult(sellThrough, breakEven);
+  const handling = internalHandling(
+    input.internal_handling_cost_per_unit,
+    purchaseQuantity,
+    effectiveContributionMargin,
+    effectiveRevenue,
+  );
 
   return {
     complete: true,
@@ -222,6 +228,8 @@ export function reconcileCatch(input: ReconciliationInput): ReconciliationResult
       effective_vat: effectiveVat,
       total_investment: totalInvestment,
       effective_contribution_margin: effectiveContributionMargin,
+      db_i: effectiveContributionMargin,
+      ...handling,
       remaining_inventory_value: remainingInventoryValue,
       action_duration_ms: duration,
       break_even_sell_through: breakEven,
