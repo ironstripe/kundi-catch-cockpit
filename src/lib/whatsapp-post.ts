@@ -5,10 +5,7 @@
  * Nur die beiden freigegebenen Markentexte werden verwendet.
  */
 
-import {
-  DEFAULT_TEMPLATE_SETTINGS,
-  type TemplateSettings,
-} from "@/lib/app-settings";
+import { DEFAULT_TEMPLATE_SETTINGS, type TemplateSettings } from "@/lib/app-settings";
 import { QUANTITY_UNIT_LABELS } from "@/lib/catch-domain";
 import { APP_LOCALE, APP_TIMEZONE, formatDate } from "@/lib/format";
 
@@ -123,7 +120,10 @@ export function pickupBlock(locations: PostLocation[], label: string): string | 
 }
 
 function normalise(value: string): string {
-  return value.toLowerCase().replace(/[\s\u2013\u2014-]+/g, " ").trim();
+  return value
+    .toLowerCase()
+    .replace(/[\s\u2013\u2014-]+/g, " ")
+    .trim();
 }
 
 function clean(value: string | null | undefined): string | null {
@@ -180,7 +180,8 @@ export function generatePostText(
   }
 
   const stockLines: string[] = [];
-  if (template.show_expiry && source.expiry_date) stockLines.push(`MHD: ${formatDate(source.expiry_date)}`);
+  if (template.show_expiry && source.expiry_date)
+    stockLines.push(`MHD: ${formatDate(source.expiry_date)}`);
   stockLines.push("*Nur solange Vorrat.*");
   blocks.push(stockLines.join("\n"));
 
@@ -188,7 +189,9 @@ export function generatePostText(
   const pickup = pickupBlock(source.locations, template.pickup_label);
   if (pickup) actionLines.push(pickup);
   if (source.available_from) {
-    actionLines.push(`${template.available_from_label} ${postDateTime(source.available_from, "ab")}`);
+    actionLines.push(
+      `${template.available_from_label} ${postDateTime(source.available_from, "ab")}`,
+    );
   }
   if (template.show_available_until && source.available_until) {
     actionLines.push(`📅 Verfügbar bis: ${postDateTime(source.available_until, "bis")}`);

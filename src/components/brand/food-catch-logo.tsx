@@ -22,13 +22,7 @@ export function FoodCatchLogo({ className, src }: { className?: string; src?: st
  * Vorläufige typografische Wortmarke, bis ein freigegebenes Food-Catch-Logo
  * hochgeladen wird. Ein hinterlegtes Logo hat immer Vorrang.
  */
-export function FoodCatchWordmark({
-  className,
-  src,
-}: {
-  className?: string;
-  src?: string | null;
-}) {
+export function FoodCatchWordmark({ className, src }: { className?: string; src?: string | null }) {
   if (src) {
     return (
       <img

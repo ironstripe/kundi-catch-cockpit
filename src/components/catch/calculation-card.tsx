@@ -118,11 +118,7 @@ export function CalculationCard({
                 label="Maximaler Nettoumsatz"
                 value={formatCurrency(v.maximum_net_revenue)}
               />
-              <Primary
-                label="DB I"
-                value={formatCurrency(v.db_i)}
-                negative={v.db_i <= 0}
-              />
+              <Primary label="DB I" value={formatCurrency(v.db_i)} negative={v.db_i <= 0} />
               <Primary
                 label="Rohmarge"
                 value={
@@ -134,7 +130,9 @@ export function CalculationCard({
               />
               <Primary
                 label="DB II"
-                value={v.db_ii === null ? "Interner Aufwand nicht erfasst" : formatCurrency(v.db_ii)}
+                value={
+                  v.db_ii === null ? "Interner Aufwand nicht erfasst" : formatCurrency(v.db_ii)
+                }
                 negative={(v.db_ii ?? 0) <= 0 && v.db_ii !== null}
               />
               <Primary
@@ -144,7 +142,9 @@ export function CalculationCard({
                     ? "—"
                     : formatPercentValue(v.db_ii_margin_percentage)
                 }
-                negative={(v.db_ii_margin_percentage ?? 0) <= 0 && v.db_ii_margin_percentage !== null}
+                negative={
+                  (v.db_ii_margin_percentage ?? 0) <= 0 && v.db_ii_margin_percentage !== null
+                }
               />
             </dl>
 

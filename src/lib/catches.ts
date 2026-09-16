@@ -550,10 +550,7 @@ export async function saveCatch({ id, values, status, audit }: SaveArgs): Promis
  * explizit auf einen einzelnen Catch. Rechte und Sounding-Invalidierung
  * laufen über die bestehenden Datenbankregeln und Trigger.
  */
-export async function applyInternalHandlingDefault(
-  catchId: string,
-  rate: number,
-): Promise<void> {
+export async function applyInternalHandlingDefault(catchId: string, rate: number): Promise<void> {
   if (!Number.isFinite(rate) || rate < 0) {
     throw new Error("Der Standardwert ist ungültig.");
   }

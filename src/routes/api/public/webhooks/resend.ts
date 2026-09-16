@@ -347,7 +347,6 @@ export const Route = createFileRoute("/api/public/webhooks/resend")({
           });
         }
 
-
         const outcome = retrievalFailed
           ? "retrieval_failed"
           : attachmentResult.failed

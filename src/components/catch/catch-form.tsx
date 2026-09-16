@@ -605,7 +605,6 @@ export function CatchForm({
                 </span>
               </label>
             </div>
-
           </FormSection>
 
           <FormSection
@@ -746,8 +745,8 @@ export function CatchForm({
                 onChange={(event) => set("online_shop_url", event.target.value)}
               />
               <p id="online_shop_url_hint" className="text-xs text-muted-foreground">
-                Optionaler Direktlink zum Produkt. Wird im WhatsApp-Post angezeigt, wenn eine gültige
-                URL hinterlegt ist.
+                Optionaler Direktlink zum Produkt. Wird im WhatsApp-Post angezeigt, wenn eine
+                gültige URL hinterlegt ist.
               </p>
             </Field>
           </FormSection>
@@ -856,8 +855,9 @@ export function CatchForm({
                 />
               </Field>
               <p className="text-xs text-muted-foreground">
-                Vorbelegt aus den Einstellungen und für diesen Catch überschreibbar. Der gespeicherte
-                Wert gilt für alle vorbereiteten Einheiten, auch wenn nicht alle verkauft werden.
+                Vorbelegt aus den Einstellungen und für diesen Catch überschreibbar. Der
+                gespeicherte Wert gilt für alle vorbereiteten Einheiten, auch wenn nicht alle
+                verkauft werden.
               </p>
               <Collapsible>
                 <CollapsibleTrigger className="text-xs font-medium underline underline-offset-4">

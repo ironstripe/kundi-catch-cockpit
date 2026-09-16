@@ -33,7 +33,10 @@ const FIELDS: { key: keyof CatchThresholds; label: string }[] = [
   { key: "minimum_green_margin", label: "Minimale Rohmarge für grünen Catch" },
   { key: "minimum_green_discount", label: "Minimaler Preisvorteil für grünen Catch" },
   { key: "maximum_green_break_even", label: "Maximaler Break-even-Abverkauf für grünen Catch" },
-  { key: "maximum_orange_break_even", label: "Maximaler Break-even-Abverkauf für orange Bewertung" },
+  {
+    key: "maximum_orange_break_even",
+    label: "Maximaler Break-even-Abverkauf für orange Bewertung",
+  },
 ];
 
 export function ThresholdsSection() {

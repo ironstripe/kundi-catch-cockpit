@@ -24,6 +24,5 @@ export function KpiCard({ label, value, hint, icon: Icon }: KpiCardProps) {
         </div>
       </CardContent>
     </Card>
-
   );
 }

@@ -82,7 +82,6 @@ export function formatPercentValue(percent: number, fractionDigits = 1): string 
   return `${formatted} %`;
 }
 
-
 /** Offset (ms) zwischen Europe/Zurich-Wanduhr und UTC zum gegebenen Zeitpunkt. */
 function zurichOffsetMs(date: Date): number {
   const parts = new Intl.DateTimeFormat("en-US", {

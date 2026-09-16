@@ -8,22 +8,13 @@ import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-ba
 import { Card, CardContent } from "@/components/ui/card";
 import { useSignedImage } from "@/hooks/use-signed-image";
 import { calculateCatch } from "@/lib/catch-calculation";
-import {
-  durationMs,
-  formatDuration,
-  reconcileCatch,
-} from "@/lib/catch-reconciliation";
+import { durationMs, formatDuration, reconcileCatch } from "@/lib/catch-reconciliation";
 import {
   catchToCalculationInput,
   catchToReconciliationInput,
   type CatchListItem,
 } from "@/lib/catches";
-import {
-  formatCurrency,
-  formatDateTime,
-  formatPercentValue,
-  formatQuantity,
-} from "@/lib/format";
+import { formatCurrency, formatDateTime, formatPercentValue, formatQuantity } from "@/lib/format";
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
@@ -127,7 +118,7 @@ export function CatchCard({ item }: { item: CatchListItem }) {
                 />
               </dl>
             ) : (
-            <dl className="grid grid-cols-2 gap-3 border-t pt-3 sm:grid-cols-3 xl:grid-cols-5">
+              <dl className="grid grid-cols-2 gap-3 border-t pt-3 sm:grid-cols-3 xl:grid-cols-5">
                 <Field
                   label="Einkaufsmenge"
                   value={
@@ -172,11 +163,7 @@ export function CatchCard({ item }: { item: CatchListItem }) {
       {item.status === "published" ? (
         <div className="flex items-center justify-end border-t px-4 py-2">
           <Button size="sm" variant="ghost" asChild>
-            <Link
-              to="/catches/$catchId"
-              params={{ catchId: item.id }}
-              hash="publikation"
-            >
+            <Link to="/catches/$catchId" params={{ catchId: item.id }} hash="publikation">
               <Send />
               Post anzeigen
             </Link>

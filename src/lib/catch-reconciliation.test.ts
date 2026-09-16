@@ -204,10 +204,16 @@ describe("DB II in der Nachkalkulation", () => {
   });
 
   it("senkt den Aufwand nicht, wenn weniger verkauft wird", () => {
-    const many = reconcileCatch({ ...base, remaining_quantity: 0, internal_handling_cost_per_unit: 2.5 })
-      .values!;
-    const few = reconcileCatch({ ...base, remaining_quantity: 80, internal_handling_cost_per_unit: 2.5 })
-      .values!;
+    const many = reconcileCatch({
+      ...base,
+      remaining_quantity: 0,
+      internal_handling_cost_per_unit: 2.5,
+    }).values!;
+    const few = reconcileCatch({
+      ...base,
+      remaining_quantity: 80,
+      internal_handling_cost_per_unit: 2.5,
+    }).values!;
     expect(few.internal_handling_cost_total).toBeCloseTo(many.internal_handling_cost_total!, 6);
   });
 

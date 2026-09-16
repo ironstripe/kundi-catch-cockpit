@@ -13,7 +13,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useRoles } from "@/hooks/use-role";
 import {
   AUDIT_ACTION_LABELS,
@@ -158,7 +165,9 @@ export function AuditSection() {
                     {formatDateTime(event.created_at)}
                   </TableCell>
                   <TableCell>{event.actor_name}</TableCell>
-                  <TableCell>{AUDIT_ENTITY_LABELS[event.entity_type] ?? event.entity_type}</TableCell>
+                  <TableCell>
+                    {AUDIT_ENTITY_LABELS[event.entity_type] ?? event.entity_type}
+                  </TableCell>
                   <TableCell>{AUDIT_ACTION_LABELS[event.action] ?? event.action}</TableCell>
                   <TableCell className="max-w-[28rem] truncate text-muted-foreground">
                     {auditSummary(event)}

@@ -142,9 +142,11 @@ export async function fetchCase(caseId: string): Promise<CaseDetail | null> {
   if (error) throw error;
   if (!data) return null;
 
-  const emails = ((data.supplier_offer_emails ?? []) as unknown as (CaseEmail & {
-    supplier_offer_attachments: OfferAttachment[] | null;
-  })[])
+  const emails = (
+    (data.supplier_offer_emails ?? []) as unknown as (CaseEmail & {
+      supplier_offer_attachments: OfferAttachment[] | null;
+    })[]
+  )
     .map((email) => ({
       ...email,
       attachments: (email.supplier_offer_attachments ?? [])

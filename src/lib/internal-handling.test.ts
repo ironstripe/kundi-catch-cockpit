@@ -69,9 +69,9 @@ describe("Vorbelegung neuer Catches", () => {
   });
 
   it("bleibt leer, wenn kein Standardwert verfügbar ist", () => {
-    expect(withInternalHandlingDefault(EMPTY_CATCH_FORM, null).internal_handling_cost_per_unit).toBe(
-      "",
-    );
+    expect(
+      withInternalHandlingDefault(EMPTY_CATCH_FORM, null).internal_handling_cost_per_unit,
+    ).toBe("");
   });
 });
 

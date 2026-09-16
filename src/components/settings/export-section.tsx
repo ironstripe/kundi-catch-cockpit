@@ -101,7 +101,9 @@ export function ExportSection() {
       >
         <ul className="text-sm text-muted-foreground space-y-1">
           <li>Tabellenblätter: Catches, Lieferanten, Standorte, Kategorien, Nutzer, Audit Log</li>
-          <li>Beträge in CHF, Prozentwerte mit einer Dezimalstelle, Datumsangaben als Excel-Datum</li>
+          <li>
+            Beträge in CHF, Prozentwerte mit einer Dezimalstelle, Datumsangaben als Excel-Datum
+          </li>
           <li>Mengen immer mit Einheit in derselben Zeile</li>
         </ul>
         {progress ? <p className="text-sm text-muted-foreground">{progress}</p> : null}
@@ -137,7 +139,8 @@ export function ExportSection() {
         </div>
         {!configured ? (
           <p className="text-sm text-muted-foreground">
-            Sobald eine Backup-Adresse hinterlegt ist, kann der automatische Versand getestet werden.
+            Sobald eine Backup-Adresse hinterlegt ist, kann der automatische Versand getestet
+            werden.
           </p>
         ) : null}
       </SectionShell>

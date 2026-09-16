@@ -283,7 +283,11 @@ export function InstagramWorkspace({ item, onChanged }: Props) {
                     Text speichern
                   </Button>
                   {status === "failed" ? (
-                    <Button size="sm" disabled={publish.isPending} onClick={() => publish.mutate(true)}>
+                    <Button
+                      size="sm"
+                      disabled={publish.isPending}
+                      onClick={() => publish.mutate(true)}
+                    >
                       {publish.isPending ? <Loader2 className="animate-spin" /> : <RefreshCw />}
                       Veröffentlichung erneut versuchen
                     </Button>

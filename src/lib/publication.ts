@@ -74,7 +74,12 @@ export async function ensureOptimizedImage(catchId: string): Promise<PreparedIma
   if (row.optimized_path && row.optimized_source_path === row.storage_path) {
     try {
       const blob = await download(row.optimized_path);
-      return { blob, path: row.optimized_path, url: await signedUrl(row.optimized_path), optimized: true };
+      return {
+        blob,
+        path: row.optimized_path,
+        url: await signedUrl(row.optimized_path),
+        optimized: true,
+      };
     } catch {
       /* neu erzeugen */
     }
@@ -114,7 +119,12 @@ export async function ensureOptimizedImage(catchId: string): Promise<PreparedIma
     await supabase.storage.from(CATCH_IMAGE_BUCKET).remove([previous]);
   }
 
-  return { blob: optimizedBlob, path: objectPath, url: await signedUrl(objectPath), optimized: true };
+  return {
+    blob: optimizedBlob,
+    path: objectPath,
+    url: await signedUrl(objectPath),
+    optimized: true,
+  };
 }
 
 interface SavePostArgs {

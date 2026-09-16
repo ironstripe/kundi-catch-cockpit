@@ -173,10 +173,7 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
                   : "Publikationszeitpunkt fehlt"
               }
             />
-            <SourceRow
-              label="Abholorte"
-              value={pickupSummary(item.locations) ?? "—"}
-            />
+            <SourceRow label="Abholorte" value={pickupSummary(item.locations) ?? "—"} />
           </div>
 
           <div className="space-y-1.5">

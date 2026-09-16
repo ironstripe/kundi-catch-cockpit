@@ -48,11 +48,7 @@ import {
   optimizedFileName,
   supportsTextClipboard,
 } from "@/lib/whatsapp-image";
-import {
-  generatePostText,
-  isTemplateOnlyChange,
-  postSourceSignature,
-} from "@/lib/whatsapp-post";
+import { generatePostText, isTemplateOnlyChange, postSourceSignature } from "@/lib/whatsapp-post";
 
 const WHATSAPP_WEB_URL = "https://web.whatsapp.com";
 
@@ -264,10 +260,7 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
                       : `CHF ${item.catch_price.toFixed(2)}/${item.quantity_unit}`
                   }
                 />
-                <Fact
-                  label="Abholorte"
-                  value={pickupSummary(item.locations) ?? "—"}
-                />
+                <Fact label="Abholorte" value={pickupSummary(item.locations) ?? "—"} />
                 <Fact
                   label="Verfügbar ab"
                   value={item.available_from ? formatDateTime(item.available_from) : "—"}
@@ -333,7 +326,9 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
                   size="sm"
                   variant="outline"
                   onClick={() =>
-                    hasManualEdits || unsaved ? setConfirm("regenerate") : applyGenerated("generated")
+                    hasManualEdits || unsaved
+                      ? setConfirm("regenerate")
+                      : applyGenerated("generated")
                   }
                 >
                   <RefreshCw />
@@ -497,7 +492,10 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
         </div>
       </div>
 
-      <AlertDialog open={confirm === "regenerate"} onOpenChange={(open) => !open && setConfirm(null)}>
+      <AlertDialog
+        open={confirm === "regenerate"}
+        onOpenChange={(open) => !open && setConfirm(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Text neu generieren?</AlertDialogTitle>
