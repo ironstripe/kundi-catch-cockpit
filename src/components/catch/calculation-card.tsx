@@ -16,8 +16,15 @@ const HELP: Record<string, string> = {
     "Vor der Margenrechnung wird die enthaltene Mehrwertsteuer abgezogen. Deckungsbeitrag und Rohmarge beruhen auf diesem Nettoumsatz.",
   Nettoinvestition:
     "Ware und Lieferkosten ohne Mehrwertsteuer — je nach erfasster Steuerbasis umgerechnet.",
-  "Maximaler DB":
-    "Der maximale Deckungsbeitrag zeigt, was übrig bleibt, wenn die gesamte Einkaufsmenge zum Food-Catch-Preis verkauft wird.",
+  "DB I":
+    "DB I ist der Deckungsbeitrag nach Waren- und Lieferkosten, wenn die gesamte Einkaufsmenge zum Food-Catch-Preis verkauft wird.",
+  "DB II":
+    "DB II ist DB I abzüglich des direkt zurechenbaren internen Catch-Aufwands (Wareneingang, interner Transport, Vorbereitung, Umpacken, Etikettierung, catchbezogene Administration, Verpackungs- und Etikettenmaterial). Nicht enthalten sind Miete, Energie, allgemeine Administration, normale Ladenarbeit, Marketing sowie andere Gemeinkosten. DB II ist kein Gewinn.",
+  "DB-II-Marge": "Anteil von DB II am Nettoumsatz.",
+  "Interner Aufwand pro Einheit":
+    "Pauschale für direkt zurechenbare Logistik, Bereitstellung, Etikettierung und Verpackung — pro vorbereitete Einheit.",
+  "Interner Aufwand total":
+    "Interner Aufwand pro Einheit multipliziert mit der gesamten vorbereiteten Menge, unabhängig vom Abverkauf.",
   Rohmarge: "Die Rohmarge ist der Anteil des maximalen Deckungsbeitrags am maximalen Umsatz.",
   "Break-even-Abverkauf":
     "Der Break-even-Abverkauf zeigt, welcher Anteil der Einkaufsmenge verkauft werden muss, damit der gesamte Wareneinsatz gedeckt ist.",
@@ -112,9 +119,9 @@ export function CalculationCard({
                 value={formatCurrency(v.maximum_net_revenue)}
               />
               <Primary
-                label="Maximaler DB"
-                value={formatCurrency(v.maximum_contribution_margin)}
-                negative={v.maximum_contribution_margin <= 0}
+                label="DB I"
+                value={formatCurrency(v.db_i)}
+                negative={v.db_i <= 0}
               />
               <Primary
                 label="Rohmarge"
@@ -125,7 +132,55 @@ export function CalculationCard({
                 }
                 negative={(v.gross_margin_percentage ?? 0) <= 0}
               />
+              <Primary
+                label="DB II"
+                value={v.db_ii === null ? "Interner Aufwand nicht erfasst" : formatCurrency(v.db_ii)}
+                negative={(v.db_ii ?? 0) <= 0 && v.db_ii !== null}
+              />
+              <Primary
+                label="DB-II-Marge"
+                value={
+                  v.db_ii_margin_percentage === null
+                    ? "—"
+                    : formatPercentValue(v.db_ii_margin_percentage)
+                }
+                negative={(v.db_ii_margin_percentage ?? 0) <= 0 && v.db_ii_margin_percentage !== null}
+              />
             </dl>
+
+            <dl className="space-y-1 border-t pt-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Interner Catch-Aufwand
+              </p>
+              <Secondary
+                label="Interner Aufwand pro Einheit"
+                value={
+                  v.internal_handling_cost_per_unit === null
+                    ? "Interner Aufwand nicht erfasst"
+                    : `${formatCurrency(v.internal_handling_cost_per_unit)} / ${unit}`
+                }
+                muted={v.internal_handling_cost_per_unit === null}
+              />
+              <Secondary
+                label="Interner Aufwand total"
+                value={
+                  v.internal_handling_cost_total === null
+                    ? "—"
+                    : `${formatCurrency(v.internal_handling_cost_total)}${
+                        v.internal_handling_cost_share_percentage === null
+                          ? ""
+                          : ` (${formatPercentValue(v.internal_handling_cost_share_percentage)} des Nettoumsatzes)`
+                      }`
+                }
+              />
+            </dl>
+
+            <p className="text-xs text-muted-foreground">
+              DB I ist der Deckungsbeitrag nach Waren- und Lieferkosten. DB II berücksichtigt
+              zusätzlich den direkt zurechenbaren internen Catch-Aufwand, jedoch keine allgemeinen
+              Betriebs- oder Gemeinkosten. Der Aufwand fällt für jede vorbereitete Einheit an, auch
+              wenn sie nicht verkauft wird.
+            </p>
 
             <dl className="space-y-1 border-t pt-3">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
