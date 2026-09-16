@@ -6,9 +6,10 @@ Ziel: Neben dem bestehenden Deckungsbeitrag (DB I) zeigt jeder Catch einen zweit
 
 - Neues optionales Feld im Catch-Formular: **Interner Aufwand pro vorbereitete Einheit**, Standard bei neuen Catches CHF 2.50, Einheit dynamisch («CHF 2.50 / kg», «/ Stück»).
 - Hilfetext: «Pauschale für direkt zurechenbare Logistik, Bereitstellung, Etikettierung und Verpackung.» plus Tooltip mit der Abgrenzung (enthalten: Wareneingang, interner Transport, Vorbereitung, Umpacken, Etikettierung, catchbezogene Administration, Verpackungs- und Etikettenmaterial — nicht enthalten: Miete, Energie, allgemeine Administration, normale Ladenarbeit, Marketing, Frequenz- und Cross-Selling-Effekte, sonstige Gemeinkosten).
-- Vorkalkulation zeigt zusätzlich: Interner Aufwand pro Einheit, Interner Aufwand total, DB II, DB-II-Marge. DB I bleibt unverändert sichtbar und behält seine Definition.
-- Nachkalkulation und Historie zeigen: effektiver Nettoerlös, effektiver DB I, interner Aufwand total, effektiver DB II, effektive DB-II-Marge.
-- Sounding-Steckbrief, Prüfseite und Teams-Text enthalten DB I, internen Aufwand und DB II.
+- Vorkalkulation zeigt zusätzlich: Interner Aufwand pro Einheit, Interner Aufwand total, Anteil am Nettoerlös, DB II, DB-II-Marge. DB I bleibt unverändert sichtbar und behält seine Definition.
+- Nachkalkulation und Historie zeigen: effektiver Nettoerlös, effektiver DB I, interner Aufwand total, Anteil am effektiven Nettoerlös, effektiver DB II, effektive DB-II-Marge.
+- Neue Kennzahl **Interner Aufwand in % des Nettoerlöses** direkt neben dem Totalbetrag, klar als Diagnosewert («Kennzahl, kein zusätzlicher Kostenblock») beschriftet — keine Benchmarks, keine Ampelfarben, keine automatischen Freigaberegeln.
+- Sounding-Steckbrief, Prüfseite und Teams-Text enthalten DB I, internen Aufwand mit Anteil und DB II.
 - Kundenkommunikation (WhatsApp, Instagram, Bild) bleibt vollständig unverändert — interne Werte erscheinen dort nie.
 
 ## Rechenregeln
