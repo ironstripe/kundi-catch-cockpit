@@ -60,6 +60,8 @@ Additive Migration `add_internal_handling_cost`:
 
 Neu in `catch-calculation.test.ts`, `catch-reconciliation.test.ts`, `sounding.test.ts`, `whatsapp-post.test.ts`: Standard 2.50 bei neuem Catch, `null` bleibt `null`, Total über vorbereitete Menge, unverkaufte Menge senkt den Aufwand nicht, geplanter und effektiver DB II, Marge auf Nettobasis, Bruttopreis mit 2.6 % MWST, Nulldivision, negativer DB II, Satzänderung ändert das Ergebnis, Satzänderung markiert Sounding als überholt, interne Werte im Steckbrief und Teams-Text, keine internen Werte im Kundenpost, Viewer ohne Schreibrecht, historische Catches unverändert.
 
+Zusätzlich für die Kennzahl: Anteil auf Nettoerlösbasis (MWST korrekt ausgeschlossen), geplanter und effektiver Anteil, Nettoerlös 0 ohne Division, CHF-pro-Einheit-Rechnung unverändert, kein Erscheinen im Kundenpost, historische Snapshots liefern den damals angewendeten Anteil.
+
 Zusätzlich: bestehende Testsuite, TypeScript-Check, Lint, Produktionsbuild.
 
 ## Handoff am Ende
