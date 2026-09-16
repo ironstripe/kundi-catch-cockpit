@@ -590,35 +590,6 @@ export function CatchForm({
               </label>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field
-                label="Interner Aufwand pro vorbereitete Einheit"
-                error={issueFor("internal_handling_cost_per_unit")}
-                hint={`CHF / ${values.quantity_unit}, optional`}
-              >
-                <Input
-                  id="internal_handling_cost_per_unit"
-                  type="number"
-                  min="0"
-                  step="0.05"
-                  inputMode="decimal"
-                  placeholder="2.50"
-                  value={values.internal_handling_cost_per_unit}
-                  aria-invalid={Boolean(issueFor("internal_handling_cost_per_unit"))}
-                  onChange={(event) =>
-                    set("internal_handling_cost_per_unit", event.target.value)
-                  }
-                />
-              </Field>
-              <p className="self-end pb-1 text-xs text-muted-foreground">
-                Pauschale für direkt zurechenbare Logistik, Bereitstellung, Etikettierung und
-                Verpackung. Enthalten sind Wareneingang, interner Transport, Vorbereitung,
-                Umpacken, Etikettierung, catchbezogene Administration sowie Verpackungs- und
-                Etikettenmaterial. Nicht enthalten sind Miete, Energie, allgemeine Administration,
-                normale Ladenarbeit, Marketing, Frequenz- und Cross-Selling-Effekte sowie andere
-                Gemeinkosten.
-              </p>
-            </div>
           </FormSection>
 
           <FormSection

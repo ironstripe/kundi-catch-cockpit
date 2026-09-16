@@ -6,6 +6,7 @@ import { BrandSection } from "@/components/settings/brand-section";
 import { ExportSection } from "@/components/settings/export-section";
 import { InboundDiagnosticsSection } from "@/components/settings/inbound-diagnostics-section";
 import { InstagramSection } from "@/components/settings/instagram-section";
+import { InternalHandlingSection } from "@/components/settings/internal-handling-section";
 import { CategoriesSection } from "@/components/settings/categories-section";
 import { LocationsSection } from "@/components/settings/locations-section";
 import { SoundingSection } from "@/components/settings/sounding-section";
@@ -76,6 +77,7 @@ function SettingsPage() {
         <TabsContent value="calculation" className="space-y-4">
           <ThresholdsSection />
           <VatSection />
+          <InternalHandlingSection />
         </TabsContent>
 
         <TabsContent value="template">
