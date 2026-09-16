@@ -116,9 +116,51 @@ export const DEFAULT_SOUNDING_SETTINGS: SoundingSettings = {
   default_reviewer_ids: [],
 };
 
+/**
+ * Kalkulationsstandards für neu erfasste Catches.
+ * Der Wert wird beim Anlegen kopiert; bestehende Catches bleiben unberührt.
+ */
+export interface CalculationDefaults {
+  /** Interner Aufwand in CHF pro vorbereiteter Einheit. */
+  internal_handling_cost_per_unit: number;
+}
+
+export const DEFAULT_INTERNAL_HANDLING_COST = 2.5;
+
+export const DEFAULT_CALCULATION_DEFAULTS: CalculationDefaults = {
+  internal_handling_cost_per_unit: DEFAULT_INTERNAL_HANDLING_COST,
+};
+
+/** Eingabefeld -> Zahl in CHF; leer oder ungültig ergibt null. */
+export function parseInternalHandlingInput(
+  value: string | number | null | undefined,
+): number | null {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (value === null || value === undefined) return null;
+  const trimmed = String(value).trim().replace(",", ".");
+  if (trimmed === "") return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+/** Deutsche Fehlermeldung oder null. Der Standardwert ist Pflicht. */
+export function validateInternalHandlingDefault(value: number | null): string | null {
+  if (value === null) return "Bitte einen Standardwert in CHF erfassen.";
+  if (!Number.isFinite(value) || value < 0) {
+    return "Der interne Aufwand muss ein Betrag von 0 CHF oder mehr sein.";
+  }
+  if (value > 1000) return "Der interne Aufwand darf 1000 CHF pro Einheit nicht überschreiten.";
+  if (Math.round(value * 100) !== Number((value * 100).toFixed(6))) {
+    return "Bitte höchstens zwei Dezimalstellen erfassen.";
+  }
+  return null;
+}
+
 export interface AppSettings {
   thresholds: CatchThresholds;
   thresholds_version: number;
+  calculation_defaults: CalculationDefaults;
+  calculation_defaults_version: number;
   vat: VatSettings;
   vat_version: number;
   template: TemplateSettings;
