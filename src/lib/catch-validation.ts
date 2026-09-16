@@ -24,6 +24,13 @@ export function validateDraft(values: CatchFormValues): FieldIssue[] {
   }
   const urlProblem = validateProductUrl(values.online_shop_url);
   if (urlProblem) issues.push({ field: "online_shop_url", message: urlProblem });
+  const handling = toNumber(values.internal_handling_cost_per_unit);
+  if (values.internal_handling_cost_per_unit.trim() !== "" && (handling === null || handling < 0)) {
+    issues.push({
+      field: "internal_handling_cost_per_unit",
+      message: "Interner Aufwand pro Einheit darf nicht negativ sein.",
+    });
+  }
   return issues;
 }
 
