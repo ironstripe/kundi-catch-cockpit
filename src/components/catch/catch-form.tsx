@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ArrowLeft, CheckCircle2, Save } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { CalculationCard } from "@/components/catch/calculation-card";
@@ -50,7 +50,7 @@ import {
   saveCatch,
   type CatchFormValues,
 } from "@/lib/catches";
-import { fetchAppSettings } from "@/lib/app-settings";
+import { DEFAULT_INTERNAL_HANDLING_COST, fetchAppSettings } from "@/lib/app-settings";
 import { isoToZurichLocal } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
