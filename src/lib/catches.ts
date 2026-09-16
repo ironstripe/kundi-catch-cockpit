@@ -576,6 +576,7 @@ export function catchToCalculationInput(
     purchase_vat_rate: item.purchase_vat_rate,
     delivery_cost_includes_vat: item.delivery_cost_includes_vat,
     delivery_vat_rate: item.delivery_vat_rate,
+    internal_handling_cost_per_unit: item.internal_handling_cost_per_unit,
   };
 }
 
@@ -596,5 +597,6 @@ export function formValuesToCalculationInput(
     purchase_vat_rate: parseVatRate(values.purchase_vat_rate),
     delivery_cost_includes_vat: values.delivery_cost_includes_vat,
     delivery_vat_rate: parseVatRate(values.delivery_vat_rate),
+    internal_handling_cost_per_unit: parseNumberInput(values.internal_handling_cost_per_unit),
   };
 }
