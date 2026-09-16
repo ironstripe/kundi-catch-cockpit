@@ -252,7 +252,9 @@ describe("Steckbrief und Teams-Nachricht", () => {
   });
 
   it("verwendet Netto-Deckungsbeitrag und Netto-Rohmarge", () => {
-    expect(message).toContain("Maximaler DB: CHF 119.98");
+    expect(message).toContain("DB I: CHF 119.98");
+    expect(message).toContain("Interner Aufwand: CHF 250.00");
+    expect(message).toContain("DB II: CHF -130.02");
     expect(message).toContain("Rohmarge: 15.6 %");
   });
 
