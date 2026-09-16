@@ -262,6 +262,10 @@ export interface HistoryTotals {
   /** Summe der enthaltenen MWST. */
   vat: number;
   contribution_margin: number;
+  /** Summe des internen Aufwands, nur aus Catches mit erfasstem Satz. */
+  internal_handling_cost: number;
+  /** DB II summiert: DB I abzüglich erfasstem internem Aufwand. */
+  contribution_margin_ii: number;
   /** Durchschnittliche Aktionsdauer in Millisekunden, null ohne Daten. */
   average_duration_ms: number | null;
 }
