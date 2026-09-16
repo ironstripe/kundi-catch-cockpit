@@ -89,8 +89,24 @@ export const EMPTY_CATCH_FORM: CatchFormValues = {
   handicap_story: "",
   internal_note: "",
   online_shop_url: "",
-  internal_handling_cost_per_unit: "2.50",
+  internal_handling_cost_per_unit: "",
 };
+
+/**
+ * Setzt den globalen Standardwert für den internen Aufwand als Ausgangswert ein.
+ * Bereits erfasste Eingaben bleiben unverändert — auch wenn die Einstellungen
+ * erst nach dem Tippen geladen werden.
+ */
+export function withInternalHandlingDefault(
+  values: CatchFormValues,
+  defaultRate: number | null | undefined,
+): CatchFormValues {
+  if (values.internal_handling_cost_per_unit.trim() !== "") return values;
+  if (defaultRate === null || defaultRate === undefined || !Number.isFinite(defaultRate)) {
+    return values;
+  }
+  return { ...values, internal_handling_cost_per_unit: defaultRate.toFixed(2) };
+}
 
 export interface CatchListItem {
   id: string;
