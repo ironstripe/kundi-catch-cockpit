@@ -185,6 +185,7 @@ export async function fetchAppSettings(): Promise<AppSettings> {
   if (error) throw error;
   const rows = new Map((data ?? []).map((row) => [row.key, row]));
   const thresholdRow = rows.get(SETTING_KEYS.thresholds);
+  const defaultsRow = rows.get(SETTING_KEYS.calculationDefaults);
   const vatRow = rows.get(SETTING_KEYS.vat);
   const templateRow = rows.get(SETTING_KEYS.template);
   const brandRow = rows.get(SETTING_KEYS.brand);
