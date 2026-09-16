@@ -128,6 +128,7 @@ const calculation = calculateCatch({
   purchase_vat_rate: 2.6,
   delivery_cost_includes_vat: false,
   delivery_vat_rate: 8.1,
+  internal_handling_cost_per_unit: 0.5,
 });
 
 describe("Musterprüfung als Voraussetzung", () => {
@@ -243,6 +244,9 @@ describe("Steckbrief und Teams-Nachricht", () => {
     expect(snapshot.gross_catch_price).toBe(7.9);
     expect(snapshot.net_investment).toBeCloseTo(650, 2);
     expect(snapshot.maximum_contribution_margin).toBeCloseTo(119.98, 2);
+    expect(snapshot.internal_handling_cost_per_unit).toBe(0.5);
+    expect(snapshot.internal_handling_cost_total).toBeCloseTo(50, 2);
+    expect(snapshot.db_ii).toBeCloseTo(69.98, 2);
     expect(snapshot.sample_check_status).toBe("passed");
     expect(snapshot.sample_checked_by_name).toBe("Ivo Streiff");
   });
@@ -253,8 +257,8 @@ describe("Steckbrief und Teams-Nachricht", () => {
 
   it("verwendet Netto-Deckungsbeitrag und Netto-Rohmarge", () => {
     expect(message).toContain("DB I: CHF 119.98");
-    expect(message).toContain("Interner Aufwand: CHF 250.00");
-    expect(message).toContain("DB II: CHF -130.02");
+    expect(message).toContain("Interner Aufwand: CHF 50.00");
+    expect(message).toContain("DB II: CHF 69.98");
     expect(message).toContain("Rohmarge: 15.6 %");
   });
 
