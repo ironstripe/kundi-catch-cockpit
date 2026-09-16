@@ -817,6 +817,52 @@ export function CatchForm({
             </div>
           </FormSection>
 
+          <div id="interner-aufwand" tabIndex={-1} className="scroll-mt-24">
+            <FormSection
+              title="Interner Aufwand / DB II"
+              description="Direkt zurechenbarer Catch-Aufwand — Grundlage für DB II."
+            >
+              <Field
+                label="Interner Aufwand pro vorbereitete Einheit"
+                error={issueFor("internal_handling_cost_per_unit")}
+                hint={`CHF / ${values.quantity_unit}`}
+              >
+                <Input
+                  id="internal_handling_cost_per_unit"
+                  type="number"
+                  min="0"
+                  step="0.05"
+                  inputMode="decimal"
+                  placeholder={defaultHandlingRate.toFixed(2)}
+                  value={values.internal_handling_cost_per_unit}
+                  aria-invalid={Boolean(issueFor("internal_handling_cost_per_unit"))}
+                  onChange={(event) => set("internal_handling_cost_per_unit", event.target.value)}
+                />
+              </Field>
+              <p className="text-xs text-muted-foreground">
+                Vorbelegt aus den Einstellungen und für diesen Catch überschreibbar. Der gespeicherte
+                Wert gilt für alle vorbereiteten Einheiten, auch wenn nicht alle verkauft werden.
+              </p>
+              <Collapsible>
+                <CollapsibleTrigger className="text-xs font-medium underline underline-offset-4">
+                  Was ist enthalten?
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2 space-y-2 rounded-md border bg-muted/20 p-3 text-xs text-muted-foreground">
+                  <p>
+                    <span className="font-medium text-foreground">Enthalten:</span> Wareneingang,
+                    interner Transport, Vorbereitung, Umpacken, Etikettierung, catchbezogene
+                    Administration sowie direktes Verpackungs- und Etikettenmaterial.
+                  </p>
+                  <p>
+                    <span className="font-medium text-foreground">Nicht enthalten:</span> Miete,
+                    Energie, allgemeine Administration, normale Ladenarbeit, allgemeines Marketing,
+                    Frequenz- und Cross-Selling-Effekte sowie übrige Gemeinkosten.
+                  </p>
+                </CollapsibleContent>
+              </Collapsible>
+            </FormSection>
+          </div>
+
           <CalculationCard
             result={calculation}
             compact
