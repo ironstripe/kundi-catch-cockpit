@@ -401,6 +401,7 @@ export type Database = {
           instagram_published_at: string | null
           instagram_selected: boolean
           instagram_status: string
+          internal_handling_cost_per_unit: number | null
           internal_note: string | null
           inventory_counted_at: string | null
           learning: string | null
@@ -479,6 +480,7 @@ export type Database = {
           instagram_published_at?: string | null
           instagram_selected?: boolean
           instagram_status?: string
+          internal_handling_cost_per_unit?: number | null
           internal_note?: string | null
           inventory_counted_at?: string | null
           learning?: string | null
@@ -557,6 +559,7 @@ export type Database = {
           instagram_published_at?: string | null
           instagram_selected?: boolean
           instagram_status?: string
+          internal_handling_cost_per_unit?: number | null
           internal_note?: string | null
           inventory_counted_at?: string | null
           learning?: string | null

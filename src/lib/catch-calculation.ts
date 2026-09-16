@@ -38,7 +38,15 @@ export interface CalculationInput {
   delivery_cost_includes_vat?: boolean | null;
   /** MWST-Satz der Lieferkosten in Prozent; fehlt er, gilt der Normalsatz. */
   delivery_vat_rate?: number | null;
+  /**
+   * Interner Aufwand in CHF pro vorbereiteter Verkaufseinheit. null = nicht
+   * erfasst; dann bleiben DB II und die zugehörigen Kennzahlen null.
+   */
+  internal_handling_cost_per_unit?: number | null;
 }
+
+/** Standardsatz für neu erfasste Catches — nie als Rückfall für Altbestand. */
+export const DEFAULT_INTERNAL_HANDLING_COST = 2.5;
 
 export type DecisionLevel = "green" | "orange" | "red" | "incomplete";
 
@@ -103,6 +111,18 @@ export interface CalculationValues {
   discount_percentage: number | null;
   break_even_quantity: number | null;
   break_even_sell_through: number | null;
+  /** DB I — Deckungsbeitrag nach Waren- und Lieferkosten (Alias, netto). */
+  db_i: number;
+  /** Erfasster interner Aufwand pro vorbereiteter Einheit, null = nicht erfasst. */
+  internal_handling_cost_per_unit: number | null;
+  /** Interner Aufwand total = vorbereitete Menge × Satz, null = nicht erfasst. */
+  internal_handling_cost_total: number | null;
+  /** Diagnosekennzahl: interner Aufwand in Prozent des Nettoerlöses. */
+  internal_handling_cost_share_percentage: number | null;
+  /** DB II — DB I nach direkt zurechenbarem internem Aufwand. */
+  db_ii: number | null;
+  /** DB-II-Marge in Prozent auf Nettobasis. */
+  db_ii_margin_percentage: number | null;
 }
 
 export interface CalculationResult {
@@ -142,6 +162,50 @@ export function parseNumberInput(value: string | number | null | undefined): num
   const parsed = Number(trimmed);
   return Number.isFinite(parsed) ? parsed : null;
 }
+
+/** Kennzahlen des internen Aufwands (DB II). Ohne erfassten Satz bleibt alles null. */
+export interface InternalHandlingValues {
+  internal_handling_cost_per_unit: number | null;
+  internal_handling_cost_total: number | null;
+  internal_handling_cost_share_percentage: number | null;
+  db_ii: number | null;
+  db_ii_margin_percentage: number | null;
+}
+
+/**
+ * Rechnet den internen Aufwand auf die vollständig vorbereitete Menge — nie auf
+ * die verkaufte Menge. Der Anteil bezieht sich immer auf den Nettoerlös.
+ */
+export function internalHandling(
+  ratePerUnit: number | null | undefined,
+  preparedQuantity: number,
+  dbI: number,
+  netRevenue: number,
+): InternalHandlingValues {
+  const rate =
+    typeof ratePerUnit === "number" && Number.isFinite(ratePerUnit) && ratePerUnit >= 0
+      ? ratePerUnit
+      : null;
+  if (rate === null || !Number.isFinite(preparedQuantity)) {
+    return {
+      internal_handling_cost_per_unit: null,
+      internal_handling_cost_total: null,
+      internal_handling_cost_share_percentage: null,
+      db_ii: null,
+      db_ii_margin_percentage: null,
+    };
+  }
+  const total = preparedQuantity * rate;
+  const dbII = dbI - total;
+  return {
+    internal_handling_cost_per_unit: rate,
+    internal_handling_cost_total: total,
+    internal_handling_cost_share_percentage: netRevenue > 0 ? (total / netRevenue) * 100 : null,
+    db_ii: dbII,
+    db_ii_margin_percentage: netRevenue > 0 ? (dbII / netRevenue) * 100 : null,
+  };
+}
+
 
 function safeDivide(numerator: number, denominator: number): number | null {
   if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator === 0) {
@@ -223,6 +287,13 @@ export function calculateCatch(
   const breakEvenSellThrough =
     breakEvenQuantity !== null ? (breakEvenQuantity / quantity) * 100 : null;
 
+  const handling = internalHandling(
+    input.internal_handling_cost_per_unit,
+    quantity,
+    maximumContributionMargin,
+    maximumRevenue,
+  );
+
   const values: CalculationValues = {
     purchase_quantity: quantity,
     quantity_unit: input.quantity_unit,
@@ -257,6 +328,8 @@ export function calculateCatch(
     discount_percentage: discountPercentage,
     break_even_quantity: breakEvenQuantity,
     break_even_sell_through: breakEvenSellThrough,
+    db_i: maximumContributionMargin,
+    ...handling,
   };
 
   const decision = decide(values, thresholds);

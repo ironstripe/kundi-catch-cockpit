@@ -49,6 +49,8 @@ export interface CatchFormValues {
   internal_note: string;
   /** Optionaler Direktlink zum Produkt im Onlineshop. */
   online_shop_url: string;
+  /** Interner Aufwand in CHF pro vorbereiteter Einheit; leer = nicht erfasst. */
+  internal_handling_cost_per_unit: string;
 }
 
 /** Abholort mit vollständigen Stammdaten. */
@@ -87,6 +89,7 @@ export const EMPTY_CATCH_FORM: CatchFormValues = {
   handicap_story: "",
   internal_note: "",
   online_shop_url: "",
+  internal_handling_cost_per_unit: "2.50",
 };
 
 export interface CatchListItem {
@@ -119,6 +122,8 @@ export interface CatchListItem {
   locations: CatchLocation[];
   /** Optionaler Direktlink zum Produkt im Onlineshop. */
   online_shop_url: string | null;
+  /** Interner Aufwand pro vorbereiteter Einheit in CHF; null = nicht erfasst. */
+  internal_handling_cost_per_unit: number | null;
   supplier_id: string | null;
   supplier_name: string | null;
   published_at: string | null;
@@ -182,6 +187,7 @@ const LIST_SELECT = `
   published_at, published_text, published_image_path,
   supplier_id, remaining_quantity, inventory_counted_at, learning,
   closed_at, cancelled_at, cancellation_reason, online_shop_url,
+  internal_handling_cost_per_unit,
   suppliers ( id, name ),
   catch_images ( storage_path, is_primary, sort_order ),
   catch_locations ( location_id, locations ( id, name, address, pickup_note ) )
@@ -206,6 +212,7 @@ const DETAIL_SELECT = `
   closed_at, closed_by, reopened_at, reopened_by, reopen_reason,
   cancelled_at, cancelled_by, cancellation_reason,
   reconciliation_snapshot, online_shop_url,
+  internal_handling_cost_per_unit,
   suppliers ( id, name ),
   catch_images ( storage_path, is_primary, sort_order ),
   catch_locations ( location_id, locations ( id, name, address, pickup_note ) )
@@ -283,6 +290,11 @@ function mapList(row: any): CatchListItem {
         pickup_note: cl.locations.pickup_note ?? null,
       })),
     online_shop_url: row.online_shop_url ?? null,
+    internal_handling_cost_per_unit:
+      row.internal_handling_cost_per_unit === null ||
+      row.internal_handling_cost_per_unit === undefined
+        ? null
+        : Number(row.internal_handling_cost_per_unit),
   };
 }
 
@@ -425,6 +437,10 @@ export function catchDetailToForm(detail: CatchDetail): CatchFormValues {
     handicap_story: detail.handicap_story ?? "",
     internal_note: detail.internal_note ?? "",
     online_shop_url: detail.online_shop_url ?? "",
+    internal_handling_cost_per_unit:
+      detail.internal_handling_cost_per_unit === null
+        ? ""
+        : detail.internal_handling_cost_per_unit.toFixed(2),
   };
 }
 
@@ -477,6 +493,7 @@ export async function saveCatch({ id, values, status, audit }: SaveArgs): Promis
     handicap_story: values.handicap_story.trim() || null,
     internal_note: values.internal_note.trim() || null,
     online_shop_url: normaliseProductUrl(values.online_shop_url),
+    internal_handling_cost_per_unit: num(values.internal_handling_cost_per_unit),
     status,
   };
 
@@ -576,6 +593,7 @@ export function catchToCalculationInput(
     purchase_vat_rate: item.purchase_vat_rate,
     delivery_cost_includes_vat: item.delivery_cost_includes_vat,
     delivery_vat_rate: item.delivery_vat_rate,
+    internal_handling_cost_per_unit: item.internal_handling_cost_per_unit,
   };
 }
 
@@ -596,5 +614,6 @@ export function formValuesToCalculationInput(
     purchase_vat_rate: parseVatRate(values.purchase_vat_rate),
     delivery_cost_includes_vat: values.delivery_cost_includes_vat,
     delivery_vat_rate: parseVatRate(values.delivery_vat_rate),
+    internal_handling_cost_per_unit: parseNumberInput(values.internal_handling_cost_per_unit),
   };
 }

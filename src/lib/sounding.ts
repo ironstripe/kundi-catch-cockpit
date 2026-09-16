@@ -96,6 +96,15 @@ export interface SoundingSnapshot {
   maximum_net_revenue: number | null;
   maximum_contribution_margin: number | null;
   gross_margin_percentage: number | null;
+  /** DB I: Deckungsbeitrag nach Waren- und Lieferkosten. */
+  db_i?: number | null;
+  /** Interner Aufwand pro vorbereiteter Einheit; null = nicht erfasst. */
+  internal_handling_cost_per_unit?: number | null;
+  internal_handling_cost_total?: number | null;
+  internal_handling_cost_share_percentage?: number | null;
+  /** DB II: DB I abzüglich internem Catch-Aufwand. */
+  db_ii?: number | null;
+  db_ii_margin_percentage?: number | null;
   break_even_sell_through: number | null;
   available_from: string | null;
   available_until: string | null;
@@ -141,6 +150,13 @@ export function buildSoundingSnapshot(
     maximum_net_revenue: values?.maximum_net_revenue ?? null,
     maximum_contribution_margin: values?.maximum_contribution_margin ?? null,
     gross_margin_percentage: values?.gross_margin_percentage ?? null,
+    db_i: values?.db_i ?? null,
+    internal_handling_cost_per_unit: values?.internal_handling_cost_per_unit ?? null,
+    internal_handling_cost_total: values?.internal_handling_cost_total ?? null,
+    internal_handling_cost_share_percentage:
+      values?.internal_handling_cost_share_percentage ?? null,
+    db_ii: values?.db_ii ?? null,
+    db_ii_margin_percentage: values?.db_ii_margin_percentage ?? null,
     break_even_sell_through: values?.break_even_sell_through ?? null,
     available_from: item.available_from,
     available_until: item.available_until,
@@ -178,10 +194,31 @@ export function soundingMessage(snapshot: SoundingSnapshot, reviewUrl: string): 
         ? MISSING
         : formatPercentValue(snapshot.discount_percentage)
     }`,
-    `Maximaler DB: ${
+    `DB I: ${
       snapshot.maximum_contribution_margin === null
         ? MISSING
         : formatCurrency(snapshot.maximum_contribution_margin)
+    }`,
+    `Interner Aufwand: ${
+      snapshot.internal_handling_cost_total === null ||
+      snapshot.internal_handling_cost_total === undefined
+        ? "nicht erfasst"
+        : `${formatCurrency(snapshot.internal_handling_cost_total)}${
+            snapshot.internal_handling_cost_share_percentage === null ||
+            snapshot.internal_handling_cost_share_percentage === undefined
+              ? ""
+              : ` (${formatPercentValue(snapshot.internal_handling_cost_share_percentage)} des Nettoumsatzes)`
+          }`
+    }`,
+    `DB II: ${
+      snapshot.db_ii === null || snapshot.db_ii === undefined
+        ? MISSING
+        : `${formatCurrency(snapshot.db_ii)}${
+            snapshot.db_ii_margin_percentage === null ||
+            snapshot.db_ii_margin_percentage === undefined
+              ? ""
+              : ` (${formatPercentValue(snapshot.db_ii_margin_percentage)})`
+          }`
     }`,
     `Rohmarge: ${
       snapshot.gross_margin_percentage === null

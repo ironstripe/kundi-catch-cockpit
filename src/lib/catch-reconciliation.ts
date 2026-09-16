@@ -10,6 +10,7 @@
 
 import {
   calculateCatch,
+  internalHandling,
   type CalculationInput,
   type CalculationValues,
 } from "@/lib/catch-calculation";
@@ -44,6 +45,18 @@ export interface ReconciliationValues {
   /** Nettoinvestition: Ware und Lieferung ohne MWST. */
   total_investment: number;
   effective_contribution_margin: number;
+  /** DB I effektiv (Alias auf effective_contribution_margin). */
+  db_i: number;
+  /** Erfasster interner Aufwand pro vorbereiteter Einheit, null = nicht erfasst. */
+  internal_handling_cost_per_unit: number | null;
+  /** Interner Aufwand total auf Basis der vorbereiteten Menge. */
+  internal_handling_cost_total: number | null;
+  /** Diagnosekennzahl: interner Aufwand in Prozent des effektiven Nettoerlöses. */
+  internal_handling_cost_share_percentage: number | null;
+  /** DB II effektiv. */
+  db_ii: number | null;
+  /** DB-II-Marge effektiv in Prozent des Nettoerlöses. */
+  db_ii_margin_percentage: number | null;
   remaining_inventory_value: number;
   /** Dauer in Millisekunden, null ohne Publikationszeitpunkt. */
   action_duration_ms: number | null;
@@ -192,6 +205,12 @@ export function reconcileCatch(input: ReconciliationInput): ReconciliationResult
   const duration = durationMs(input.published_at, input.inventory_counted_at);
   const breakEven = planned.values?.break_even_sell_through ?? null;
   const result = breakEvenResult(sellThrough, breakEven);
+  const handling = internalHandling(
+    input.internal_handling_cost_per_unit,
+    purchaseQuantity,
+    effectiveContributionMargin,
+    effectiveRevenue,
+  );
 
   return {
     complete: true,
@@ -209,6 +228,8 @@ export function reconcileCatch(input: ReconciliationInput): ReconciliationResult
       effective_vat: effectiveVat,
       total_investment: totalInvestment,
       effective_contribution_margin: effectiveContributionMargin,
+      db_i: effectiveContributionMargin,
+      ...handling,
       remaining_inventory_value: remainingInventoryValue,
       action_duration_ms: duration,
       break_even_sell_through: breakEven,
@@ -241,6 +262,10 @@ export interface HistoryTotals {
   /** Summe der enthaltenen MWST. */
   vat: number;
   contribution_margin: number;
+  /** Summe des internen Aufwands, nur aus Catches mit erfasstem Satz. */
+  internal_handling_cost: number;
+  /** DB II summiert: DB I abzüglich erfasstem internem Aufwand. */
+  contribution_margin_ii: number;
   /** Durchschnittliche Aktionsdauer in Millisekunden, null ohne Daten. */
   average_duration_ms: number | null;
 }
@@ -255,6 +280,7 @@ export function aggregateReconciliations(inputs: ReconciliationInput[]): History
   let revenueGross = 0;
   let vat = 0;
   let margin = 0;
+  let handlingCost = 0;
   let durationSum = 0;
   let durationCount = 0;
   let count = 0;
@@ -272,6 +298,7 @@ export function aggregateReconciliations(inputs: ReconciliationInput[]): History
     revenueGross += v.effective_revenue_gross;
     vat += v.effective_vat;
     margin += v.effective_contribution_margin;
+    handlingCost += v.internal_handling_cost_total ?? 0;
     if (v.action_duration_ms !== null) {
       durationSum += v.action_duration_ms;
       durationCount += 1;
@@ -290,6 +317,8 @@ export function aggregateReconciliations(inputs: ReconciliationInput[]): History
     revenue_gross: revenueGross,
     vat,
     contribution_margin: margin,
+    internal_handling_cost: handlingCost,
+    contribution_margin_ii: margin - handlingCost,
     average_duration_ms: durationCount > 0 ? durationSum / durationCount : null,
   };
 }

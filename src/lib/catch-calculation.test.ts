@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { aggregateCatches, calculateCatch, type CalculationInput } from "@/lib/catch-calculation";
+import {
+  aggregateCatches,
+  calculateCatch,
+  DEFAULT_INTERNAL_HANDLING_COST,
+  type CalculationInput,
+} from "@/lib/catch-calculation";
 
 function input(partial: Partial<CalculationInput>): CalculationInput {
   return {
@@ -220,5 +225,55 @@ describe("Steuerbasis Einkauf und Lieferung", () => {
   it("vergleicht den Preisvorteil brutto gegen brutto", () => {
     const v = calculateCatch(input({})).values!;
     expect(v.discount_percentage!).toBeCloseTo(((10.75 - 7.9) / 10.75) * 100, 10);
+  });
+});
+
+describe("DB II – interner Catch-Aufwand", () => {
+  const input = {
+    purchase_quantity: 100,
+    quantity_unit: "kg",
+    purchase_price: 6.5,
+    delivery_cost: 0,
+    regular_price: 12.5,
+    catch_price: 7.9,
+    vat_rate: 2.6,
+    purchase_price_includes_vat: false,
+    delivery_cost_includes_vat: false,
+  };
+
+  it("kennt den Standardsatz CHF 2.50", () => {
+    expect(DEFAULT_INTERNAL_HANDLING_COST).toBe(2.5);
+  });
+
+  it("lässt DB II ohne erfassten Satz leer", () => {
+    const v = calculateCatch(input).values!;
+    expect(v.db_i).toBeCloseTo(119.98, 2);
+    expect(v.internal_handling_cost_per_unit).toBeNull();
+    expect(v.db_ii).toBeNull();
+    expect(v.db_ii_margin_percentage).toBeNull();
+  });
+
+  it("zieht den Aufwand der gesamten vorbereiteten Menge von DB I ab", () => {
+    const v = calculateCatch({ ...input, internal_handling_cost_per_unit: 0.5 }).values!;
+    expect(v.internal_handling_cost_total).toBeCloseTo(50, 6);
+    expect(v.db_ii).toBeCloseTo(69.98, 2);
+    expect(v.db_ii_margin_percentage).toBeCloseTo((69.98 / v.maximum_net_revenue) * 100, 2);
+  });
+
+  it("bestätigt das Referenzbeispiel brutto 12.50 bei 2.6 % mit CHF 2.50 Aufwand", () => {
+    const v = calculateCatch({
+      ...input,
+      purchase_quantity: 1,
+      purchase_price: 0,
+      catch_price: 12.5,
+      internal_handling_cost_per_unit: 2.5,
+    }).values!;
+    expect(v.net_sales_price_per_unit).toBeCloseTo(12.18, 2);
+    expect(v.internal_handling_cost_share_percentage).toBeCloseTo(20.5, 1);
+  });
+
+  it("meldet negative DB II ohne Fehler", () => {
+    const v = calculateCatch({ ...input, internal_handling_cost_per_unit: 5 }).values!;
+    expect(v.db_ii).toBeLessThan(0);
   });
 });

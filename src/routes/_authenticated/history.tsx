@@ -245,9 +245,15 @@ function HistoryPage() {
       icon: Wallet,
     },
     {
-      label: "Effektiver Gesamt-DB",
+      label: "Effektiver Gesamt-DB I",
       value: formatCurrency(totals.contribution_margin),
       hint: "Nur abgeschlossene Catches",
+      icon: TrendingUp,
+    },
+    {
+      label: "Effektiver Gesamt-DB II",
+      value: formatCurrency(totals.contribution_margin_ii),
+      hint: `Nach internem Aufwand ${formatCurrency(totals.internal_handling_cost)}`,
       icon: TrendingUp,
     },
     {
@@ -397,7 +403,8 @@ function HistoryPage() {
                     <TableHead className="text-right">Catch-Preis</TableHead>
                     <TableHead className="text-right">Abverkauf</TableHead>
                     <TableHead className="text-right">Nettoumsatz</TableHead>
-                    <TableHead className="text-right">Effektiver DB</TableHead>
+                    <TableHead className="text-right">DB I</TableHead>
+                   <TableHead className="text-right">DB II</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Post</TableHead>
                   </TableRow>
@@ -543,6 +550,9 @@ function HistoryRow({ row }: { row: CatchListItem }) {
       <TableCell className="text-right tabular-nums">
         {v ? formatCurrency(v.effective_contribution_margin) : "—"}
       </TableCell>
+      <TableCell className="text-right tabular-nums">
+        {v?.db_ii == null ? "—" : formatCurrency(v.db_ii)}
+      </TableCell>
       <TableCell>
         <CatchStatusBadge status={row.status} />
       </TableCell>
@@ -592,8 +602,12 @@ function HistoryCard({ row }: { row: CatchListItem }) {
               </dd>
             </div>
             <div>
-              <dt className="text-[11px] uppercase text-muted-foreground">Effektiver DB</dt>
+              <dt className="text-[11px] uppercase text-muted-foreground">DB I</dt>
               <dd>{v ? formatCurrency(v.effective_contribution_margin) : "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-[11px] uppercase text-muted-foreground">DB II</dt>
+              <dd>{v?.db_ii == null ? "—" : formatCurrency(v.db_ii)}</dd>
             </div>
             <div>
               <dt className="text-[11px] uppercase text-muted-foreground">Aktionsdauer</dt>

@@ -86,3 +86,8 @@
 - Stadtladen Schaffhausen: Kirchhofplatz 10, 8200 Schaffhausen hinterlegt (kein Duplikat).
 - Optionaler Produktlink im Onlineshop pro Catch (nur https, kein Pflichtfeld).
 - Offen: Link zum Teams-Gruppenchat unter Einstellungen > Sounding hinterlegen.
+
+## DB II (interner Catch-Aufwand)
+- [x] Feld «Interner Aufwand pro vorbereitete Einheit» (Standard CHF 2.50 für neue Catches, Altbestand bleibt leer)
+- [x] DB I / DB II in Vor- und Nachkalkulation, Prüfseite, Teams-Sounding, Historie, Export
+- [ ] Teams-Gruppenchat-Link unter Einstellungen › Sounding hinterlegen

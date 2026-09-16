@@ -181,3 +181,52 @@ describe("Nachkalkulation mit Steuerbasis", () => {
     expect(v.remaining_inventory_value).toBeCloseTo(130, 8);
   });
 });
+
+describe("DB II in der Nachkalkulation", () => {
+  it("bleibt ohne erfassten Satz leer", () => {
+    const v = reconcileCatch(base).values!;
+    expect(v.internal_handling_cost_per_unit).toBeNull();
+    expect(v.internal_handling_cost_total).toBeNull();
+    expect(v.db_ii).toBeNull();
+    expect(v.db_ii_margin_percentage).toBeNull();
+    expect(v.db_i).toBeCloseTo(v.effective_contribution_margin, 6);
+  });
+
+  it("rechnet auf der vorbereiteten Menge, nicht auf der verkauften", () => {
+    const v = reconcileCatch({
+      ...base,
+      vat_rate: 2.6,
+      internal_handling_cost_per_unit: 2.5,
+    }).values!;
+    expect(v.internal_handling_cost_total).toBeCloseTo(250, 6);
+    expect(v.db_ii).toBeCloseTo(v.effective_contribution_margin - 250, 6);
+    expect(v.db_ii_margin_percentage).toBeCloseTo((v.db_ii! / v.effective_revenue) * 100, 6);
+  });
+
+  it("senkt den Aufwand nicht, wenn weniger verkauft wird", () => {
+    const many = reconcileCatch({ ...base, remaining_quantity: 0, internal_handling_cost_per_unit: 2.5 })
+      .values!;
+    const few = reconcileCatch({ ...base, remaining_quantity: 80, internal_handling_cost_per_unit: 2.5 })
+      .values!;
+    expect(few.internal_handling_cost_total).toBeCloseTo(many.internal_handling_cost_total!, 6);
+  });
+
+  it("liefert ohne Nettoumsatz keine Marge", () => {
+    const v = reconcileCatch({
+      ...base,
+      remaining_quantity: 100,
+      internal_handling_cost_per_unit: 2.5,
+    }).values!;
+    expect(v.effective_revenue).toBe(0);
+    expect(v.db_ii_margin_percentage).toBeNull();
+  });
+
+  it("summiert DB II über abgeschlossene Catches", () => {
+    const totals = aggregateReconciliations([
+      { ...base, internal_handling_cost_per_unit: 2.5 },
+      { ...base },
+    ]);
+    expect(totals.internal_handling_cost).toBeCloseTo(250, 6);
+    expect(totals.contribution_margin_ii).toBeCloseTo(totals.contribution_margin - 250, 6);
+  });
+});

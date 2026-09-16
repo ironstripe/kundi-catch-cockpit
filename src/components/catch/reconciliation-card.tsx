@@ -130,9 +130,30 @@ export function ReconciliationCard({
                 value={formatCurrency(v.total_investment)}
               />
               <Metric
-                label="Effektiver DB"
+                label="Effektiver DB I"
                 value={formatCurrency(v.effective_contribution_margin)}
                 strong
+              />
+              <Metric
+                label="Interner Aufwand total"
+                value={
+                  v.internal_handling_cost_total === null
+                    ? "Interner Aufwand nicht erfasst"
+                    : formatCurrency(v.internal_handling_cost_total)
+                }
+              />
+              <Metric
+                label="Effektiver DB II"
+                value={v.db_ii === null ? "—" : formatCurrency(v.db_ii)}
+                strong
+              />
+              <Metric
+                label="Effektive DB-II-Marge"
+                value={
+                  v.db_ii_margin_percentage === null
+                    ? "—"
+                    : formatPercentValue(v.db_ii_margin_percentage)
+                }
               />
               <Metric
                 label="Verbleibender Warenwert"
