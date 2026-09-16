@@ -243,6 +243,13 @@ export function calculateCatch(
   const breakEvenSellThrough =
     breakEvenQuantity !== null ? (breakEvenQuantity / quantity) * 100 : null;
 
+  const handling = internalHandling(
+    input.internal_handling_cost_per_unit,
+    quantity,
+    maximumContributionMargin,
+    maximumRevenue,
+  );
+
   const values: CalculationValues = {
     purchase_quantity: quantity,
     quantity_unit: input.quantity_unit,
