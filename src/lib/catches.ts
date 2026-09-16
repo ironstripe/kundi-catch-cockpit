@@ -535,10 +535,45 @@ export async function saveCatch({ id, values, status, audit }: SaveArgs): Promis
     entity_id: catchId,
     action: id ? "updated" : "created",
     actor_id: userId,
-    payload: { status, ...(audit ?? {}) },
+    payload: {
+      status,
+      internal_handling_cost_per_unit: payload.internal_handling_cost_per_unit,
+      ...(audit ?? {}),
+    },
   });
 
   return catchId;
+}
+
+/**
+ * Übernimmt den aktuellen globalen Standardwert für den internen Aufwand
+ * explizit auf einen einzelnen Catch. Rechte und Sounding-Invalidierung
+ * laufen über die bestehenden Datenbankregeln und Trigger.
+ */
+export async function applyInternalHandlingDefault(
+  catchId: string,
+  rate: number,
+): Promise<void> {
+  if (!Number.isFinite(rate) || rate < 0) {
+    throw new Error("Der Standardwert ist ungültig.");
+  }
+  const { error } = await supabase
+    .from("catches")
+    .update({ internal_handling_cost_per_unit: rate })
+    .eq("id", catchId)
+    .is("internal_handling_cost_per_unit", null);
+  if (error) throw error;
+
+  await supabase.from("audit_events").insert({
+    entity_type: "catch",
+    entity_id: catchId,
+    action: "internal_handling_applied",
+    payload: {
+      previous: { internal_handling_cost_per_unit: null },
+      next: { internal_handling_cost_per_unit: rate },
+      summary: "Standardwert interner Aufwand übernommen",
+    } as never,
+  });
 }
 
 async function syncLocations(catchId: string, locationIds: string[]) {
