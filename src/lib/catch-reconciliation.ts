@@ -317,6 +317,8 @@ export function aggregateReconciliations(inputs: ReconciliationInput[]): History
     revenue_gross: revenueGross,
     vat,
     contribution_margin: margin,
+    internal_handling_cost: handlingCost,
+    contribution_margin_ii: margin - handlingCost,
     average_duration_ms: durationCount > 0 ? durationSum / durationCount : null,
   };
 }
