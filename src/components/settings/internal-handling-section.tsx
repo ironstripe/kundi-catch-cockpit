@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { NoAccess, SectionShell } from "@/components/settings/section-shell";
+import { SectionShell } from "@/components/settings/section-shell";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
