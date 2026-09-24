@@ -27,6 +27,7 @@ import {
   type ExtractedOffer,
 } from "@/lib/supplier-offer-extraction";
 import { DEFAULT_DELIVERY_VAT_RATE, DEFAULT_PURCHASE_VAT_RATE } from "@/lib/vat";
+import { transferImageToCatch, type ImageTransferClient } from "@/lib/offer-image-transfer";
 
 export interface CaseActionResult {
   status: string;
@@ -361,6 +362,8 @@ export const convertCaseToCatch = createServerFn({ method: "POST" })
       caseId: string;
       values?: Record<string, unknown>;
       imageAttachmentId?: string | null;
+      /** Ausdrücklich ohne Bild fortfahren, obwohl Bilder vorhanden sind. */
+      withoutImage?: boolean;
     }) => input,
   )
   .handler(async ({ data, context }): Promise<CaseActionResult & { catchId: string }> => {
@@ -384,6 +387,34 @@ export const convertCaseToCatch = createServerFn({ method: "POST" })
     const sourceEmails = emails ?? [];
     if (!sourceEmails.length) throw new Error("Dieses Dossier enthält keine E-Mail.");
     const first = sourceEmails[0]!;
+
+    // Bildwahl vor dem Anlegen prüfen: nie stillschweigend ohne Bild.
+    let attachment: Awaited<ReturnType<typeof loadCaseImage>> | null = null;
+    if (data.imageAttachmentId) {
+      attachment = await loadCaseImage(supabaseAdmin, data.caseId, data.imageAttachmentId);
+    } else if (!data.withoutImage) {
+      const { count } = await supabaseAdmin
+        .from("supplier_offer_attachments")
+        .select("id, supplier_offer_emails!inner(case_id)", { count: "exact", head: true })
+        .eq("supplier_offer_emails.case_id", data.caseId)
+        .like("mime_type", "image/%");
+      if ((count ?? 0) > 0) {
+        throw new Error(
+          "Das Dossier enthält Bilder. Bitte ein Produktbild wählen oder ausdrücklich ohne Bild fortfahren.",
+        );
+      }
+    }
+
+    // Nach einer fehlgeschlagenen Bildübernahme den bereits angelegten Entwurf weiterverwenden.
+    const { data: earlier } = await supabaseAdmin
+      .from("catches")
+      .select("id, catch_number")
+      .eq("source_case_id", data.caseId)
+      .eq("status", "draft")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    const reused = Boolean(earlier);
 
     // Lieferant nur zuordnen, wenn er in den Stammdaten existiert.
     const supplierName = fieldValue(offer, "supplier_name");
@@ -431,7 +462,9 @@ export const convertCaseToCatch = createServerFn({ method: "POST" })
       .filter(Boolean)
       .join("\n");
 
-    const { data: created, error: createError } = await supabaseAdmin
+    const { data: created, error: createError } = earlier
+      ? { data: earlier, error: null }
+      : await supabaseAdmin
       .from("catches")
       .insert({
         product_name: String(fieldValue(offer, "product_name")),
@@ -468,46 +501,30 @@ export const convertCaseToCatch = createServerFn({ method: "POST" })
       throw new Error(createError?.message ?? "Der Catch-Entwurf konnte nicht angelegt werden.");
     }
 
-    // Gewähltes Produktbild aus einer beliebigen E-Mail des Dossiers übernehmen.
-    const attachmentId = data.imageAttachmentId ?? null;
-    if (attachmentId) {
-      const { data: attachment } = await supabaseAdmin
-        .from("supplier_offer_attachments")
-        .select("storage_path, file_name, mime_type, offer_id")
-        .eq("id", attachmentId)
-        .maybeSingle();
-      const belongs = attachment
-        ? sourceEmails.some((email) => email.id === attachment.offer_id)
-        : false;
-      if (attachment && belongs) {
-        try {
-          const download = await supabaseAdmin.storage
-            .from(SUPPLIER_OFFER_BUCKET)
-            .download(attachment.storage_path);
-          if (download.data) {
-            const bytes = new Uint8Array(await download.data.arrayBuffer());
-            const target = `${created.id}/${crypto.randomUUID()}-${attachment.file_name.replace(/[^\w.-]+/g, "_")}`;
-            const upload = await supabaseAdmin.storage
-              .from("catch-images")
-              .upload(target, bytes as unknown as ArrayBuffer, {
-                contentType: attachment.mime_type,
-                upsert: false,
-              });
-            if (!upload.error) {
-              await supabaseAdmin.from("catch_images").insert({
-                catch_id: created.id,
-                storage_path: target,
-                is_primary: true,
-                sort_order: 0,
-              });
-            }
-          }
-        } catch (error) {
-          console.error(
-            "[case-convert] Bildübernahme fehlgeschlagen",
-            error instanceof Error ? error.message : error,
-          );
-        }
+    const catchId = created.id;
+    const catchNumber = created.catch_number;
+
+    // Gewähltes Produktbild übernehmen — jeder Schritt muss gelingen.
+    if (attachment && !(await catchHasImage(supabaseAdmin, catchId))) {
+      try {
+        await transferImageToCatch(supabaseAdmin as unknown as ImageTransferClient, {
+          catchId,
+          attachment,
+          sourceBucket: SUPPLIER_OFFER_BUCKET,
+          targetBucket: "catch-images",
+          replace: false,
+        });
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : "unbekannter Fehler";
+        await audit(supabaseAdmin, {
+          caseId: data.caseId,
+          action: "case_image_failed",
+          actorId: context.userId,
+          payload: { catch_id: catchId, attachment_id: attachment.id, reason },
+        });
+        throw new Error(
+          `Der Catch-Entwurf ${catchNumber ?? ""} wurde angelegt, aber das Bild konnte nicht übernommen werden. ${reason} Das Dossier ist noch nicht als übernommen markiert — «Als Catch-Entwurf übernehmen» erneut ausführen, es entsteht kein zweiter Catch.`,
+        );
       }
     }
 
@@ -516,7 +533,7 @@ export const convertCaseToCatch = createServerFn({ method: "POST" })
       .update({
         status: "converted",
         consolidated_data: offer as never,
-        converted_catch_id: created.id,
+        converted_catch_id: catchId,
         converted_by: context.userId,
         converted_at: new Date().toISOString(),
       })
@@ -534,11 +551,86 @@ export const convertCaseToCatch = createServerFn({ method: "POST" })
       action: "case_converted",
       actorId: context.userId,
       payload: {
-        catch_id: created.id,
-        catch_number: created.catch_number,
+        catch_id: catchId,
+        catch_number: catchNumber,
         emails: sourceEmails.map((email) => email.id),
+        image_attachment_id: attachment?.id ?? null,
+        reused_draft: reused,
       },
     });
 
-    return { status: "converted", message: "Catch-Entwurf erstellt.", catchId: created.id };
+    return {
+      status: "converted",
+      message: attachment ? "Catch-Entwurf mit Bild erstellt." : "Catch-Entwurf ohne Bild erstellt.",
+      catchId,
+    };
+  });
+
+async function catchHasImage(supabaseAdmin: AdminClient, catchId: string): Promise<boolean> {
+  const { count } = await supabaseAdmin
+    .from("catch_images")
+    .select("id", { count: "exact", head: true })
+    .eq("catch_id", catchId);
+  return (count ?? 0) > 0;
+}
+
+async function loadCaseImage(supabaseAdmin: AdminClient, caseId: string, attachmentId: string) {
+  const { data: attachment } = await supabaseAdmin
+    .from("supplier_offer_attachments")
+    .select("id, storage_path, file_name, mime_type, offer_id, supplier_offer_emails!inner(case_id)")
+    .eq("id", attachmentId)
+    .maybeSingle();
+  const owner = attachment?.supplier_offer_emails as { case_id: string | null } | null | undefined;
+  if (!attachment || owner?.case_id !== caseId) {
+    throw new Error("Das gewählte Bild gehört nicht zu diesem Dossier.");
+  }
+  if (!attachment.mime_type.startsWith("image/")) {
+    throw new Error("Der gewählte Anhang ist kein Bild.");
+  }
+  return attachment;
+}
+
+/** Bild aus einem bereits übernommenen Dossier in dessen Catch übertragen. */
+export const transferCaseImageToCatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { caseId: string; attachmentId: string; replace?: boolean }) => input)
+  .handler(async ({ data, context }): Promise<CaseActionResult & { catchId: string }> => {
+    await assertEditor(context.supabase as unknown as Supa, context.userId);
+    const { row, supabaseAdmin } = await loadCase(data.caseId);
+    if (!row.converted_catch_id) throw new Error("Das Dossier wurde noch nicht übernommen.");
+    const { data: target } = await supabaseAdmin
+      .from("catches")
+      .select("id, status, catch_number")
+      .eq("id", row.converted_catch_id)
+      .maybeSingle();
+    if (!target) throw new Error("Der übernommene Catch existiert nicht mehr.");
+    if (target.status === "closed" || target.status === "cancelled") {
+      throw new Error("Abgeschlossene oder abgebrochene Catches werden nicht mehr verändert.");
+    }
+    const attachment = await loadCaseImage(supabaseAdmin, data.caseId, data.attachmentId);
+    const result = await transferImageToCatch(supabaseAdmin as unknown as ImageTransferClient, {
+      catchId: target.id,
+      attachment,
+      sourceBucket: SUPPLIER_OFFER_BUCKET,
+      targetBucket: "catch-images",
+      replace: Boolean(data.replace),
+    });
+    await supabaseAdmin.from("audit_events").insert({
+      entity_type: "catch",
+      entity_id: target.id,
+      action: "catch_image_transferred",
+      actor_id: context.userId,
+      payload: {
+        case_id: data.caseId,
+        attachment_id: attachment.id,
+        file_name: attachment.file_name,
+        replaced: result.replaced,
+        summary: result.replaced ? "Produktbild aus Dossier ersetzt" : "Produktbild aus Dossier übernommen",
+      } as never,
+    });
+    return {
+      status: "ok",
+      message: `Bild in ${target.catch_number ?? "den Catch"} übernommen.`,
+      catchId: target.id,
+    };
   });

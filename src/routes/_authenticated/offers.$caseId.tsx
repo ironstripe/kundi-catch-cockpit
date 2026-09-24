@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   FileDown,
   FolderInput,
+  ImageUp,
   Pencil,
   RefreshCw,
   Save,
@@ -17,6 +18,11 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import { CaseAssignDialog } from "@/components/offers/case-assign-dialog";
 import { CaseEmailPanel } from "@/components/offers/case-email-panel";
+import {
+  AttachmentThumb,
+  CaseImagePicker,
+  type ImageChoice,
+} from "@/components/offers/case-image-picker";
 import { CaseStatusBadge } from "@/components/offers/case-status-badge";
 import {
   OfferFieldsForm,
@@ -38,17 +44,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRoles } from "@/hooks/use-role";
 import { formatDateTime } from "@/lib/format";
 import { fetchCase } from "@/lib/offer-cases";
+import { CATCH_IMAGE_EXISTS_MARKER } from "@/lib/offer-image-transfer";
 import {
   assignEmailToCase,
   convertCaseToCatch,
@@ -58,6 +58,7 @@ import {
   retryCaseExtraction,
   saveCaseFields,
   setCaseIgnored,
+  transferCaseImageToCatch,
 } from "@/lib/offer-cases.functions";
 import {
   extractionWarnings,
@@ -107,7 +108,9 @@ function OfferCaseDetailPage() {
   const [confirmOverwrite, setConfirmOverwrite] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
-  const [imageId, setImageId] = useState<string | null>(null);
+  const [imageChoice, setImageChoice] = useState<ImageChoice>(null);
+  const [convertError, setConvertError] = useState<string | null>(null);
+  const [confirmReplace, setConfirmReplace] = useState(false);
 
   useEffect(() => {
     if (!dossier) return;
@@ -146,10 +149,13 @@ function OfferCaseDetailPage() {
       ),
     [dossier],
   );
-  const chosenImage =
-    images.find((image) => image.id === imageId) ??
-    images.find((image) => image.is_primary_image) ??
-    null;
+  useEffect(() => {
+    if (imageChoice !== null) return;
+    const flagged = images.find((image) => image.is_primary_image);
+    if (flagged) setImageChoice(flagged.id);
+  }, [images, imageChoice]);
+  const chosenImage = images.find((image) => image.id === imageChoice) ?? null;
+  const needsImageDecision = images.length > 0 && imageChoice === null;
 
   async function run(key: string, action: () => Promise<{ message: string }>) {
     setBusy(key);
@@ -159,6 +165,23 @@ function OfferCaseDetailPage() {
       await refetch();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Aktion fehlgeschlagen.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function transferImage(replace: boolean) {
+    if (!chosenImage) return;
+    setBusy("transfer");
+    try {
+      const result = await transferCaseImageToCatch({
+        data: { caseId, attachmentId: chosenImage.id, replace },
+      });
+      toast.success(result.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Übernahme fehlgeschlagen.";
+      if (message.includes(CATCH_IMAGE_EXISTS_MARKER)) setConfirmReplace(true);
+      else toast.error(message);
     } finally {
       setBusy(null);
     }
@@ -243,6 +266,29 @@ function OfferCaseDetailPage() {
             onChange={setValues}
             disabled={!editable}
             warnings={warnings}
+          />
+          <CaseImagePicker
+            images={images}
+            choice={imageChoice}
+            onChoose={setImageChoice}
+            disabled={!canEdit || (locked && !dossier.converted_catch_id)}
+            footer={
+              locked && dossier.converted_catch_id && canEdit ? (
+                <div className="flex flex-wrap items-center gap-2 border-t pt-3">
+                  <Button
+                    size="sm"
+                    disabled={!chosenImage || busy !== null}
+                    onClick={() => void transferImage(false)}
+                  >
+                    <ImageUp className="mr-2 size-4" aria-hidden />
+                    Gewähltes Bild in den Catch übernehmen
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    Ein vorhandenes Catch-Bild wird nur nach Bestätigung ersetzt.
+                  </span>
+                </div>
+              ) : null
+            }
           />
         </div>
 
@@ -329,27 +375,13 @@ function OfferCaseDetailPage() {
                 </p>
               ) : null}
 
-              {images.length ? (
-                <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground">Hauptbild für den Catch</span>
-                  <Select
-                    value={chosenImage?.id ?? "none"}
-                    disabled={!editable}
-                    onValueChange={(value) => setImageId(value === "none" ? null : value)}
-                  >
-                    <SelectTrigger aria-label="Hauptbild wählen">
-                      <SelectValue placeholder="Kein Bild" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Kein Bild</SelectItem>
-                      {images.map((image) => (
-                        <SelectItem key={image.id} value={image.id}>
-                          {image.file_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              {convertError ? (
+                <p
+                  role="alert"
+                  className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs"
+                >
+                  {convertError}
+                </p>
               ) : null}
 
               <Button
@@ -490,6 +522,29 @@ function OfferCaseDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog open={confirmReplace} onOpenChange={setConfirmReplace}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bestehendes Catch-Bild ersetzen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Der Catch hat bereits ein Bild. Es wird durch «{chosenImage?.file_name}» ersetzt.
+              Eine bestandene Musterprüfung und laufende Soundings werden dadurch zurückgesetzt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmReplace(false);
+                void transferImage(true);
+              }}
+            >
+              Bild ersetzen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={confirmConvert} onOpenChange={setConfirmConvert}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -508,12 +563,23 @@ function OfferCaseDetailPage() {
                     ))}
                   </ul>
                 ) : null}
-                <p>
-                  Hauptbild:{" "}
-                  {chosenImage
-                    ? chosenImage.file_name
-                    : "keines gewählt — der Catch bleibt ohne Bild."}
-                </p>
+                {chosenImage ? (
+                  <div className="flex items-center gap-3 rounded-md border p-2">
+                    <div className="size-20 shrink-0 overflow-hidden rounded">
+                      <AttachmentThumb attachment={chosenImage} />
+                    </div>
+                    <p>
+                      Hauptbild: <strong>{chosenImage.file_name}</strong>
+                    </p>
+                  </div>
+                ) : needsImageDecision ? (
+                  <p className="font-medium text-destructive">
+                    Das Dossier enthält {images.length} Bild(er), aber keines ist gewählt. Bitte ein
+                    Produktbild wählen oder ausdrücklich ohne Bild fortfahren.
+                  </p>
+                ) : (
+                  <p className="font-medium">Kein Bild gewählt — der Catch bleibt ohne Bild.</p>
+                )}
                 {missing.length ? (
                   <p>Es fehlen noch: {missing.map((key) => OFFER_FIELD_LABELS[key]).join(", ")}.</p>
                 ) : null}
@@ -522,9 +588,29 @@ function OfferCaseDetailPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            {needsImageDecision ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setConfirmConvert(false);
+                    document
+                      .getElementById("case-image-picker")
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                >
+                  Produktbild wählen
+                </Button>
+                <Button variant="outline" onClick={() => setImageChoice("none")}>
+                  Ohne Bild fortfahren
+                </Button>
+              </>
+            ) : null}
             <AlertDialogAction
+              disabled={needsImageDecision}
               onClick={async () => {
                 setConfirmConvert(false);
+                setConvertError(null);
                 setBusy("convert");
                 try {
                   const result = await convertCaseToCatch({
@@ -532,14 +618,17 @@ function OfferCaseDetailPage() {
                       caseId,
                       values: formValuesToExtraction(values, dossier.consolidated_data),
                       imageAttachmentId: chosenImage?.id ?? null,
+                      withoutImage: imageChoice === "none",
                     },
                   });
                   toast.success(result.message);
                   await navigate({ to: "/catches/$catchId", params: { catchId: result.catchId } });
                 } catch (error) {
-                  toast.error(
-                    error instanceof Error ? error.message : "Die Übernahme ist fehlgeschlagen.",
-                  );
+                  const message =
+                    error instanceof Error ? error.message : "Die Übernahme ist fehlgeschlagen.";
+                  setConvertError(message);
+                  toast.error(message);
+                  await refetch();
                 } finally {
                   setBusy(null);
                 }
