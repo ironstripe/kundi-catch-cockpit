@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   FileDown,
   FolderInput,
+  ImageUp,
   Pencil,
   RefreshCw,
   Save,
@@ -17,6 +18,11 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import { CaseAssignDialog } from "@/components/offers/case-assign-dialog";
 import { CaseEmailPanel } from "@/components/offers/case-email-panel";
+import {
+  AttachmentThumb,
+  CaseImagePicker,
+  type ImageChoice,
+} from "@/components/offers/case-image-picker";
 import { CaseStatusBadge } from "@/components/offers/case-status-badge";
 import {
   OfferFieldsForm,
