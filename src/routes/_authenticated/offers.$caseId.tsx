@@ -107,7 +107,9 @@ function OfferCaseDetailPage() {
   const [confirmOverwrite, setConfirmOverwrite] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
-  const [imageId, setImageId] = useState<string | null>(null);
+  const [imageChoice, setImageChoice] = useState<ImageChoice>(null);
+  const [convertError, setConvertError] = useState<string | null>(null);
+  const [confirmReplace, setConfirmReplace] = useState(false);
 
   useEffect(() => {
     if (!dossier) return;
@@ -146,10 +148,13 @@ function OfferCaseDetailPage() {
       ),
     [dossier],
   );
-  const chosenImage =
-    images.find((image) => image.id === imageId) ??
-    images.find((image) => image.is_primary_image) ??
-    null;
+  useEffect(() => {
+    if (imageChoice !== null) return;
+    const flagged = images.find((image) => image.is_primary_image);
+    if (flagged) setImageChoice(flagged.id);
+  }, [images, imageChoice]);
+  const chosenImage = images.find((image) => image.id === imageChoice) ?? null;
+  const needsImageDecision = images.length > 0 && imageChoice === null;
 
   async function run(key: string, action: () => Promise<{ message: string }>) {
     setBusy(key);
