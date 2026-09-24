@@ -249,6 +249,29 @@ function OfferCaseDetailPage() {
             disabled={!editable}
             warnings={warnings}
           />
+          <CaseImagePicker
+            images={images}
+            choice={imageChoice}
+            onChoose={setImageChoice}
+            disabled={!canEdit || (locked && !dossier.converted_catch_id)}
+            footer={
+              locked && dossier.converted_catch_id && canEdit ? (
+                <div className="flex flex-wrap items-center gap-2 border-t pt-3">
+                  <Button
+                    size="sm"
+                    disabled={!chosenImage || busy !== null}
+                    onClick={() => void transferImage(false)}
+                  >
+                    <ImageUp className="mr-2 size-4" aria-hidden />
+                    Gewähltes Bild in den Catch übernehmen
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    Ein vorhandenes Catch-Bild wird nur nach Bestätigung ersetzt.
+                  </span>
+                </div>
+              ) : null
+            }
+          />
         </div>
 
         <div className="space-y-4">
@@ -334,27 +357,13 @@ function OfferCaseDetailPage() {
                 </p>
               ) : null}
 
-              {images.length ? (
-                <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground">Hauptbild für den Catch</span>
-                  <Select
-                    value={chosenImage?.id ?? "none"}
-                    disabled={!editable}
-                    onValueChange={(value) => setImageId(value === "none" ? null : value)}
-                  >
-                    <SelectTrigger aria-label="Hauptbild wählen">
-                      <SelectValue placeholder="Kein Bild" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Kein Bild</SelectItem>
-                      {images.map((image) => (
-                        <SelectItem key={image.id} value={image.id}>
-                          {image.file_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              {convertError ? (
+                <p
+                  role="alert"
+                  className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs"
+                >
+                  {convertError}
+                </p>
               ) : null}
 
               <Button
