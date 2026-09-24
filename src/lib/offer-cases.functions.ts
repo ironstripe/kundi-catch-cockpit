@@ -361,6 +361,8 @@ export const convertCaseToCatch = createServerFn({ method: "POST" })
       caseId: string;
       values?: Record<string, unknown>;
       imageAttachmentId?: string | null;
+      /** Ausdrücklich ohne Bild fortfahren, obwohl Bilder vorhanden sind. */
+      withoutImage?: boolean;
     }) => input,
   )
   .handler(async ({ data, context }): Promise<CaseActionResult & { catchId: string }> => {
@@ -384,6 +386,34 @@ export const convertCaseToCatch = createServerFn({ method: "POST" })
     const sourceEmails = emails ?? [];
     if (!sourceEmails.length) throw new Error("Dieses Dossier enthält keine E-Mail.");
     const first = sourceEmails[0]!;
+
+    // Bildwahl vor dem Anlegen prüfen: nie stillschweigend ohne Bild.
+    let attachment: Awaited<ReturnType<typeof loadCaseImage>> | null = null;
+    if (data.imageAttachmentId) {
+      attachment = await loadCaseImage(supabaseAdmin, data.caseId, data.imageAttachmentId);
+    } else if (!data.withoutImage) {
+      const { count } = await supabaseAdmin
+        .from("supplier_offer_attachments")
+        .select("id, supplier_offer_emails!inner(case_id)", { count: "exact", head: true })
+        .eq("supplier_offer_emails.case_id", data.caseId)
+        .like("mime_type", "image/%");
+      if ((count ?? 0) > 0) {
+        throw new Error(
+          "Das Dossier enthält Bilder. Bitte ein Produktbild wählen oder ausdrücklich ohne Bild fortfahren.",
+        );
+      }
+    }
+
+    // Nach einer fehlgeschlagenen Bildübernahme den bereits angelegten Entwurf weiterverwenden.
+    const { data: earlier } = await supabaseAdmin
+      .from("catches")
+      .select("id, catch_number")
+      .eq("source_case_id", data.caseId)
+      .eq("status", "draft")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    const reused = Boolean(earlier);
 
     // Lieferant nur zuordnen, wenn er in den Stammdaten existiert.
     const supplierName = fieldValue(offer, "supplier_name");
