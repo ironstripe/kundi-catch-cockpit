@@ -305,18 +305,10 @@ export async function storeAttachments(
 }
 
 /** Erstes Produktbild als Hauptbild markieren, falls noch keines gesetzt ist. */
-export async function ensurePrimaryImage(supabaseAdmin: AdminClient, offerId: string) {
-  const { data } = await supabaseAdmin
-    .from("supplier_offer_attachments")
-    .select("id, kind, is_primary_image, created_at")
-    .eq("offer_id", offerId)
-    .order("created_at", { ascending: true });
-  const rows = data ?? [];
-  if (rows.some((row) => row.is_primary_image)) return;
-  const first = rows.find((row) => row.kind === "product_image");
-  if (!first) return;
-  await supabaseAdmin
-    .from("supplier_offer_attachments")
-    .update({ is_primary_image: true })
-    .eq("id", first.id);
+/**
+ * Früher wurde hier automatisch das erste Bild zum Hauptbild. Das griff oft
+ * Logos oder Signaturbilder ab. Das Hauptbild wählt jetzt immer ein Mensch.
+ */
+export async function ensurePrimaryImage(_supabaseAdmin: AdminClient, _offerId: string) {
+  return;
 }
