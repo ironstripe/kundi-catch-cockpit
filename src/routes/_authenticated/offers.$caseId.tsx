@@ -55,6 +55,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useRoles } from "@/hooks/use-role";
 import { formatDateTime } from "@/lib/format";
 import { fetchCase } from "@/lib/offer-cases";
+import { CATCH_IMAGE_EXISTS_MARKER } from "@/lib/offer-image-transfer";
 import {
   assignEmailToCase,
   convertCaseToCatch,
@@ -64,6 +65,7 @@ import {
   retryCaseExtraction,
   saveCaseFields,
   setCaseIgnored,
+  transferCaseImageToCatch,
 } from "@/lib/offer-cases.functions";
 import {
   extractionWarnings,
@@ -170,6 +172,23 @@ function OfferCaseDetailPage() {
       await refetch();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Aktion fehlgeschlagen.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function transferImage(replace: boolean) {
+    if (!chosenImage) return;
+    setBusy("transfer");
+    try {
+      const result = await transferCaseImageToCatch({
+        data: { caseId, attachmentId: chosenImage.id, replace },
+      });
+      toast.success(result.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Übernahme fehlgeschlagen.";
+      if (message.includes(CATCH_IMAGE_EXISTS_MARKER)) setConfirmReplace(true);
+      else toast.error(message);
     } finally {
       setBusy(null);
     }
@@ -510,6 +529,29 @@ function OfferCaseDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog open={confirmReplace} onOpenChange={setConfirmReplace}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bestehendes Catch-Bild ersetzen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Der Catch hat bereits ein Bild. Es wird durch «{chosenImage?.file_name}» ersetzt.
+              Eine bestandene Musterprüfung und laufende Soundings werden dadurch zurückgesetzt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmReplace(false);
+                void transferImage(true);
+              }}
+            >
+              Bild ersetzen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={confirmConvert} onOpenChange={setConfirmConvert}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -528,12 +570,23 @@ function OfferCaseDetailPage() {
                     ))}
                   </ul>
                 ) : null}
-                <p>
-                  Hauptbild:{" "}
-                  {chosenImage
-                    ? chosenImage.file_name
-                    : "keines gewählt — der Catch bleibt ohne Bild."}
-                </p>
+                {chosenImage ? (
+                  <div className="flex items-center gap-3 rounded-md border p-2">
+                    <div className="size-20 shrink-0 overflow-hidden rounded">
+                      <AttachmentThumb attachment={chosenImage} />
+                    </div>
+                    <p>
+                      Hauptbild: <strong>{chosenImage.file_name}</strong>
+                    </p>
+                  </div>
+                ) : needsImageDecision ? (
+                  <p className="font-medium text-destructive">
+                    Das Dossier enthält {images.length} Bild(er), aber keines ist gewählt. Bitte ein
+                    Produktbild wählen oder ausdrücklich ohne Bild fortfahren.
+                  </p>
+                ) : (
+                  <p className="font-medium">Kein Bild gewählt — der Catch bleibt ohne Bild.</p>
+                )}
                 {missing.length ? (
                   <p>Es fehlen noch: {missing.map((key) => OFFER_FIELD_LABELS[key]).join(", ")}.</p>
                 ) : null}
@@ -542,9 +595,29 @@ function OfferCaseDetailPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            {needsImageDecision ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setConfirmConvert(false);
+                    document
+                      .getElementById("case-image-picker")
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                >
+                  Produktbild wählen
+                </Button>
+                <Button variant="outline" onClick={() => setImageChoice("none")}>
+                  Ohne Bild fortfahren
+                </Button>
+              </>
+            ) : null}
             <AlertDialogAction
+              disabled={needsImageDecision}
               onClick={async () => {
                 setConfirmConvert(false);
+                setConvertError(null);
                 setBusy("convert");
                 try {
                   const result = await convertCaseToCatch({
@@ -552,14 +625,17 @@ function OfferCaseDetailPage() {
                       caseId,
                       values: formValuesToExtraction(values, dossier.consolidated_data),
                       imageAttachmentId: chosenImage?.id ?? null,
+                      withoutImage: imageChoice === "none",
                     },
                   });
                   toast.success(result.message);
                   await navigate({ to: "/catches/$catchId", params: { catchId: result.catchId } });
                 } catch (error) {
-                  toast.error(
-                    error instanceof Error ? error.message : "Die Übernahme ist fehlgeschlagen.",
-                  );
+                  const message =
+                    error instanceof Error ? error.message : "Die Übernahme ist fehlgeschlagen.";
+                  setConvertError(message);
+                  toast.error(message);
+                  await refetch();
                 } finally {
                   setBusy(null);
                 }
