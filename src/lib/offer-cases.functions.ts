@@ -27,6 +27,7 @@ import {
   type ExtractedOffer,
 } from "@/lib/supplier-offer-extraction";
 import { DEFAULT_DELIVERY_VAT_RATE, DEFAULT_PURCHASE_VAT_RATE } from "@/lib/vat";
+import { transferImageToCatch, type ImageTransferClient } from "@/lib/offer-image-transfer";
 
 export interface CaseActionResult {
   status: string;
@@ -461,7 +462,9 @@ export const convertCaseToCatch = createServerFn({ method: "POST" })
       .filter(Boolean)
       .join("\n");
 
-    const { data: created, error: createError } = await supabaseAdmin
+    const { data: created, error: createError } = earlier
+      ? { data: earlier, error: null }
+      : await supabaseAdmin
       .from("catches")
       .insert({
         product_name: String(fieldValue(offer, "product_name")),
