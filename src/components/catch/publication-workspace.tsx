@@ -70,7 +70,11 @@ interface PublicationWorkspaceProps {
   onDirtyChange?: (dirty: boolean) => void;
 }
 
-export function PublicationWorkspace({ item, onChanged, onDirtyChange }: PublicationWorkspaceProps) {
+export function PublicationWorkspace({
+  item,
+  onChanged,
+  onDirtyChange,
+}: PublicationWorkspaceProps) {
   const source = useMemo(() => catchToPostSource(item), [item]);
   const generated = useMemo(() => generatePostText(source), [source]);
   const signature = useMemo(() => postSourceSignature(source), [source]);
@@ -169,9 +173,7 @@ export function PublicationWorkspace({ item, onChanged, onDirtyChange }: Publica
   function saveEditedText() {
     if (saveText.isPending || !unsaved) return;
     const submitted = finalText;
-    return saveText
-      .mutateAsync({ text: submitted, reason: "edited" })
-      .catch(() => undefined);
+    return saveText.mutateAsync({ text: submitted, reason: "edited" }).catch(() => undefined);
   }
   // Nur Text sichern; Neu generieren, Zurücksetzen und Publizieren bleiben eigene Aktionen.
   const textScope = useEditShortcuts({

@@ -3,6 +3,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ArrowLeft, CheckCircle2, Save } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { ordinarySaveLabel, ordinarySaveStatus } from "@/lib/catch-save-intent";
+
 import {
   UnsavedChangesDialog,
   useEditShortcuts,
@@ -1012,22 +1014,4 @@ function Field({
       {error ? <p className="text-xs font-medium text-destructive">{error}</p> : null}
     </div>
   );
-}
-
-type FormStatus = CatchFormProps["currentStatus"];
-
-/** Status für das gewöhnliche Speichern. Neu/Entwurf → draft; bestehend bereit → ready. */
-export function ordinarySaveStatus(
-  mode: "create" | "edit",
-  currentStatus: FormStatus,
-): "draft" | "ready" {
-  if (mode === "create") return "draft";
-  // «published» bleibt über persist() publiziert; closed/cancelled sind nicht editierbar.
-  return currentStatus === "ready" ? "ready" : "draft";
-}
-
-export function ordinarySaveLabel(mode: "create" | "edit", currentStatus: FormStatus): string {
-  if (mode === "create" || currentStatus === "draft" || currentStatus === undefined)
-    return "Als Entwurf speichern";
-  return "Änderungen speichern";
 }
