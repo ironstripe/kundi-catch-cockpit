@@ -7,8 +7,8 @@
 /*
  * Food Catch Cockpit — Design System
  *
- * Die Farb-, Radius- und Typografie-Tokens sind 1:1 aus Kundivent übernommen,
- * damit sich Food Catch wie eine Schwester-Anwendung anfühlt.
+ * Basis: Kundi Family Standard v1 (siehe docs/KUNDI-UI-STANDARD.md),
+ * lokale Abbildung in docs/FOOD-CATCH-FAMILY-ADOPTION.md.
  * Ergänzt um zurückhaltende Produkt-Akzente aus dem Food-Catch-Logo
  * (Teal/Petrol) sowie Status-Tokens für den Catch-Lebenszyklus.
  */
@@ -41,6 +41,22 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-canvas: var(--canvas);
+
+  /* Kundi Family Typografie */
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --text-page-title: 1.5rem;
+  --text-page-title--line-height: 2rem;
+  --text-section-title: 1.125rem;
+  --text-section-title--line-height: 1.625rem;
+  --text-ui: 0.9375rem;
+  --text-ui--line-height: 1.5rem;
+  --text-control: 0.875rem;
+  --text-control--line-height: 1.25rem;
+  --text-meta: 0.75rem;
+  --text-meta--line-height: 1rem;
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -76,55 +92,64 @@
 }
 
 :root {
-  --radius: 0.375rem;
-  --background: oklch(98.5% 0.003 247.858);
-  --foreground: oklch(24% 0.02 250);
-  --card: oklch(100% 0 0);
-  --card-foreground: oklch(24% 0.02 250);
-  --popover: oklch(100% 0 0);
-  --popover-foreground: oklch(24% 0.02 250);
-  --primary: oklch(47% 0.06 216);
-  --primary-foreground: oklch(99% 0.002 247);
-  --secondary: oklch(95.5% 0.006 247.896);
-  --secondary-foreground: oklch(30% 0.02 250);
-  --muted: oklch(95.8% 0.005 247.896);
-  --muted-foreground: oklch(52% 0.02 252);
-  --accent: oklch(94% 0.014 216);
-  --accent-foreground: oklch(32% 0.04 216);
-  --destructive: oklch(55% 0.16 27);
-  --destructive-foreground: oklch(99% 0.002 247);
-  --success: oklch(58% 0.13 150);
-  --success-foreground: oklch(99% 0.002 247);
-  --warning: oklch(65% 0.11 70);
-  --warning-foreground: oklch(38% 0.08 70);
-  --border: oklch(90.5% 0.008 250);
-  --input: oklch(90.5% 0.008 250);
-  --ring: oklch(60% 0.05 216);
-  --chart-1: oklch(55% 0.07 216);
-  --chart-2: oklch(60% 0.08 160);
-  --chart-3: oklch(65% 0.09 70);
-  --chart-4: oklch(55% 0.08 300);
-  --chart-5: oklch(58% 0.1 20);
-  --sidebar: oklch(97.5% 0.004 247.858);
-  --sidebar-foreground: oklch(24% 0.02 250);
-  --sidebar-primary: oklch(47% 0.06 216);
-  --sidebar-primary-foreground: oklch(99% 0.002 247);
-  --sidebar-accent: oklch(94% 0.014 216);
-  --sidebar-accent-foreground: oklch(32% 0.04 216);
-  --sidebar-border: oklch(90.5% 0.008 250);
-  --sidebar-ring: oklch(60% 0.05 216);
+  /* Kundi Family Standard v1 — exakte Light-Tokens (KundiMKT da4d83e) */
+  --radius: 0.5rem;
+  --background: oklch(0.982 0.008 92);
+  --foreground: oklch(0.205 0.024 160);
+  --card: oklch(0.997 0.003 92);
+  --card-foreground: oklch(0.22 0.025 165);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.025 165);
+  --primary: oklch(0.345 0.078 161);
+  --primary-foreground: oklch(0.99 0.004 95);
+  --secondary: oklch(0.945 0.014 95);
+  --secondary-foreground: oklch(0.27 0.035 165);
+  --muted: oklch(0.952 0.009 92);
+  --muted-foreground: oklch(0.48 0.024 160);
+  --accent: oklch(0.938 0.025 157);
+  --accent-foreground: oklch(0.27 0.055 165);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(0.86 0.014 92);
+  --input: oklch(0.84 0.015 92);
+  --ring: oklch(0.52 0.08 165);
+  --success: oklch(0.49 0.13 143);
+  --warning: oklch(0.61 0.14 67);
+  --info: oklch(0.48 0.07 226);
+  --canvas: oklch(0.958 0.011 92);
 
+  /* Lokale Ergänzungen (Food Catch) */
+  --success-foreground: oklch(0.99 0.004 95);
+  --warning-foreground: oklch(0.38 0.09 67);
+  --info-foreground: oklch(0.99 0.004 95);
+  --chart-1: oklch(0.52 0.06 210);
+  --chart-2: oklch(0.49 0.13 143);
+  --chart-3: oklch(0.61 0.14 67);
+  --chart-4: oklch(0.55 0.08 300);
+  --chart-5: oklch(0.58 0.1 20);
+
+  /* Sidebar = Family-Flächen, keine separaten kühlen Werte */
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+
+  /* Identitätsakzent Food Catch (Teal/Petrol) */
   --catch-deep: oklch(30% 0.04 210);
-  --catch-teal: oklch(58% 0.045 210);
+  --catch-teal: oklch(52% 0.05 210);
 
-  --status-draft: oklch(55% 0.015 250);
-  --status-ready: oklch(58% 0.08 216);
-  --status-published: oklch(58% 0.13 150);
-  --status-closed: oklch(48% 0.03 250);
+  --status-draft: oklch(52% 0.015 250);
+  --status-ready: oklch(52% 0.08 216);
+  --status-published: oklch(0.49 0.13 143);
+  --status-closed: oklch(45% 0.03 250);
   --status-cancelled: oklch(55% 0.16 27);
 
-  --temp-fresh: oklch(58% 0.08 160);
-  --temp-frozen: oklch(58% 0.075 235);
+  --temp-fresh: oklch(52% 0.08 160);
+  --temp-frozen: oklch(52% 0.075 235);
 }
 
 .dark {
@@ -134,8 +159,11 @@
   --card-foreground: oklch(95% 0.005 247);
   --popover: oklch(23% 0.017 250);
   --popover-foreground: oklch(95% 0.005 247);
-  --primary: oklch(72% 0.07 216);
-  --primary-foreground: oklch(20% 0.02 250);
+  --primary: oklch(72% 0.09 161);
+  --primary-foreground: oklch(20% 0.03 165);
+  --info: oklch(72% 0.07 226);
+  --info-foreground: oklch(20% 0.02 250);
+  --canvas: oklch(17% 0.012 160);
   --secondary: oklch(28% 0.018 250);
   --secondary-foreground: oklch(93% 0.005 247);
   --muted: oklch(27% 0.017 250);
@@ -150,7 +178,7 @@
   --warning-foreground: oklch(85% 0.09 70);
   --border: oklch(100% 0 0 / 0.12);
   --input: oklch(100% 0 0 / 0.16);
-  --ring: oklch(60% 0.05 216);
+  --ring: oklch(62% 0.08 165);
   --chart-1: oklch(66% 0.08 216);
   --chart-2: oklch(68% 0.09 160);
   --chart-3: oklch(72% 0.1 70);
@@ -158,8 +186,8 @@
   --chart-5: oklch(66% 0.11 20);
   --sidebar: oklch(21% 0.016 250);
   --sidebar-foreground: oklch(95% 0.005 247);
-  --sidebar-primary: oklch(72% 0.07 216);
-  --sidebar-primary-foreground: oklch(20% 0.02 250);
+  --sidebar-primary: oklch(72% 0.09 161);
+  --sidebar-primary-foreground: oklch(20% 0.03 165);
   --sidebar-accent: oklch(31% 0.03 216);
   --sidebar-accent-foreground: oklch(93% 0.01 216);
   --sidebar-border: oklch(100% 0 0 / 0.12);
@@ -186,7 +214,11 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-size: var(--text-ui);
+    line-height: 1.5;
     font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
   }
 
   h1,
