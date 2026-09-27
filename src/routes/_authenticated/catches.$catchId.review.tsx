@@ -105,7 +105,7 @@ function ReviewPage() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Catch nicht gefunden</CardTitle>
+          <CardTitle className="text-section-title">Catch nicht gefunden</CardTitle>
           <CardDescription className="text-xs">
             Dieser Catch existiert nicht oder wurde gelöscht.
           </CardDescription>
@@ -158,7 +158,7 @@ function ReviewPage() {
         <div className="space-y-4 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Produkt</CardTitle>
+              <CardTitle className="text-section-title">Produkt</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="aspect-[4/3] w-full overflow-hidden rounded-md border bg-muted/30">
@@ -200,7 +200,7 @@ function ReviewPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Musterprüfung</CardTitle>
+              <CardTitle className="text-section-title">Musterprüfung</CardTitle>
               <CardDescription className="text-xs">
                 Das Produktmuster wird offline aufgetaut und geprüft.
               </CardDescription>
@@ -224,7 +224,7 @@ function ReviewPage() {
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Deine Rückmeldung</CardTitle>
+              <CardTitle className="text-section-title">Deine Rückmeldung</CardTitle>
               <CardDescription className="text-xs">
                 Die Diskussion kann in Teams laufen; verbindlich ist die Rückmeldung hier.
               </CardDescription>
@@ -293,7 +293,7 @@ function ReviewPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Erfasste Rückmeldungen</CardTitle>
+              <CardTitle className="text-section-title">Erfasste Rückmeldungen</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {(round?.responses ?? []).length === 0 ? (

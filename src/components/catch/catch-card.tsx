@@ -39,7 +39,7 @@ export function CatchCard({ item }: { item: CatchListItem }) {
       <Link
         to="/catches/$catchId"
         params={{ catchId: item.id }}
-        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <CardContent className="flex flex-col gap-4 p-4 sm:flex-row">
           <div className="h-28 w-full shrink-0 overflow-hidden rounded-md border bg-muted/40 sm:h-24 sm:w-32">
@@ -64,7 +64,7 @@ export function CatchCard({ item }: { item: CatchListItem }) {
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-mono text-xs text-muted-foreground">{item.catch_number}</p>
-                <h3 className="truncate text-base font-semibold">{item.product_name}</h3>
+                <h3 className="truncate text-base font-semibold underline-offset-4 group-hover:underline group-focus-visible:underline">{item.product_name}</h3>
               </div>
               <div className="flex flex-wrap items-center gap-1.5">
                 <TemperatureBadge temperature={item.temperature} />

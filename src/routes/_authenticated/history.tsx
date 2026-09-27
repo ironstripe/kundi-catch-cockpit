@@ -498,19 +498,19 @@ function Thumb({ row }: { row: CatchListItem }) {
 function HistoryRow({ row }: { row: CatchListItem }) {
   const { v, duration } = useRowValues(row);
   return (
-    <TableRow className="cursor-pointer">
+    <TableRow>
       <TableCell>
+        <span className="flex items-center gap-2 font-mono text-xs">
+          <Thumb row={row} />
+          {row.catch_number ?? "—"}
+        </span>
+      </TableCell>
+      <TableCell className="font-medium">
         <Link
           to="/catches/$catchId"
           params={{ catchId: row.id }}
-          className="flex items-center gap-2 font-mono text-xs"
+          className="rounded-sm underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <Thumb row={row} />
-          {row.catch_number ?? "—"}
-        </Link>
-      </TableCell>
-      <TableCell className="font-medium">
-        <Link to="/catches/$catchId" params={{ catchId: row.id }}>
           {row.product_name}
         </Link>
       </TableCell>
@@ -574,12 +574,12 @@ function HistoryCard({ row }: { row: CatchListItem }) {
   return (
     <Card className="py-0">
       <CardContent className="p-4">
-        <Link to="/catches/$catchId" params={{ catchId: row.id }} className="block space-y-3">
+        <Link to="/catches/$catchId" params={{ catchId: row.id }} className="group block space-y-3 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <div className="flex items-start gap-3">
             <Thumb row={row} />
             <div className="min-w-0 flex-1">
               <p className="font-mono text-xs text-muted-foreground">{row.catch_number ?? "—"}</p>
-              <p className="truncate font-medium">{row.product_name}</p>
+              <p className="truncate font-medium underline-offset-4 group-hover:underline">{row.product_name}</p>
             </div>
             <div className="flex flex-col items-end gap-1">
               <CatchStatusBadge status={row.status} />

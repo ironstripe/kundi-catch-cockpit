@@ -52,7 +52,7 @@ export function CalculationCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">Vorkalkulation</CardTitle>
+        <CardTitle className="text-section-title">Vorkalkulation</CardTitle>
         <CardDescription className="text-xs">
           {description ?? "Entscheidungshilfe aus den erfassten Eingabewerten — nicht editierbar."}
         </CardDescription>

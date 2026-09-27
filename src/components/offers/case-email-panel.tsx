@@ -88,7 +88,7 @@ export function CaseEmailPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">Quellen im Dossier ({emails.length})</CardTitle>
+        <CardTitle className="text-section-title">Quellen im Dossier ({emails.length})</CardTitle>
         <CardDescription className="text-xs">
           Jede E-Mail bleibt unverändert erhalten. E-Mails werden nur durch eine bewusste Zuweisung
           zusammengeführt.

@@ -268,7 +268,7 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Post-Inhalt</CardTitle>
+              <CardTitle className="text-section-title">Post-Inhalt</CardTitle>
               <CardDescription className="text-xs">
                 Diese Catch-Daten fliessen in den Text ein.
               </CardDescription>
@@ -323,7 +323,7 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">WhatsApp-Text</CardTitle>
+              <CardTitle className="text-section-title">WhatsApp-Text</CardTitle>
               <CardDescription className="text-xs">
                 Frei editierbar. Manuelle Änderungen werden nicht automatisch überschrieben.
               </CardDescription>
@@ -384,7 +384,7 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">WhatsApp-Vorschau</CardTitle>
+              <CardTitle className="text-section-title">WhatsApp-Vorschau</CardTitle>
               <CardDescription className="text-xs">
                 Aktualisiert sich sofort beim Bearbeiten des Textes.
               </CardDescription>
@@ -502,7 +502,7 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
           {item.status === "published" && item.published_text ? (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Publizierte Version</CardTitle>
+                <CardTitle className="text-section-title">Publizierte Version</CardTitle>
                 <CardDescription className="text-xs">
                   Unveränderter Text und Bild zum Zeitpunkt der Publikation.
                 </CardDescription>

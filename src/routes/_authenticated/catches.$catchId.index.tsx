@@ -80,7 +80,7 @@ function CatchDetailPage() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Catch nicht gefunden</CardTitle>
+          <CardTitle className="text-section-title">Catch nicht gefunden</CardTitle>
           <CardDescription className="text-xs">
             Dieser Catch existiert nicht oder wurde gelöscht.
           </CardDescription>
@@ -240,7 +240,7 @@ function CatchDetailPage() {
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Produktbild</CardTitle>
+              <CardTitle className="text-section-title">Produktbild</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="aspect-[4/3] w-full overflow-hidden rounded-md border bg-muted/30">
@@ -261,7 +261,7 @@ function CatchDetailPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Interne Notiz</CardTitle>
+              <CardTitle className="text-section-title">Interne Notiz</CardTitle>
               <CardDescription className="text-xs">Nur intern sichtbar.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -273,7 +273,7 @@ function CatchDetailPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Zeitstempel</CardTitle>
+              <CardTitle className="text-section-title">Zeitstempel</CardTitle>
             </CardHeader>
             <CardContent className="space-y-1.5">
               <Row label="Erstellt" value={formatDateTime(item.created_at)} />
@@ -379,7 +379,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">{title}</CardTitle>
+        <CardTitle className="text-section-title">{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-1.5">{children}</CardContent>
     </Card>
