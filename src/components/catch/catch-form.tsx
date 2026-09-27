@@ -949,6 +949,7 @@ export function CatchForm({
           </div>
         </div>
       </div>
+      </fieldset>
 
       <AlertDialog open={criticalOpen} onOpenChange={setCriticalOpen}>
         <AlertDialogContent>

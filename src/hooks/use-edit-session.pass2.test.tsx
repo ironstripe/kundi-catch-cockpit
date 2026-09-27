@@ -161,3 +161,52 @@ describe("Seiten-Guard mit aggregierten Quellen", () => {
     expect(await screen.findByText("Ungespeicherte Änderungen verwerfen?")).toBeTruthy();
   });
 });
+
+describe("Korrekturen: Quittung und Unmount", () => {
+  it("normalisierte Speicherung wird quittiert, auch bei gleichem Serverwert/gleicher Referenz", () => {
+    const server = { qty: "1" };
+    const { result, rerender } = renderHook(({ id, s }) => useSyncedDraft(id, s), {
+      initialProps: { id: "A", s: server },
+    });
+    act(() => result.current.setValue({ qty: "1.0" }));
+    expect(result.current.dirty).toBe(true);
+    // Refetch liefert dieselbe Referenz (Structural Sharing) → Effekt läuft nicht.
+    rerender({ id: "A", s: server });
+    act(() => result.current.reconcileSaved({ qty: "1.0" }, { qty: "1" }));
+    expect(result.current.value).toEqual({ qty: "1" });
+    expect(result.current.dirty).toBe(false);
+  });
+
+  it("Quittung verwirft keine Eingaben nach dem Absenden", () => {
+    const { result } = renderHook(() => useSyncedDraft("A", "1"));
+    act(() => result.current.setValue("1.0 mehr"));
+    act(() => result.current.reconcileSaved("1.0", "1"));
+    expect(result.current.value).toBe("1.0 mehr");
+  });
+
+  it("ausgeblendeter Editor entfernt seinen Dirty-Beitrag (kein Guard ohne Editor)", async () => {
+    function Page() {
+      const [show, setShow] = useState(true);
+      const [dirty, setDirty] = useState(false);
+      return (
+        <div>
+          {show ? (
+            <CaseTitleEditor title="Alt" onSave={async () => true} onDirtyChange={setDirty} />
+          ) : null}
+          <button type="button" onClick={() => setShow(false)}>
+            ausblenden
+          </button>
+          <p>dirty:{String(dirty)}</p>
+        </div>
+      );
+    }
+    render(<Page />);
+    fireEvent.click(screen.getByRole("button", { name: /Titel ändern/ }));
+    fireEvent.change(screen.getByLabelText("Titel des Angebotsdossiers"), {
+      target: { value: "Neu" },
+    });
+    expect(screen.getByText("dirty:true")).toBeTruthy();
+    fireEvent.click(screen.getByText("ausblenden"));
+    expect(await screen.findByText("dirty:false")).toBeTruthy();
+  });
+});
