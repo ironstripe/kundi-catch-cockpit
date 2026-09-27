@@ -71,7 +71,7 @@ export function PublishedPostCard({ item }: { item: CatchDetail }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">Publizierter WhatsApp-Post</CardTitle>
+        <CardTitle className="text-section-title">Publizierter WhatsApp-Post</CardTitle>
         <CardDescription className="text-xs">
           Unveränderter Stand zum Zeitpunkt der Publikation — nur zum Ansehen und Kopieren.
         </CardDescription>

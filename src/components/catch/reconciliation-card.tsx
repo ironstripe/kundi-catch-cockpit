@@ -84,7 +84,7 @@ export function ReconciliationCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">{title}</CardTitle>
+        <CardTitle className="text-section-title">{title}</CardTitle>
         {description ? <CardDescription className="text-xs">{description}</CardDescription> : null}
       </CardHeader>
       <CardContent className="space-y-4">

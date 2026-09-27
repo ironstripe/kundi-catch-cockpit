@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { AlertTriangle, Quote } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -220,19 +220,4 @@ export function OfferFieldsForm({
       ))}
     </div>
   );
-}
-
-/** Warnt, wenn beim Verlassen ungespeicherte Änderungen bestehen. */
-export function useUnsavedGuard(dirty: boolean) {
-  const [armed, setArmed] = useState(dirty);
-  useEffect(() => setArmed(dirty), [dirty]);
-  useEffect(() => {
-    if (!armed) return;
-    const handler = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", handler);
-    return () => window.removeEventListener("beforeunload", handler);
-  }, [armed]);
 }

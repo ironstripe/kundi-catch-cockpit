@@ -66,7 +66,7 @@ export function CompletedSummary({ item, onChanged }: Props) {
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">
+          <CardTitle className="text-section-title">
             {item.status === "cancelled" ? "Abbruch" : "Abschluss"}
           </CardTitle>
           <CardDescription className="text-xs">
@@ -129,7 +129,7 @@ export function CompletedSummary({ item, onChanged }: Props) {
 
       <Card className="xl:col-span-2">
         <CardHeader>
-          <CardTitle className="text-sm">Learning</CardTitle>
+          <CardTitle className="text-section-title">Learning</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="whitespace-pre-line text-sm text-muted-foreground">

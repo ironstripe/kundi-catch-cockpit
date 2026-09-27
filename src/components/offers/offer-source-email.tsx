@@ -36,7 +36,7 @@ export function OfferSourceEmail({ offer }: { offer: OfferDetail }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">Original-E-Mail</CardTitle>
+        <CardTitle className="text-section-title">Original-E-Mail</CardTitle>
         <CardDescription className="text-xs">
           Unveränderter Inhalt der Weiterleitung — Grundlage jeder Prüfung.
         </CardDescription>

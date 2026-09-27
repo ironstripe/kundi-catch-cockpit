@@ -20,7 +20,7 @@ export function SectionShell({
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
-          <CardTitle className="text-sm">{title}</CardTitle>
+          <CardTitle className="text-section-title">{title}</CardTitle>
           <CardDescription className="text-xs">{description}</CardDescription>
         </div>
         {action}

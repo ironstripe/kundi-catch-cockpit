@@ -47,7 +47,7 @@ function EditCatchPage() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Catch nicht gefunden</CardTitle>
+          <CardTitle className="text-section-title">Catch nicht gefunden</CardTitle>
           <CardDescription className="text-xs">
             Dieser Catch existiert nicht oder wurde gelöscht.
           </CardDescription>

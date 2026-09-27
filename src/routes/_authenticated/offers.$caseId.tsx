@@ -7,12 +7,11 @@ import {
   FileDown,
   FolderInput,
   ImageUp,
-  Pencil,
   RefreshCw,
   Save,
   Sparkles,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -24,13 +23,18 @@ import {
   type ImageChoice,
 } from "@/components/offers/case-image-picker";
 import { CaseStatusBadge } from "@/components/offers/case-status-badge";
+import { CaseTitleEditor } from "@/components/offers/case-title-editor";
 import {
   OfferFieldsForm,
   formValuesToExtraction,
   offerToFormValues,
-  useUnsavedGuard,
   type OfferFormValues,
 } from "@/components/offers/offer-fields-form";
+import {
+  UnsavedChangesDialog,
+  useEditShortcuts,
+  useUnsavedChangesGuard,
+} from "@/hooks/use-edit-session";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,7 +47,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRoles } from "@/hooks/use-role";
 import { formatDateTime } from "@/lib/format";
@@ -107,23 +110,33 @@ function OfferCaseDetailPage() {
   const [confirmConvert, setConfirmConvert] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
-  const [titleDraft, setTitleDraft] = useState<string | null>(null);
   const [imageChoice, setImageChoice] = useState<ImageChoice>(null);
   const [convertError, setConvertError] = useState<string | null>(null);
   const [confirmReplace, setConfirmReplace] = useState(false);
+  const initialRef = useRef<OfferFormValues | null>(null);
+  const resetOnRefetchRef = useRef(false);
 
   useEffect(() => {
     if (!dossier) return;
     const next = offerToFormValues(dossier.consolidated_data);
-    setValues(next);
+    const previous = initialRef.current;
+    const force = resetOnRefetchRef.current;
+    resetOnRefetchRef.current = false;
+    initialRef.current = next;
     setInitial(next);
+    // Lokale, ungespeicherte Feldwerte nicht durch Umbenennen/Anhang-Refresh überschreiben.
+    setValues((current) =>
+      force || previous === null || JSON.stringify(current) === JSON.stringify(previous)
+        ? next
+        : current,
+    );
   }, [dossier]);
 
   const dirty = useMemo(
     () => JSON.stringify(values) !== JSON.stringify(initial),
     [values, initial],
   );
-  useUnsavedGuard(dirty);
+  const guard = useUnsavedChangesGuard(dirty);
 
   const locked = dossier?.status === "converted";
   const editable = canEdit && !locked;
@@ -157,18 +170,39 @@ function OfferCaseDetailPage() {
   const chosenImage = images.find((image) => image.id === imageChoice) ?? null;
   const needsImageDecision = images.length > 0 && imageChoice === null;
 
-  async function run(key: string, action: () => Promise<{ message: string }>) {
+  async function run(key: string, action: () => Promise<{ message: string }>): Promise<boolean> {
     setBusy(key);
     try {
       const result = await action();
       toast.success(result.message);
       await refetch();
+      return true;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Aktion fehlgeschlagen.");
+      return false;
     } finally {
       setBusy(null);
     }
   }
+
+  /** Gewöhnliches Speichern der Dossierfelder (Button und Ctrl/Cmd+Enter). */
+  async function saveFields() {
+    if (!dossier || !editable || !dirty || busy !== null) return;
+    resetOnRefetchRef.current = true;
+    const ok = await run("save", () =>
+      saveCaseFields({
+        data: { caseId, values: formValuesToExtraction(values, dossier.consolidated_data) },
+      }),
+    );
+    if (!ok) resetOnRefetchRef.current = false;
+  }
+
+  // Mehrfeld-Formular: Esc verwirft nicht still — Verlassen fragt über den Guard.
+  const fieldsScope = useEditShortcuts({
+    onCommit: saveFields,
+    busy: busy !== null,
+    enabled: editable,
+  });
 
   async function transferImage(replace: boolean) {
     if (!chosenImage) return;
@@ -259,14 +293,16 @@ function OfferCaseDetailPage() {
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="space-y-4">
-          <OfferFieldsForm
-            offer={dossier.consolidated_data}
-            values={values}
-            onChange={setValues}
-            disabled={!editable}
-            warnings={warnings}
-          />
+        <div className="min-w-0 space-y-4">
+          <div {...fieldsScope}>
+            <OfferFieldsForm
+              offer={dossier.consolidated_data}
+              values={values}
+              onChange={setValues}
+              disabled={!editable}
+              warnings={warnings}
+            />
+          </div>
           <CaseImagePicker
             images={images}
             choice={imageChoice}
@@ -296,56 +332,24 @@ function OfferCaseDetailPage() {
           <Card>
             <CardContent className="flex flex-col gap-2 p-4">
               {editable ? (
-                titleDraft === null ? (
-                  <Button variant="ghost" size="sm" onClick={() => setTitleDraft(dossier.title)}>
-                    <Pencil className="mr-2 size-4" aria-hidden />
-                    Titel ändern
-                  </Button>
-                ) : (
-                  <div className="space-y-2">
-                    <Input
-                      value={titleDraft}
-                      aria-label="Titel des Angebotsdossiers"
-                      onChange={(event) => setTitleDraft(event.target.value)}
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        disabled={busy !== null}
-                        onClick={async () => {
-                          const title = titleDraft;
-                          setTitleDraft(null);
-                          await run("rename", () => renameCase({ data: { caseId, title } }));
-                        }}
-                      >
-                        Speichern
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setTitleDraft(null)}>
-                        Abbrechen
-                      </Button>
-                    </div>
-                  </div>
-                )
+                <CaseTitleEditor
+                  title={dossier.title}
+                  disabled={busy !== null}
+                  onSave={(title) => run("rename", () => renameCase({ data: { caseId, title } }))}
+                />
               ) : null}
 
               <Button
+                className="h-auto whitespace-normal text-left"
                 disabled={!editable || !dirty || busy !== null}
-                onClick={() =>
-                  run("save", () =>
-                    saveCaseFields({
-                      data: {
-                        caseId,
-                        values: formValuesToExtraction(values, dossier.consolidated_data),
-                      },
-                    }),
-                  )
-                }
+                onClick={() => void saveFields()}
               >
                 <Save className="mr-2 size-4" aria-hidden />
                 Änderungen speichern
               </Button>
 
               <Button
+                className="h-auto whitespace-normal text-left"
                 disabled={!editable || busy !== null || missing.length > 0}
                 onClick={() => setConfirmConvert(true)}
               >
@@ -371,7 +375,8 @@ function OfferCaseDetailPage() {
                       </button>
                     </span>
                   ))}
-                  . Werte eintragen und speichern, dann wird die Übernahme aktiv.
+                  . Sobald diese Felder ausgefüllt sind, wird die Übernahme aktiv; sie verwendet die
+                  aktuell angezeigten Werte.
                 </p>
               ) : null}
 
@@ -527,8 +532,8 @@ function OfferCaseDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Bestehendes Catch-Bild ersetzen?</AlertDialogTitle>
             <AlertDialogDescription>
-              Der Catch hat bereits ein Bild. Es wird durch «{chosenImage?.file_name}» ersetzt.
-              Eine bestandene Musterprüfung und laufende Soundings werden dadurch zurückgesetzt.
+              Der Catch hat bereits ein Bild. Es wird durch «{chosenImage?.file_name}» ersetzt. Eine
+              bestandene Musterprüfung und laufende Soundings werden dadurch zurückgesetzt.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -622,6 +627,8 @@ function OfferCaseDetailPage() {
                     },
                   });
                   toast.success(result.message);
+                  // Die Übernahme hat die aktuellen Werte verbraucht — nicht erneut blockieren.
+                  guard.allowNextNavigation();
                   await navigate({ to: "/catches/$catchId", params: { catchId: result.catchId } });
                 } catch (error) {
                   const message =
@@ -634,11 +641,13 @@ function OfferCaseDetailPage() {
                 }
               }}
             >
-              Entwurf erstellen
+              Catch-Entwurf erstellen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <UnsavedChangesDialog guard={guard} />
     </>
   );
 }

@@ -128,7 +128,7 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Nachkalkulation erfassen</CardTitle>
+          <CardTitle className="text-section-title">Nachkalkulation erfassen</CardTitle>
           <CardDescription className="text-xs">
             Die verkaufte Menge ergibt sich aus Einkaufsmenge minus effektiver Restmenge.
           </CardDescription>

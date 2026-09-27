@@ -31,6 +31,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  UnsavedChangesDialog,
+  useEditShortcuts,
+  useUnsavedChangesGuard,
+} from "@/hooks/use-edit-session";
 import { supabase } from "@/integrations/supabase/client";
 import type { CatchDetail } from "@/lib/catches";
 import { pickupSummary } from "@/lib/pickup-display";
@@ -79,9 +84,17 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
   const fallbackRef = useRef<HTMLTextAreaElement>(null);
   const catchId = item.id;
 
+  // Basis = gespeicherter Text bzw. (noch nicht gespeicherter) generierter Text.
+  // Nur echte Nutzeränderungen gelten als «bearbeitet» und werden bei Refetch nicht überschrieben.
+  const baseText = item.post_final_text ?? generated;
+  const baseRef = useRef(baseText);
   useEffect(() => {
-    setFinalText(item.post_final_text ?? generated);
-  }, [item.post_final_text, generated, item.id]);
+    const previous = baseRef.current;
+    baseRef.current = baseText;
+    setFinalText((current) => (current === previous ? baseText : current));
+  }, [baseText, item.id]);
+  const userEdited = finalText !== baseText;
+  const guard = useUnsavedChangesGuard(userEdited);
 
   const image = useQuery({
     queryKey: ["catch-post-image", catchId, item.image_path],
@@ -153,6 +166,17 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
       toast.error("Publikation fehlgeschlagen", {
         description: error instanceof Error ? error.message : "Unbekannter Fehler.",
       }),
+  });
+
+  function saveEditedText() {
+    if (saveText.isPending || !unsaved) return;
+    return saveText.mutateAsync({ text: finalText, reason: "edited" }).catch(() => undefined);
+  }
+  // Nur Text sichern; Neu generieren, Zurücksetzen und Publizieren bleiben eigene Aktionen.
+  const textScope = useEditShortcuts({
+    onCommit: saveEditedText,
+    onCancel: () => setFinalText(baseRef.current),
+    busy: saveText.isPending,
   });
 
   function applyGenerated(reason: "generated" | "reset") {
@@ -244,7 +268,7 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Post-Inhalt</CardTitle>
+              <CardTitle className="text-section-title">Post-Inhalt</CardTitle>
               <CardDescription className="text-xs">
                 Diese Catch-Daten fliessen in den Text ein.
               </CardDescription>
@@ -299,12 +323,12 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">WhatsApp-Text</CardTitle>
+              <CardTitle className="text-section-title">WhatsApp-Text</CardTitle>
               <CardDescription className="text-xs">
                 Frei editierbar. Manuelle Änderungen werden nicht automatisch überschrieben.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-3" {...textScope}>
               <Textarea
                 id="post_final_text"
                 value={finalText}
@@ -316,7 +340,7 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
               <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
-                  onClick={() => saveText.mutate({ text: finalText, reason: "edited" })}
+                  onClick={() => void saveEditedText()}
                   disabled={saveText.isPending || !unsaved}
                 >
                   {saveText.isPending ? <Loader2 className="animate-spin" /> : <Save />}
@@ -348,7 +372,8 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
               </div>
               {unsaved ? (
                 <p className="text-xs text-muted-foreground">
-                  Ungesicherte Textänderungen — vor dem Publizieren sichern.
+                  Ungesicherte Textänderungen — vor dem Publizieren sichern (Ctrl/⌘ + Enter). Esc
+                  verwirft die Änderungen.
                 </p>
               ) : null}
             </CardContent>
@@ -359,7 +384,7 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">WhatsApp-Vorschau</CardTitle>
+              <CardTitle className="text-section-title">WhatsApp-Vorschau</CardTitle>
               <CardDescription className="text-xs">
                 Aktualisiert sich sofort beim Bearbeiten des Textes.
               </CardDescription>
@@ -477,7 +502,7 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
           {item.status === "published" && item.published_text ? (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Publizierte Version</CardTitle>
+                <CardTitle className="text-section-title">Publizierte Version</CardTitle>
                 <CardDescription className="text-xs">
                   Unveränderter Text und Bild zum Zeitpunkt der Publikation.
                 </CardDescription>
@@ -560,6 +585,7 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <UnsavedChangesDialog guard={guard} />
     </>
   );
 }

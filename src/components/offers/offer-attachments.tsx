@@ -100,7 +100,7 @@ export function OfferAttachments({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">Anhänge ({attachments.length})</CardTitle>
+        <CardTitle className="text-section-title">Anhänge ({attachments.length})</CardTitle>
         <CardDescription className="text-xs">
           Produktbilder, Etiketten und Unterlagen aus der Weiterleitung. Ein Produktbild kann als
           Hauptbild für den Catch übernommen werden.
