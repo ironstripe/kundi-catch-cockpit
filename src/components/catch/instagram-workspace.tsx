@@ -10,7 +10,7 @@ import {
   Save,
   Send,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +67,7 @@ function nextPublishAt(hour: string): string | null {
 interface Props {
   item: CatchDetail;
   onChanged: () => void | Promise<unknown>;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 export function InstagramWorkspace({ item, onChanged, onDirtyChange }: Props) {
@@ -141,8 +142,9 @@ export function InstagramWorkspace({ item, onChanged, onDirtyChange }: Props) {
   });
 
   const persistCaption = useMutation({
-    mutationFn: () => saveCaption({ data: { catchId: item.id, caption } }),
-    onSuccess: async () => {
+    mutationFn: (text: string) => saveCaption({ data: { catchId: item.id, caption: text } }),
+    onSuccess: async (_result, text) => {
+      draft.markSaved(text);
       await onChanged();
       toast.success("Instagram-Text gespeichert");
     },
@@ -157,10 +159,7 @@ export function InstagramWorkspace({ item, onChanged, onDirtyChange }: Props) {
     onCommit: () =>
       persistCaption.isPending || !captionDirty
         ? undefined
-        : persistCaption
-            .mutateAsync()
-            .then(() => draft.markSaved(caption))
-            .catch(() => undefined),
+        : persistCaption.mutateAsync(caption).catch(() => undefined),
     onCancel: draft.restoreOpening,
     busy: persistCaption.isPending,
     enabled: !locked && canEdit,
@@ -297,7 +296,7 @@ export function InstagramWorkspace({ item, onChanged, onDirtyChange }: Props) {
                     variant="outline"
                     size="sm"
                     disabled={locked || persistCaption.isPending}
-                    onClick={() => persistCaption.mutate()}
+                    onClick={() => persistCaption.mutate(caption)}
                   >
                     <Save />
                     Text speichern

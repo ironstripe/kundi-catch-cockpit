@@ -126,7 +126,8 @@ export function PublicationWorkspace({ item, onChanged, onDirtyChange }: Publica
         imagePath: image.data?.path ?? null,
       });
     },
-    onSuccess: async () => {
+    onSuccess: async (_result, args) => {
+      text.markSaved(args.text);
       await onChanged();
       toast.success("Post-Text gespeichert");
     },
@@ -170,7 +171,6 @@ export function PublicationWorkspace({ item, onChanged, onDirtyChange }: Publica
     const submitted = finalText;
     return saveText
       .mutateAsync({ text: submitted, reason: "edited" })
-      .then(() => text.markSaved(submitted))
       .catch(() => undefined);
   }
   // Nur Text sichern; Neu generieren, Zurücksetzen und Publizieren bleiben eigene Aktionen.
