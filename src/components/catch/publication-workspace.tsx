@@ -31,11 +31,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  UnsavedChangesDialog,
-  useEditShortcuts,
-  useUnsavedChangesGuard,
-} from "@/hooks/use-edit-session";
+import { useEditShortcuts } from "@/hooks/use-edit-session";
+import { useSyncedDraft } from "@/hooks/use-synced-draft";
 import { supabase } from "@/integrations/supabase/client";
 import type { CatchDetail } from "@/lib/catches";
 import { pickupSummary } from "@/lib/pickup-display";
@@ -69,14 +66,15 @@ const SEQUENCE = [
 interface PublicationWorkspaceProps {
   item: CatchDetail;
   onChanged: () => void | Promise<unknown>;
+  /** Meldet echte Nutzeränderungen an den (einzigen) Seiten-Guard. */
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
-export function PublicationWorkspace({ item, onChanged }: PublicationWorkspaceProps) {
+export function PublicationWorkspace({ item, onChanged, onDirtyChange }: PublicationWorkspaceProps) {
   const source = useMemo(() => catchToPostSource(item), [item]);
   const generated = useMemo(() => generatePostText(source), [source]);
   const signature = useMemo(() => postSourceSignature(source), [source]);
 
-  const [finalText, setFinalText] = useState(item.post_final_text ?? generated);
   const [confirm, setConfirm] = useState<null | "regenerate" | "reset" | "publish">(null);
   const [imageFallback, setImageFallback] = useState(false);
   const [textFallback, setTextFallback] = useState(false);
@@ -87,14 +85,13 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
   // Basis = gespeicherter Text bzw. (noch nicht gespeicherter) generierter Text.
   // Nur echte Nutzeränderungen gelten als «bearbeitet» und werden bei Refetch nicht überschrieben.
   const baseText = item.post_final_text ?? generated;
-  const baseRef = useRef(baseText);
+  const text = useSyncedDraft(item.id, baseText);
+  const finalText = text.value;
+  const setFinalText = text.setValue;
+  const userEdited = text.dirty;
   useEffect(() => {
-    const previous = baseRef.current;
-    baseRef.current = baseText;
-    setFinalText((current) => (current === previous ? baseText : current));
-  }, [baseText, item.id]);
-  const userEdited = finalText !== baseText;
-  const guard = useUnsavedChangesGuard(userEdited);
+    onDirtyChange?.(userEdited);
+  }, [userEdited, onDirtyChange]);
 
   const image = useQuery({
     queryKey: ["catch-post-image", catchId, item.image_path],
@@ -170,12 +167,16 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
 
   function saveEditedText() {
     if (saveText.isPending || !unsaved) return;
-    return saveText.mutateAsync({ text: finalText, reason: "edited" }).catch(() => undefined);
+    const submitted = finalText;
+    return saveText
+      .mutateAsync({ text: submitted, reason: "edited" })
+      .then(() => text.markSaved(submitted))
+      .catch(() => undefined);
   }
   // Nur Text sichern; Neu generieren, Zurücksetzen und Publizieren bleiben eigene Aktionen.
   const textScope = useEditShortcuts({
     onCommit: saveEditedText,
-    onCancel: () => setFinalText(baseRef.current),
+    onCancel: text.restoreOpening,
     busy: saveText.isPending,
   });
 
@@ -585,7 +586,6 @@ export function PublicationWorkspace({ item, onChanged }: PublicationWorkspacePr
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <UnsavedChangesDialog guard={guard} />
     </>
   );
 }

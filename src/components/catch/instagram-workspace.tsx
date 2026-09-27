@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useEditShortcuts } from "@/hooks/use-edit-session";
+import { useSyncedDraft } from "@/hooks/use-synced-draft";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoles } from "@/hooks/use-role";
 import { fetchAppSettings } from "@/lib/app-settings";
@@ -68,7 +69,7 @@ interface Props {
   onChanged: () => void | Promise<unknown>;
 }
 
-export function InstagramWorkspace({ item, onChanged }: Props) {
+export function InstagramWorkspace({ item, onChanged, onDirtyChange }: Props) {
   const { canEdit } = useRoles();
   const settings = useQuery({ queryKey: ["app-settings"], queryFn: fetchAppSettings });
   const instagram = settings.data?.instagram;
@@ -93,14 +94,13 @@ export function InstagramWorkspace({ item, onChanged }: Props) {
   );
 
   const baseCaption = item.instagram_caption ?? generated;
-  const [caption, setCaption] = useState(baseCaption);
-  const baseRef = useRef(baseCaption);
+  // Refetch überschreibt keinen lokal bearbeiteten Text; anderer Catch = Reset.
+  const draft = useSyncedDraft(item.id, baseCaption);
+  const caption = draft.value;
+  const setCaption = draft.setValue;
   useEffect(() => {
-    const previous = baseRef.current;
-    baseRef.current = baseCaption;
-    // Refetch überschreibt keinen lokal bearbeiteten Text.
-    setCaption((current) => (current === previous ? baseCaption : current));
-  }, [baseCaption]);
+    onDirtyChange?.(draft.dirty);
+  }, [draft.dirty, onDirtyChange]);
 
   const preview = useQuery({
     queryKey: ["instagram-asset", item.instagram_asset_path],
@@ -157,8 +157,11 @@ export function InstagramWorkspace({ item, onChanged }: Props) {
     onCommit: () =>
       persistCaption.isPending || !captionDirty
         ? undefined
-        : persistCaption.mutateAsync().catch(() => undefined),
-    onCancel: () => setCaption(baseRef.current),
+        : persistCaption
+            .mutateAsync()
+            .then(() => draft.markSaved(caption))
+            .catch(() => undefined),
+    onCancel: draft.restoreOpening,
     busy: persistCaption.isPending,
     enabled: !locked && canEdit,
   });
