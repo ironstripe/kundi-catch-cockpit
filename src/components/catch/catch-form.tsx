@@ -3,6 +3,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ArrowLeft, CheckCircle2, Save } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { ordinarySaveLabel, ordinarySaveStatus } from "@/lib/catch-save-intent";
+
 import {
   UnsavedChangesDialog,
   useEditShortcuts,
@@ -163,24 +165,24 @@ export function CatchForm({
   const dirty =
     JSON.stringify(values) !== JSON.stringify(baseline) || imagePath !== initialImagePath;
 
-  const guard = useUnsavedChangesGuard(dirty && !saving);
+  // Schutz bleibt bis zum bestätigten Erfolg aktiv (auch während des Speicherns).
+  const guard = useUnsavedChangesGuard(dirty);
+  const ordinaryIntent = ordinarySaveStatus(mode, currentStatus);
 
   /**
-   * Tastenkürzel = gewöhnliches Speichern. Neu: Entwurf. Bestehend: Status
-   * bleibt (Entwurf/publiziert). Nie «Bereit», Freigabe, Abschluss o. Ä.
+   * Gewöhnliches Speichern (Schaltfläche und Ctrl/Cmd+Enter identisch):
+   * neu → Entwurf; bestehend → aktueller Status bleibt (unter den bestehenden
+   * Prüfungen). Ein Entwurf wird dadurch nie «Bereit».
    */
-  function shortcutSave() {
+  function saveOrdinary() {
     if (saving || uploading) return;
-    if (mode === "edit" && currentStatus === "ready") {
-      toast.info("Tastenkürzel nicht verfügbar", {
-        description:
-          "Ein bereiter Catch wird nur über «Speichern und WhatsApp-Post vorbereiten» gespeichert, damit der Status nicht unbeabsichtigt ändert.",
-      });
-      return;
-    }
-    return persist("draft");
+    return persist(ordinaryIntent);
   }
-  const formScope = useEditShortcuts({ onCommit: shortcutSave, busy: saving || uploading });
+  const formScope = useEditShortcuts({
+    onCommit: saveOrdinary,
+    onCancel: handleLeave,
+    busy: saving || uploading,
+  });
 
   function set<K extends keyof CatchFormValues>(key: K, value: CatchFormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
@@ -926,10 +928,10 @@ export function CatchForm({
               variant="secondary"
               className="h-auto w-full whitespace-normal py-2"
               disabled={saving || uploading}
-              onClick={() => void persist("draft")}
+              onClick={() => void saveOrdinary()}
             >
               <Save />
-              Als Entwurf speichern
+              {ordinarySaveLabel(mode, currentStatus)}
             </Button>
             <Button type="button" variant="ghost" className="w-full" onClick={handleLeave}>
               <ArrowLeft />
@@ -939,7 +941,8 @@ export function CatchForm({
               {dirty ? "Ungespeicherte Änderungen vorhanden." : "Alle Änderungen gespeichert."}
             </p>
             <p className="hidden text-[11px] text-muted-foreground lg:block">
-              Ctrl/⌘ + Enter speichert {mode === "create" ? "als Entwurf" : "ohne Statuswechsel"}.
+              Ctrl/⌘ + Enter: {ordinarySaveLabel(mode, currentStatus)}. Esc: Verlassen mit
+              Rückfrage.
             </p>
           </div>
         </div>

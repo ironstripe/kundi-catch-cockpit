@@ -6,8 +6,8 @@ Reference: `docs/KUNDI-UI-STANDARD.md` (Family Standard v1, KundiMKT `da4d83e`, 
 
 | Pass | Scope | Status |
 |---|---|---|
-| 1 | Visual foundation: tokens, Manrope, type scale, control sizing, shared components | Implemented 2026-09-27, awaiting review |
-| 2 | Interaction rules (§8 entity-title links, §13 save model: Fertig, Ctrl/Cmd+Enter, Escape) | **Not implemented** — target rules only |
+| 1 | Visual foundation: tokens, Manrope, type scale, control sizing, shared components | Implemented 2026-09-27, review fixes applied |
+| 2 | Interaction rules (§8 entity-title links, §13 save model) | Implemented 2026-09-27 for the consumers listed in the mapping below; other surfaces keep their explicit CTAs. Not verified in an authenticated browser. |
 
 ## Local mappings
 
@@ -39,23 +39,52 @@ See the pass report in chat for measured widths and observed/untested cases. Aut
 - Detail-link rule (§8): Catch cards show a hover/focus underline on the title (the whole card is the link). The History table no longer has two links in one row: the product name is the link, and the catch number is plain text. The offer inbox keeps its row click plus action button.
 - `src/integrations/supabase/previewAuthStorage.ts`: this is a platform-generated file. It changed in commit a889ed0 ("Work in progress"), before Pass 1, and appears in the merge diff only because dd5b264 lacked it. Pass 1 did not touch it, so it was left as is.
 
-## Pass 2 — edit/commit mapping (implemented)
-Helper: `src/hooks/use-edit-session.tsx` (`useEditShortcuts`, `useUnsavedChangesGuard` + `UnsavedChangesDialog` on TanStack `useBlocker` with resolver). Shortcuts only work inside their own `data-edit-scope`. They ignore portal events, nested scopes, repeated keys, IME composition, open Radix dialogs/menus/listboxes/poppers and expanded comboboxes. A second commit is blocked while one is still pending.
+## Pass 2 — edit/commit mapping
+Helpers:
+- `src/hooks/use-edit-session.tsx`: `useEditShortcuts` plus `useUnsavedChangesGuard` / `UnsavedChangesDialog` (TanStack `useBlocker` with resolver).
+- `src/hooks/use-synced-draft.ts`: local draft against the server value of the same object.
 
-| Surface | Type | Commit | Ctrl/Cmd+Enter | Esc | Guard |
-|---|---|---|---|---|---|
-| Catch form (new) | multi-field route form | "Als Entwurf speichern" / "Speichern und WhatsApp-Post vorbereiten" | saves draft | none (leave confirmation) | router + unload |
-| Catch form (edit) | multi-field route form | same | ordinary save, keeps status (draft/published). Exception: a ready Catch shows a hint instead of saving, so the shortcut never sets or re-validates "Bereit" | none | router + unload |
-| Dossier fields | multi-field form | "Änderungen speichern" | same save | none | router + unload |
-| Dossier title | pencil session | "Fertig" | same | restores opening value | – |
-| WhatsApp text | freeform | "Text sichern" | text only | restores base text | router + unload (only for real user edits; unsaved generated text does not count) |
-| Instagram text | freeform | "Text speichern" | text only | restores base text | – |
-| Settings › interner Aufwand | single field | "Änderungen speichern" | same | restores stored value | – |
-| "Auf CHF 2.50 zurücksetzen" | atomic | persists default immediately (version check, audit) | – | – | – |
-| Sample check, internal-handling apply, assign/merge/archive, image transfer, conversion, publish, reconciliation close/cancel | atomic with confirmation | unchanged | never | – | – |
+Shortcut rules:
+- Shortcuts work only inside their own `data-edit-scope`.
+- They ignore portal events, nested scopes, repeated keys, IME composition, open Radix dialogs/menus/listboxes/poppers and expanded comboboxes.
+- While a commit is pending, **both** commit and cancel are ignored.
+- A rejected commit is caught and does not lock the helper.
 
-Refetch safety: dossier fields, WhatsApp/Instagram text and the settings rate re-sync only when the local value still matches the last synced value. The dossier resets after its own successful save. The title editor closes only after a successful rename; if it fails, the value stays in the field for a retry.
-Conversion: the misleading "eintragen und speichern" hint is gone. The final CTA is "Catch-Entwurf erstellen" and uses the displayed values. Navigating after a successful conversion or save is not blocked.
-Domain exceptions: reconciliation, sample result, Sounding feedback and template reset have no generic keyboard save.
+Page guards (one per page):
+- Dossier: fields dirty OR title dirty.
+- Catch detail: WhatsApp dirty OR Instagram dirty.
+- Catch form: dirty. Protection stays active while a save is pending; navigation is allowed only after a confirmed save or an explicit discard.
 
-Verification: 199 vitest tests pass, including 8 consumer tests (title editor focus/commit-once/failure/Esc, scoping, overlay priority, router block/stay/proceed/post-save). There is no consumer test for dossier refetch retention; that logic was reviewed only. Typecheck is clean. No authenticated browser session was available, so real Catch and supplier-image E2E flows are **not** verified.
+| Surface | Kind | Visible commit | Ctrl/Cmd+Enter | Esc |
+|---|---|---|---|---|
+| Catch form, new | multi-field route form | "Als Entwurf speichern" → draft | same ordinary save (draft) | leave with confirmation, no write |
+| Catch form, existing draft | same | "Als Entwurf speichern" → draft | same | same |
+| Catch form, existing ready | same | "Änderungen speichern" → keeps ready, with the existing ready validation, sample check/Sounding lock and critical-calculation confirmation | same | same |
+| Catch form, published | same | "Änderungen speichern"; `saveCatch` keeps published | same | same |
+| Catch form, prepare CTA | separate intent | "Speichern und WhatsApp-Post vorbereiten" | never | – |
+| Dossier fields | multi-field form | "Änderungen speichern" | same | confirm, then restore opening values (no write) |
+| Dossier title | pencil session | "Fertig", closes only on success | same | restores the opening value; ignored while saving |
+| WhatsApp text | freeform | "Text sichern" (text only) | same | restores the session opening text |
+| Instagram text | freeform | "Text speichern" (text only) | same | same |
+| Settings › interner Aufwand | single field | "Änderungen speichern" | same | restores the stored value |
+| Settings › "Auf CHF 2.50 zurücksetzen" | atomic | persists immediately (version check, audit) | – | – |
+| Other settings (thresholds, VAT, template, brand, categories, suppliers, locations, Sounding, Instagram, users) | explicit form/dialog CTAs, unchanged | existing buttons | **not added** | **not added** |
+| Sample check, internal-handling apply, assign/merge/archive, image transfer, conversion, publish, reconciliation close/cancel, Sounding feedback | atomic with confirmation | unchanged | never | – |
+
+Refetch and identity:
+- The dossier page is keyed by `caseId`, and the WhatsApp/Instagram workspaces by `item.id`. Switching to another object resets local state, so no values carry over from one object to another.
+- On a refetch of the same object, local edits are kept, and the Esc snapshot stays the value from when editing began.
+- Only after a confirmed save (`markSaved`) may a refetch replace the submitted snapshot, and only if nothing was typed after submitting. A failed save never allows a reset.
+
+Conversion: the misleading hint is gone. The final CTA is "Catch-Entwurf erstellen" and uses the displayed values. Navigation after a successful conversion or save is allowed.
+
+History (§8): the whole row navigates. The product name is the only link and the only tab stop for the row. The row has hover and focus-within states and a chevron. "Post ansehen" stays a separate destination, and clicks on it do not trigger the row.
+
+Verification:
+- 208 vitest tests pass.
+- Consumer tests render the real `CaseTitleEditor`: focus, commit once, rejected/failed save, Esc while pending.
+- Hook tests cover `useSyncedDraft` (same-id vs different-id, save sequencing) and the pure `ordinarySaveStatus`/`ordinarySaveLabel`.
+- Router-harness tests cover `useUnsavedChangesGuard`: block/stay/proceed/post-save, title-only dirty, aggregated second source standing in for Instagram.
+- CatchForm, the dossier page and the WhatsApp/Instagram workspaces themselves are **not** rendered in tests; button and shortcut share `saveOrdinary()` by code.
+- Typecheck is clean.
+- No authenticated browser session was available, so real Catch and supplier-image E2E flows and signed-in widths are **not** verified.

@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Pencil, Scale } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { CalculationCard } from "@/components/catch/calculation-card";
 import { InternalHandlingActions } from "@/components/catch/internal-handling-actions";
@@ -19,6 +19,7 @@ import { PageHeader, PageSection } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UnsavedChangesDialog, useUnsavedChangesGuard } from "@/hooks/use-edit-session";
 import { useRoles } from "@/hooks/use-role";
 import { useSignedImage } from "@/hooks/use-signed-image";
 import { WHATSAPP_STATUS_LABELS, whatsappStatus } from "@/lib/whatsapp-status";
@@ -57,6 +58,10 @@ function CatchDetailPage() {
   const image = useSignedImage(query.data?.image_path);
   const { canEdit } = useRoles();
   const loaded = Boolean(query.data);
+  // Ein gemeinsamer Guard für WhatsApp- und Instagram-Text (keine konkurrierenden Dialoge).
+  const [publicationDirty, setPublicationDirty] = useState(false);
+  const [instagramDirty, setInstagramDirty] = useState(false);
+  const guard = useUnsavedChangesGuard(publicationDirty || instagramDirty);
 
   /** Springt nach dem Laden zuverlässig zum WhatsApp-Abschnitt. */
   useEffect(() => {
@@ -329,7 +334,12 @@ function CatchDetailPage() {
             </CardContent>
           </Card>
         ) : canEdit ? (
-          <PublicationWorkspace item={item} onChanged={invalidate} />
+          <PublicationWorkspace
+            key={item.id}
+            item={item}
+            onChanged={invalidate}
+            onDirtyChange={setPublicationDirty}
+          />
         ) : item.published_text ? (
           <PublishedPostCard item={item} />
         ) : (
@@ -368,9 +378,15 @@ function CatchDetailPage() {
           title="Instagram"
           description="Optionaler Zweitkanal — erst nach der bestätigten WhatsApp-Publikation."
         >
-          <InstagramWorkspace item={item} onChanged={invalidate} />
+          <InstagramWorkspace
+            key={item.id}
+            item={item}
+            onChanged={invalidate}
+            onDirtyChange={setInstagramDirty}
+          />
         </PageSection>
       )}
+      <UnsavedChangesDialog guard={guard} />
     </>
   );
 }

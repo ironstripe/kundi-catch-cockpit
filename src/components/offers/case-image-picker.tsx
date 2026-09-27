@@ -54,7 +54,9 @@ export function CaseImagePicker({
   return (
     <Card id="case-image-picker" className="scroll-mt-24">
       <CardHeader>
-        <CardTitle className="text-section-title">Produktbild für den Catch ({images.length} Bilder)</CardTitle>
+        <CardTitle className="text-section-title">
+          Produktbild für den Catch ({images.length} Bilder)
+        </CardTitle>
         <CardDescription className="text-xs">
           Bitte das Produktfoto anklicken. Logos und Signaturbilder nicht wählen. Die
           Originalanhänge bleiben im Dossier.

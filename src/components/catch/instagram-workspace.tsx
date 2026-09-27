@@ -10,7 +10,7 @@ import {
   Save,
   Send,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useEditShortcuts } from "@/hooks/use-edit-session";
+import { useSyncedDraft } from "@/hooks/use-synced-draft";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoles } from "@/hooks/use-role";
 import { fetchAppSettings } from "@/lib/app-settings";
@@ -66,9 +67,10 @@ function nextPublishAt(hour: string): string | null {
 interface Props {
   item: CatchDetail;
   onChanged: () => void | Promise<unknown>;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
-export function InstagramWorkspace({ item, onChanged }: Props) {
+export function InstagramWorkspace({ item, onChanged, onDirtyChange }: Props) {
   const { canEdit } = useRoles();
   const settings = useQuery({ queryKey: ["app-settings"], queryFn: fetchAppSettings });
   const instagram = settings.data?.instagram;
@@ -93,14 +95,13 @@ export function InstagramWorkspace({ item, onChanged }: Props) {
   );
 
   const baseCaption = item.instagram_caption ?? generated;
-  const [caption, setCaption] = useState(baseCaption);
-  const baseRef = useRef(baseCaption);
+  // Refetch überschreibt keinen lokal bearbeiteten Text; anderer Catch = Reset.
+  const draft = useSyncedDraft(item.id, baseCaption);
+  const caption = draft.value;
+  const setCaption = draft.setValue;
   useEffect(() => {
-    const previous = baseRef.current;
-    baseRef.current = baseCaption;
-    // Refetch überschreibt keinen lokal bearbeiteten Text.
-    setCaption((current) => (current === previous ? baseCaption : current));
-  }, [baseCaption]);
+    onDirtyChange?.(draft.dirty);
+  }, [draft.dirty, onDirtyChange]);
 
   const preview = useQuery({
     queryKey: ["instagram-asset", item.instagram_asset_path],
@@ -141,8 +142,9 @@ export function InstagramWorkspace({ item, onChanged }: Props) {
   });
 
   const persistCaption = useMutation({
-    mutationFn: () => saveCaption({ data: { catchId: item.id, caption } }),
-    onSuccess: async () => {
+    mutationFn: (text: string) => saveCaption({ data: { catchId: item.id, caption: text } }),
+    onSuccess: async (_result, text) => {
+      draft.markSaved(text);
       await onChanged();
       toast.success("Instagram-Text gespeichert");
     },
@@ -157,8 +159,8 @@ export function InstagramWorkspace({ item, onChanged }: Props) {
     onCommit: () =>
       persistCaption.isPending || !captionDirty
         ? undefined
-        : persistCaption.mutateAsync().catch(() => undefined),
-    onCancel: () => setCaption(baseRef.current),
+        : persistCaption.mutateAsync(caption).catch(() => undefined),
+    onCancel: draft.restoreOpening,
     busy: persistCaption.isPending,
     enabled: !locked && canEdit,
   });
@@ -294,7 +296,7 @@ export function InstagramWorkspace({ item, onChanged }: Props) {
                     variant="outline"
                     size="sm"
                     disabled={locked || persistCaption.isPending}
-                    onClick={() => persistCaption.mutate()}
+                    onClick={() => persistCaption.mutate(caption)}
                   >
                     <Save />
                     Text speichern

@@ -11,7 +11,7 @@ import {
   Save,
   Sparkles,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -35,6 +35,7 @@ import {
   useEditShortcuts,
   useUnsavedChangesGuard,
 } from "@/hooks/use-edit-session";
+import { useSyncedDraft } from "@/hooks/use-synced-draft";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -95,6 +96,13 @@ export const Route = createFileRoute("/_authenticated/offers/$caseId")({
 
 function OfferCaseDetailPage() {
   const { caseId } = Route.useParams();
+  // Pro Dossier neu mounten: lokale Werte von A dürfen nie in B landen.
+  return <OfferCaseDetail key={caseId} caseId={caseId} />;
+}
+
+const EMPTY_VALUES: OfferFormValues = {};
+
+function OfferCaseDetail({ caseId }: { caseId: string }) {
   const navigate = useNavigate();
   const { canEdit } = useRoles();
 
@@ -104,39 +112,26 @@ function OfferCaseDetailPage() {
     refetch,
   } = useQuery({ queryKey: ["offer-case", caseId], queryFn: () => fetchCase(caseId) });
 
-  const [values, setValues] = useState<OfferFormValues>({});
-  const [initial, setInitial] = useState<OfferFormValues>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmConvert, setConfirmConvert] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
   const [imageChoice, setImageChoice] = useState<ImageChoice>(null);
   const [convertError, setConvertError] = useState<string | null>(null);
   const [confirmReplace, setConfirmReplace] = useState(false);
-  const initialRef = useRef<OfferFormValues | null>(null);
-  const resetOnRefetchRef = useRef(false);
+  const [titleDirty, setTitleDirty] = useState(false);
 
-  useEffect(() => {
-    if (!dossier) return;
-    const next = offerToFormValues(dossier.consolidated_data);
-    const previous = initialRef.current;
-    const force = resetOnRefetchRef.current;
-    resetOnRefetchRef.current = false;
-    initialRef.current = next;
-    setInitial(next);
-    // Lokale, ungespeicherte Feldwerte nicht durch Umbenennen/Anhang-Refresh überschreiben.
-    setValues((current) =>
-      force || previous === null || JSON.stringify(current) === JSON.stringify(previous)
-        ? next
-        : current,
-    );
-  }, [dossier]);
-
-  const dirty = useMemo(
-    () => JSON.stringify(values) !== JSON.stringify(initial),
-    [values, initial],
+  const serverValues = useMemo(
+    () => (dossier ? offerToFormValues(dossier.consolidated_data) : EMPTY_VALUES),
+    [dossier],
   );
-  const guard = useUnsavedChangesGuard(dirty);
+  // Lokale, ungespeicherte Feldwerte werden durch Umbenennen/Anhang-Refresh nicht überschrieben.
+  const fields = useSyncedDraft(caseId, serverValues);
+  const values = fields.value;
+  const setValues = fields.setValue;
+  const dirty = fields.dirty;
+  const guard = useUnsavedChangesGuard(dirty || titleDirty);
 
   const locked = dossier?.status === "converted";
   const editable = canEdit && !locked;
@@ -188,18 +183,30 @@ function OfferCaseDetailPage() {
   /** Gewöhnliches Speichern der Dossierfelder (Button und Ctrl/Cmd+Enter). */
   async function saveFields() {
     if (!dossier || !editable || !dirty || busy !== null) return;
-    resetOnRefetchRef.current = true;
-    const ok = await run("save", () =>
-      saveCaseFields({
-        data: { caseId, values: formValuesToExtraction(values, dossier.consolidated_data) },
-      }),
-    );
-    if (!ok) resetOnRefetchRef.current = false;
+    const submitted = values;
+    setBusy("save");
+    try {
+      const result = await saveCaseFields({
+        data: { caseId, values: formValuesToExtraction(submitted, dossier.consolidated_data) },
+      });
+      // Erst nach bestätigtem Erfolg: Refetch darf den abgesendeten Stand ersetzen,
+      // aber keine Eingaben, die nach dem Absenden getippt wurden.
+      fields.markSaved(submitted);
+      toast.success(result.message);
+      await refetch();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Speichern fehlgeschlagen.");
+    } finally {
+      setBusy(null);
+    }
   }
 
-  // Mehrfeld-Formular: Esc verwirft nicht still — Verlassen fragt über den Guard.
+  // Mehrfeld-Formular: Esc fragt nach, bevor Änderungen verworfen werden (kein Speichern).
   const fieldsScope = useEditShortcuts({
     onCommit: saveFields,
+    onCancel: () => {
+      if (dirty) setConfirmDiscard(true);
+    },
     busy: busy !== null,
     enabled: editable,
   });
@@ -336,6 +343,7 @@ function OfferCaseDetailPage() {
                   title={dossier.title}
                   disabled={busy !== null}
                   onSave={(title) => run("rename", () => renameCase({ data: { caseId, title } }))}
+                  onDirtyChange={setTitleDirty}
                 />
               ) : null}
 
@@ -642,6 +650,29 @@ function OfferCaseDetailPage() {
               }}
             >
               Catch-Entwurf erstellen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Änderungen an den Feldern verwerfen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Die Felder werden auf den Stand beim Beginn der Bearbeitung zurückgesetzt. Es wird
+              nichts gespeichert.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Weiter bearbeiten</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmDiscard(false);
+                fields.restoreOpening();
+              }}
+            >
+              Verwerfen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
