@@ -78,7 +78,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 flex h-12 items-center gap-2 border-b bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <header className="sticky top-0 z-20 flex h-14 lg:h-12 items-center gap-2 border-b bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
             <SidebarTrigger />
             <Separator orientation="vertical" className="mr-1 h-4" />
             <span className="text-xs font-medium text-muted-foreground">Food Catch Cockpit</span>
@@ -95,7 +95,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="ml-auto" />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="ml-2 gap-2 text-xs">
+                <Button variant="ghost" size="sm" className="ml-2 gap-2 text-[0.8125rem]" aria-label="Konto-Menü">
                   <UserRound />
                   <span className="hidden max-w-[10rem] truncate sm:inline">
                     {profile?.name ?? profile?.email ?? "Konto"}
