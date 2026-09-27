@@ -13,15 +13,22 @@ export function CaseTitleEditor({
   title,
   disabled,
   onSave,
+  onDirtyChange,
 }: {
   title: string;
   disabled?: boolean;
   onSave: (title: string) => Promise<boolean>;
+  /** Meldet ungespeicherte Titeländerungen an den Seiten-Guard. */
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dirty = draft !== null && draft.trim() !== title;
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
 
   useEffect(() => {
     if (draft !== null) inputRef.current?.focus();
@@ -42,13 +49,20 @@ export function CaseTitleEditor({
     }
     setPending(true);
     setError(null);
-    const ok = await onSave(next);
-    setPending(false);
+    let ok = false;
+    try {
+      ok = await onSave(next);
+    } catch {
+      ok = false;
+    } finally {
+      setPending(false);
+    }
     if (ok) setDraft(null);
     else setError("Umbenennen fehlgeschlagen. Titel bleibt zum erneuten Versuch erhalten.");
   }
 
   function cancel() {
+    if (pending) return;
     setDraft(null);
     setError(null);
   }
