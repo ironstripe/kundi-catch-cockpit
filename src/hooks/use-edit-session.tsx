@@ -48,7 +48,13 @@ export function resolveEditShortcut(
   if (target.closest('[aria-expanded="true"]')) return null;
   if (hasForeignOverlay(scope, scope.ownerDocument)) return null;
   if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && !event.altKey) return "commit";
-  if (event.key === "Escape" && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey)
+  if (
+    event.key === "Escape" &&
+    !event.ctrlKey &&
+    !event.metaKey &&
+    !event.altKey &&
+    !event.shiftKey
+  )
     return "cancel";
   return null;
 }
@@ -61,7 +67,12 @@ interface ShortcutOptions {
 }
 
 /** Props für das Scope-Element einer Bearbeitung. */
-export function useEditShortcuts({ onCommit, onCancel, busy = false, enabled = true }: ShortcutOptions) {
+export function useEditShortcuts({
+  onCommit,
+  onCancel,
+  busy = false,
+  enabled = true,
+}: ShortcutOptions) {
   const inFlight = useRef(false);
   const latest = useRef({ onCommit, onCancel, busy, enabled });
   latest.current = { onCommit, onCancel, busy, enabled };

@@ -194,10 +194,7 @@ export function InternalHandlingSection() {
         </Button>
         <Button
           variant="outline"
-          disabled={
-            mutation.isPending ||
-            storedRate === DEFAULT_INTERNAL_HANDLING_COST
-          }
+          disabled={mutation.isPending || storedRate === DEFAULT_INTERNAL_HANDLING_COST}
           onClick={() => {
             // Explizites Zurücksetzen speichert den dokumentierten Standard sofort (mit Versionsprüfung).
             setRate(DEFAULT_INTERNAL_HANDLING_COST.toFixed(2));

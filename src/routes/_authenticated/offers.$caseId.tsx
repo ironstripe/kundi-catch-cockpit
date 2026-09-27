@@ -375,8 +375,8 @@ function OfferCaseDetailPage() {
                       </button>
                     </span>
                   ))}
-                  . Sobald diese Felder ausgefüllt sind, wird die Übernahme aktiv; sie verwendet
-                  die aktuell angezeigten Werte.
+                  . Sobald diese Felder ausgefüllt sind, wird die Übernahme aktiv; sie verwendet die
+                  aktuell angezeigten Werte.
                 </p>
               ) : null}
 
@@ -532,8 +532,8 @@ function OfferCaseDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Bestehendes Catch-Bild ersetzen?</AlertDialogTitle>
             <AlertDialogDescription>
-              Der Catch hat bereits ein Bild. Es wird durch «{chosenImage?.file_name}» ersetzt.
-              Eine bestandene Musterprüfung und laufende Soundings werden dadurch zurückgesetzt.
+              Der Catch hat bereits ein Bild. Es wird durch «{chosenImage?.file_name}» ersetzt. Eine
+              bestandene Musterprüfung und laufende Soundings werden dadurch zurückgesetzt.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

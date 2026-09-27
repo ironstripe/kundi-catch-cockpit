@@ -64,7 +64,9 @@ export function CatchCard({ item }: { item: CatchListItem }) {
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-mono text-xs text-muted-foreground">{item.catch_number}</p>
-                <h3 className="truncate text-base font-semibold underline-offset-4 group-hover:underline group-focus-visible:underline">{item.product_name}</h3>
+                <h3 className="truncate text-base font-semibold underline-offset-4 group-hover:underline group-focus-visible:underline">
+                  {item.product_name}
+                </h3>
               </div>
               <div className="flex flex-wrap items-center gap-1.5">
                 <TemperatureBadge temperature={item.temperature} />

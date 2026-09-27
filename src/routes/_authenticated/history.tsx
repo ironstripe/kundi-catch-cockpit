@@ -574,12 +574,18 @@ function HistoryCard({ row }: { row: CatchListItem }) {
   return (
     <Card className="py-0">
       <CardContent className="p-4">
-        <Link to="/catches/$catchId" params={{ catchId: row.id }} className="group block space-y-3 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <Link
+          to="/catches/$catchId"
+          params={{ catchId: row.id }}
+          className="group block space-y-3 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
           <div className="flex items-start gap-3">
             <Thumb row={row} />
             <div className="min-w-0 flex-1">
               <p className="font-mono text-xs text-muted-foreground">{row.catch_number ?? "—"}</p>
-              <p className="truncate font-medium underline-offset-4 group-hover:underline">{row.product_name}</p>
+              <p className="truncate font-medium underline-offset-4 group-hover:underline">
+                {row.product_name}
+              </p>
             </div>
             <div className="flex flex-col items-end gap-1">
               <CatchStatusBadge status={row.status} />

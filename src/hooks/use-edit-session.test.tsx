@@ -141,12 +141,12 @@ function EditorPage() {
   return (
     <div>
       <input aria-label="feld" value={value} onChange={(e) => setValue(e.target.value)} />
-      <Link to="/other">Weg</Link>
+      <Link to={"/other" as "/"}>Weg</Link>
       <button
         type="button"
         onClick={() => {
           guard.allowNextNavigation();
-          void navigate({ to: "/other" });
+          void navigate({ to: "/other" as "/" });
         }}
       >
         Speichern
