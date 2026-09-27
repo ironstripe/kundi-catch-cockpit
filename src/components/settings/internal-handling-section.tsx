@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { SectionShell } from "@/components/settings/section-shell";
@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEditShortcuts } from "@/hooks/use-edit-session";
 import { useRoles } from "@/hooks/use-role";
 import {
   DEFAULT_INTERNAL_HANDLING_COST,
@@ -49,11 +50,16 @@ export function InternalHandlingSection() {
   const [rate, setRate] = useState<string>(DEFAULT_INTERNAL_HANDLING_COST.toFixed(2));
   const [error, setError] = useState<string | null>(null);
 
+  const storedRate = settings.data?.calculation_defaults.internal_handling_cost_per_unit;
+  const syncedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (settings.data) {
-      setRate(settings.data.calculation_defaults.internal_handling_cost_per_unit.toFixed(2));
-    }
-  }, [settings.data]);
+    if (storedRate === undefined) return;
+    const next = storedRate.toFixed(2);
+    const previous = syncedRef.current;
+    syncedRef.current = next;
+    // Lokale Eingabe nicht durch Hintergrund-Refetch überschreiben.
+    setRate((current) => (previous === null || current === previous ? next : current));
+  }, [storedRate]);
 
   const mutation = useMutation({
     mutationFn: async (next: CalculationDefaults) => {
@@ -79,7 +85,24 @@ export function InternalHandlingSection() {
       });
       await queryClient.invalidateQueries({ queryKey: ["app-settings"] });
     },
-    onError: () => toast.error("Der Standardwert konnte nicht gespeichert werden."),
+    onError: (err: unknown) => {
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : "Der Standardwert konnte nicht gespeichert werden.";
+      setError(`${message} Bitte erneut versuchen.`);
+      toast.error("Der Standardwert konnte nicht gespeichert werden.");
+    },
+  });
+
+  const scope = useEditShortcuts({
+    onCommit: () => save(),
+    onCancel: () => {
+      if (syncedRef.current !== null) setRate(syncedRef.current);
+      setError(null);
+    },
+    busy: mutation.isPending,
+    enabled: isAdmin,
   });
 
   if (!isAdmin) {
@@ -110,6 +133,7 @@ export function InternalHandlingSection() {
   if (settings.isLoading) return <Skeleton className="h-48 w-full" />;
 
   function save() {
+    if (mutation.isPending) return;
     const parsed = parseInternalHandlingInput(rate);
     const message = validateInternalHandlingDefault(parsed);
     if (message || parsed === null) {
@@ -126,7 +150,7 @@ export function InternalHandlingSection() {
       description="Standardwert für direkt zurechenbare Logistik, Bereitstellung, Etikettierung und Verpackung eines Food Catches."
     >
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
+        <div className="space-y-2" {...scope}>
           <Label htmlFor="internal-handling-default">Standard pro vorbereitete Einheit</Label>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">CHF</span>
@@ -165,12 +189,21 @@ export function InternalHandlingSection() {
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       <div className="flex flex-wrap gap-2">
-        <Button onClick={save} disabled={mutation.isPending}>
+        <Button onClick={save} disabled={mutation.isPending || rate === syncedRef.current}>
           Änderungen speichern
         </Button>
         <Button
           variant="outline"
-          onClick={() => setRate(DEFAULT_INTERNAL_HANDLING_COST.toFixed(2))}
+          disabled={
+            mutation.isPending ||
+            storedRate === DEFAULT_INTERNAL_HANDLING_COST
+          }
+          onClick={() => {
+            // Explizites Zurücksetzen speichert den dokumentierten Standard sofort (mit Versionsprüfung).
+            setRate(DEFAULT_INTERNAL_HANDLING_COST.toFixed(2));
+            setError(null);
+            mutation.mutate({ internal_handling_cost_per_unit: DEFAULT_INTERNAL_HANDLING_COST });
+          }}
         >
           Auf CHF {DEFAULT_INTERNAL_HANDLING_COST.toFixed(2)} zurücksetzen
         </Button>
