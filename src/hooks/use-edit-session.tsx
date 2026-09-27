@@ -85,17 +85,25 @@ export function useEditShortcuts({
     if (intent === "cancel" && !current.onCancel) return;
     event.preventDefault();
     event.stopPropagation();
+    // Während eines laufenden Speicherns weder erneut speichern noch abbrechen.
+    if (current.busy || inFlight.current) return;
     if (intent === "cancel") {
       current.onCancel?.();
       return;
     }
-    if (current.busy || inFlight.current) return;
-    const result = current.onCommit();
+    let result: unknown;
+    try {
+      result = current.onCommit();
+    } catch {
+      return;
+    }
     if (result instanceof Promise) {
       inFlight.current = true;
-      void result.finally(() => {
-        inFlight.current = false;
-      });
+      result
+        .catch(() => undefined)
+        .finally(() => {
+          inFlight.current = false;
+        });
     }
   }, []);
 
