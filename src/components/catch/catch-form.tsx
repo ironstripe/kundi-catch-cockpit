@@ -336,617 +336,629 @@ export function CatchForm({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3" {...formScope}>
-        <div className="min-w-0 space-y-4 lg:col-span-2">
-          <FormSection title="Produkt" description="Was wird als Catch angeboten?">
-            <Field label="Produktname" required error={issueFor("product_name")}>
-              <Input
-                id="product_name"
-                value={values.product_name}
-                maxLength={120}
-                aria-invalid={Boolean(issueFor("product_name"))}
-                onChange={(event) => set("product_name", event.target.value)}
-                placeholder="z. B. Felchenfilets"
-              />
-            </Field>
-
-            <Field
-              label="Artikelnummer"
-              hint="optional; Teil der Produktidentität für die Musterprüfung"
-            >
-              <Input
-                id="article_number"
-                value={values.article_number}
-                maxLength={60}
-                onChange={(event) => set("article_number", event.target.value)}
-                placeholder="z. B. ART-4711"
-              />
-            </Field>
-
-            <Field label="Produktart" required>
-              <ToggleGroup
-                id="temperature"
-                type="single"
-                variant="outline"
-                value={values.temperature}
-                onValueChange={(value) => value && set("temperature", value as Temperature)}
-                className="justify-start"
-              >
-                <ToggleGroupItem value="fresh" className="px-4">
-                  {TEMPERATURE_LABELS.fresh}
-                </ToggleGroupItem>
-                <ToggleGroupItem value="frozen" className="px-4">
-                  {TEMPERATURE_LABELS.frozen}
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </Field>
-
-            <Field label="Beschreibung">
-              <Textarea
-                id="description"
-                rows={3}
-                maxLength={1000}
-                value={values.description}
-                onChange={(event) => set("description", event.target.value)}
-                placeholder="Kurzbeschreibung für die Kundschaft"
-              />
-            </Field>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Verpackung">
+      {/* Während des Speicherns eingefroren: nichts nach dem Absenden Getipptes geht verloren. */}
+      <fieldset disabled={saving} aria-busy={saving} className="m-0 min-w-0 border-0 p-0">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3" {...formScope}>
+          <div className="min-w-0 space-y-4 lg:col-span-2">
+            <FormSection title="Produkt" description="Was wird als Catch angeboten?">
+              <Field label="Produktname" required error={issueFor("product_name")}>
                 <Input
-                  id="packaging"
+                  id="product_name"
+                  value={values.product_name}
                   maxLength={120}
-                  value={values.packaging}
-                  onChange={(event) => set("packaging", event.target.value)}
-                  placeholder="z. B. Vakuumbeutel à 500 g"
+                  aria-invalid={Boolean(issueFor("product_name"))}
+                  onChange={(event) => set("product_name", event.target.value)}
+                  placeholder="z. B. Felchenfilets"
                 />
               </Field>
-              <Field label="Mindesthaltbarkeitsdatum">
-                <Input
-                  id="expiry_date"
-                  type="date"
-                  value={values.expiry_date}
-                  onChange={(event) => set("expiry_date", event.target.value)}
-                />
-              </Field>
-            </div>
-          </FormSection>
 
-          <FormSection title="Beschaffung" description="Woher kommt die Ware und zu welchem Preis?">
-            <Field label="Lieferant" required error={issueFor("supplier_id")}>
-              <Select
-                value={values.supplier_id}
-                onValueChange={(value) => set("supplier_id", value)}
+              <Field
+                label="Artikelnummer"
+                hint="optional; Teil der Produktidentität für die Musterprüfung"
               >
-                <SelectTrigger id="supplier_id" aria-invalid={Boolean(issueFor("supplier_id"))}>
-                  <SelectValue placeholder="Lieferant wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(suppliers.data ?? []).map((supplier) => (
-                    <SelectItem key={supplier.id} value={supplier.id}>
-                      {supplier.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <Field label="Einkaufsmenge" required error={issueFor("purchase_quantity")}>
                 <Input
-                  id="purchase_quantity"
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  inputMode="decimal"
-                  value={values.purchase_quantity}
-                  aria-invalid={Boolean(issueFor("purchase_quantity"))}
-                  onChange={(event) => set("purchase_quantity", event.target.value)}
+                  id="article_number"
+                  value={values.article_number}
+                  maxLength={60}
+                  onChange={(event) => set("article_number", event.target.value)}
+                  placeholder="z. B. ART-4711"
                 />
               </Field>
-              <Field label="Einheit" required>
-                <Select
-                  value={values.quantity_unit}
-                  onValueChange={(value) => set("quantity_unit", value)}
+
+              <Field label="Produktart" required>
+                <ToggleGroup
+                  id="temperature"
+                  type="single"
+                  variant="outline"
+                  value={values.temperature}
+                  onValueChange={(value) => value && set("temperature", value as Temperature)}
+                  className="justify-start"
                 >
-                  <SelectTrigger id="quantity_unit">
-                    <SelectValue />
+                  <ToggleGroupItem value="fresh" className="px-4">
+                    {TEMPERATURE_LABELS.fresh}
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="frozen" className="px-4">
+                    {TEMPERATURE_LABELS.frozen}
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </Field>
+
+              <Field label="Beschreibung">
+                <Textarea
+                  id="description"
+                  rows={3}
+                  maxLength={1000}
+                  value={values.description}
+                  onChange={(event) => set("description", event.target.value)}
+                  placeholder="Kurzbeschreibung für die Kundschaft"
+                />
+              </Field>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="Verpackung">
+                  <Input
+                    id="packaging"
+                    maxLength={120}
+                    value={values.packaging}
+                    onChange={(event) => set("packaging", event.target.value)}
+                    placeholder="z. B. Vakuumbeutel à 500 g"
+                  />
+                </Field>
+                <Field label="Mindesthaltbarkeitsdatum">
+                  <Input
+                    id="expiry_date"
+                    type="date"
+                    value={values.expiry_date}
+                    onChange={(event) => set("expiry_date", event.target.value)}
+                  />
+                </Field>
+              </div>
+            </FormSection>
+
+            <FormSection
+              title="Beschaffung"
+              description="Woher kommt die Ware und zu welchem Preis?"
+            >
+              <Field label="Lieferant" required error={issueFor("supplier_id")}>
+                <Select
+                  value={values.supplier_id}
+                  onValueChange={(value) => set("supplier_id", value)}
+                >
+                  <SelectTrigger id="supplier_id" aria-invalid={Boolean(issueFor("supplier_id"))}>
+                    <SelectValue placeholder="Lieferant wählen" />
                   </SelectTrigger>
                   <SelectContent>
-                    {QUANTITY_UNITS.map((unit) => (
-                      <SelectItem key={unit} value={unit}>
-                        {QUANTITY_UNIT_LABELS[unit]}
+                    {(suppliers.data ?? []).map((supplier) => (
+                      <SelectItem key={supplier.id} value={supplier.id}>
+                        {supplier.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </Field>
-              <Field
-                label={`Einkaufspreis pro Einheit ${vatBasisLabel(values.purchase_price_includes_vat)}`}
-                required
-                error={issueFor("purchase_price")}
-                hint="CHF"
-              >
-                <Input
-                  id="purchase_price"
-                  type="number"
-                  min="0"
-                  step="0.05"
-                  inputMode="decimal"
-                  value={values.purchase_price}
-                  aria-invalid={Boolean(issueFor("purchase_price"))}
-                  onChange={(event) => set("purchase_price", event.target.value)}
-                />
-              </Field>
-            </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field
-                label="Steuerbasis Einkaufspreis"
-                hint="So, wie der Lieferant den Preis nennt."
-              >
-                <ToggleGroup
-                  type="single"
-                  variant="outline"
-                  value={values.purchase_price_includes_vat ? "gross" : "net"}
-                  onValueChange={(next) => {
-                    if (next) set("purchase_price_includes_vat", next === "gross");
-                  }}
-                  className="justify-start"
-                >
-                  <ToggleGroupItem value="net" aria-label="Einkaufspreis exklusive Mehrwertsteuer">
-                    exkl. MWST
-                  </ToggleGroupItem>
-                  <ToggleGroupItem
-                    value="gross"
-                    aria-label="Einkaufspreis inklusive Mehrwertsteuer"
-                  >
-                    inkl. MWST
-                  </ToggleGroupItem>
-                </ToggleGroup>
-              </Field>
-              {values.purchase_price_includes_vat ? (
-                <Field
-                  label="MWST-Satz Einkauf"
-                  error={issueFor("purchase_vat_rate")}
-                  hint={`Prozent, leer = ${DEFAULT_PURCHASE_VAT_RATE} %`}
-                >
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <Field label="Einkaufsmenge" required error={issueFor("purchase_quantity")}>
                   <Input
-                    id="purchase_vat_rate"
+                    id="purchase_quantity"
                     type="number"
                     min="0"
-                    max="99.9"
                     step="0.1"
                     inputMode="decimal"
-                    value={values.purchase_vat_rate}
-                    aria-invalid={Boolean(issueFor("purchase_vat_rate"))}
-                    onChange={(event) => set("purchase_vat_rate", event.target.value)}
+                    value={values.purchase_quantity}
+                    aria-invalid={Boolean(issueFor("purchase_quantity"))}
+                    onChange={(event) => set("purchase_quantity", event.target.value)}
                   />
                 </Field>
-              ) : null}
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field
-                label={`Lieferkosten ${values.delivery_included ? "" : vatBasisLabel(values.delivery_cost_includes_vat)}`.trim()}
-                error={issueFor("delivery_cost")}
-                hint="CHF"
-              >
-                <Input
-                  id="delivery_cost"
-                  type="number"
-                  min="0"
-                  step="0.05"
-                  inputMode="decimal"
-                  disabled={values.delivery_included}
-                  value={values.delivery_included ? "" : values.delivery_cost}
-                  onChange={(event) => set("delivery_cost", event.target.value)}
-                />
-              </Field>
-              <div className="flex items-end pb-2">
-                <label className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    id="delivery_included"
-                    checked={values.delivery_included}
-                    onCheckedChange={(checked) => set("delivery_included", checked === true)}
+                <Field label="Einheit" required>
+                  <Select
+                    value={values.quantity_unit}
+                    onValueChange={(value) => set("quantity_unit", value)}
+                  >
+                    <SelectTrigger id="quantity_unit">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {QUANTITY_UNITS.map((unit) => (
+                        <SelectItem key={unit} value={unit}>
+                          {QUANTITY_UNIT_LABELS[unit]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field
+                  label={`Einkaufspreis pro Einheit ${vatBasisLabel(values.purchase_price_includes_vat)}`}
+                  required
+                  error={issueFor("purchase_price")}
+                  hint="CHF"
+                >
+                  <Input
+                    id="purchase_price"
+                    type="number"
+                    min="0"
+                    step="0.05"
+                    inputMode="decimal"
+                    value={values.purchase_price}
+                    aria-invalid={Boolean(issueFor("purchase_price"))}
+                    onChange={(event) => set("purchase_price", event.target.value)}
                   />
-                  Lieferung im Einkaufspreis enthalten
-                </label>
+                </Field>
               </div>
-            </div>
 
-            {hasDeliveryCost ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Steuerbasis Lieferkosten">
+                <Field
+                  label="Steuerbasis Einkaufspreis"
+                  hint="So, wie der Lieferant den Preis nennt."
+                >
                   <ToggleGroup
                     type="single"
                     variant="outline"
-                    value={values.delivery_cost_includes_vat ? "gross" : "net"}
+                    value={values.purchase_price_includes_vat ? "gross" : "net"}
                     onValueChange={(next) => {
-                      if (next) set("delivery_cost_includes_vat", next === "gross");
+                      if (next) set("purchase_price_includes_vat", next === "gross");
                     }}
                     className="justify-start"
                   >
-                    <ToggleGroupItem value="net" aria-label="Lieferkosten exklusive Mehrwertsteuer">
+                    <ToggleGroupItem
+                      value="net"
+                      aria-label="Einkaufspreis exklusive Mehrwertsteuer"
+                    >
                       exkl. MWST
                     </ToggleGroupItem>
                     <ToggleGroupItem
                       value="gross"
-                      aria-label="Lieferkosten inklusive Mehrwertsteuer"
+                      aria-label="Einkaufspreis inklusive Mehrwertsteuer"
                     >
                       inkl. MWST
                     </ToggleGroupItem>
                   </ToggleGroup>
                 </Field>
-                {values.delivery_cost_includes_vat ? (
+                {values.purchase_price_includes_vat ? (
                   <Field
-                    label="MWST-Satz Lieferkosten"
-                    error={issueFor("delivery_vat_rate")}
-                    hint={`Prozent, leer = ${DEFAULT_DELIVERY_VAT_RATE} % (Normalsatz)`}
+                    label="MWST-Satz Einkauf"
+                    error={issueFor("purchase_vat_rate")}
+                    hint={`Prozent, leer = ${DEFAULT_PURCHASE_VAT_RATE} %`}
                   >
                     <Input
-                      id="delivery_vat_rate"
+                      id="purchase_vat_rate"
                       type="number"
                       min="0"
                       max="99.9"
                       step="0.1"
                       inputMode="decimal"
-                      value={values.delivery_vat_rate}
-                      aria-invalid={Boolean(issueFor("delivery_vat_rate"))}
-                      onChange={(event) => set("delivery_vat_rate", event.target.value)}
+                      value={values.purchase_vat_rate}
+                      aria-invalid={Boolean(issueFor("purchase_vat_rate"))}
+                      onChange={(event) => set("purchase_vat_rate", event.target.value)}
                     />
                   </Field>
                 ) : null}
               </div>
-            ) : null}
 
-            <div
-              id="vat_basis_confirmed"
-              tabIndex={-1}
-              className={cn(
-                "rounded-md border p-3",
-                issueFor("vat_basis_confirmed") && "border-destructive",
-              )}
-            >
-              <label className="flex items-start gap-2 text-sm">
-                <Checkbox
-                  checked={values.vat_basis_confirmed}
-                  onCheckedChange={(checked) => set("vat_basis_confirmed", checked === true)}
-                />
-                <span>
-                  Steuerbasis geprüft: Einkaufspreis{" "}
-                  {vatBasisLabel(values.purchase_price_includes_vat)}
-                  {hasDeliveryCost
-                    ? `, Lieferkosten ${vatBasisLabel(values.delivery_cost_includes_vat)}`
-                    : ""}
-                  .
-                  {issueFor("vat_basis_confirmed") ? (
-                    <span className="block text-destructive">
-                      {issueFor("vat_basis_confirmed")}
-                    </span>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field
+                  label={`Lieferkosten ${values.delivery_included ? "" : vatBasisLabel(values.delivery_cost_includes_vat)}`.trim()}
+                  error={issueFor("delivery_cost")}
+                  hint="CHF"
+                >
+                  <Input
+                    id="delivery_cost"
+                    type="number"
+                    min="0"
+                    step="0.05"
+                    inputMode="decimal"
+                    disabled={values.delivery_included}
+                    value={values.delivery_included ? "" : values.delivery_cost}
+                    onChange={(event) => set("delivery_cost", event.target.value)}
+                  />
+                </Field>
+                <div className="flex items-end pb-2">
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      id="delivery_included"
+                      checked={values.delivery_included}
+                      onCheckedChange={(checked) => set("delivery_included", checked === true)}
+                    />
+                    Lieferung im Einkaufspreis enthalten
+                  </label>
+                </div>
+              </div>
+
+              {hasDeliveryCost ? (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label="Steuerbasis Lieferkosten">
+                    <ToggleGroup
+                      type="single"
+                      variant="outline"
+                      value={values.delivery_cost_includes_vat ? "gross" : "net"}
+                      onValueChange={(next) => {
+                        if (next) set("delivery_cost_includes_vat", next === "gross");
+                      }}
+                      className="justify-start"
+                    >
+                      <ToggleGroupItem
+                        value="net"
+                        aria-label="Lieferkosten exklusive Mehrwertsteuer"
+                      >
+                        exkl. MWST
+                      </ToggleGroupItem>
+                      <ToggleGroupItem
+                        value="gross"
+                        aria-label="Lieferkosten inklusive Mehrwertsteuer"
+                      >
+                        inkl. MWST
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </Field>
+                  {values.delivery_cost_includes_vat ? (
+                    <Field
+                      label="MWST-Satz Lieferkosten"
+                      error={issueFor("delivery_vat_rate")}
+                      hint={`Prozent, leer = ${DEFAULT_DELIVERY_VAT_RATE} % (Normalsatz)`}
+                    >
+                      <Input
+                        id="delivery_vat_rate"
+                        type="number"
+                        min="0"
+                        max="99.9"
+                        step="0.1"
+                        inputMode="decimal"
+                        value={values.delivery_vat_rate}
+                        aria-invalid={Boolean(issueFor("delivery_vat_rate"))}
+                        onChange={(event) => set("delivery_vat_rate", event.target.value)}
+                      />
+                    </Field>
                   ) : null}
-                </span>
-              </label>
-            </div>
-          </FormSection>
+                </div>
+              ) : null}
 
-          <FormSection
-            title="Verkaufspreis"
-            description="Was zahlt die Kundschaft? Alle Kundenpreise sind Bruttopreise inklusive MWST."
-          >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field
-                label="Normalpreis inkl. MWST"
-                error={issueFor("regular_price")}
-                hint="CHF inkl. MWST, optional"
-              >
-                <Input
-                  id="regular_price"
-                  type="number"
-                  min="0"
-                  step="0.05"
-                  inputMode="decimal"
-                  value={values.regular_price}
-                  onChange={(event) => set("regular_price", event.target.value)}
-                />
-              </Field>
-              <Field
-                label="Food-Catch-Preis inkl. MWST"
-                required
-                error={issueFor("catch_price")}
-                hint="CHF inkl. MWST"
-              >
-                <Input
-                  id="catch_price"
-                  type="number"
-                  min="0"
-                  step="0.05"
-                  inputMode="decimal"
-                  value={values.catch_price}
-                  aria-invalid={Boolean(issueFor("catch_price"))}
-                  onChange={(event) => set("catch_price", event.target.value)}
-                />
-              </Field>
-              <Field
-                label="MWST-Satz Verkauf"
-                error={issueFor("vat_rate")}
-                hint={`Prozent, leer = Standardsatz ${defaultVatRate} %`}
-              >
-                <Input
-                  id="vat_rate"
-                  type="number"
-                  min="0"
-                  max="99.9"
-                  step="0.1"
-                  inputMode="decimal"
-                  value={values.vat_rate}
-                  aria-invalid={Boolean(issueFor("vat_rate"))}
-                  onChange={(event) => set("vat_rate", event.target.value)}
-                />
-              </Field>
-            </div>
-          </FormSection>
-
-          <FormSection
-            title="Aktion"
-            description="Abholorte und Verfügbarkeit — Zeiten in Europe/Zurich."
-          >
-            <Field label="Abholort" required error={issueFor("location_ids")}>
               <div
-                id="location_ids"
+                id="vat_basis_confirmed"
                 tabIndex={-1}
                 className={cn(
-                  "space-y-2 rounded-md border p-3",
-                  issueFor("location_ids") && "border-destructive",
+                  "rounded-md border p-3",
+                  issueFor("vat_basis_confirmed") && "border-destructive",
                 )}
               >
-                {(locations.data ?? []).map((location) => (
-                  <label key={location.id} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={values.location_ids.includes(location.id)}
-                      onCheckedChange={(checked) =>
-                        set(
-                          "location_ids",
-                          checked === true
-                            ? [...values.location_ids, location.id]
-                            : values.location_ids.filter((id) => id !== location.id),
-                        )
-                      }
-                    />
-                    <span>
-                      {location.name}
-                      {location.address ? (
-                        <span className="block text-xs text-muted-foreground">
-                          {location.address}
-                        </span>
-                      ) : null}
-                    </span>
-                  </label>
-                ))}
-                {(locations.data ?? []).length === 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    Noch keine Standorte erfasst — unter Einstellungen anlegen.
-                  </p>
-                ) : null}
+                <label className="flex items-start gap-2 text-sm">
+                  <Checkbox
+                    checked={values.vat_basis_confirmed}
+                    onCheckedChange={(checked) => set("vat_basis_confirmed", checked === true)}
+                  />
+                  <span>
+                    Steuerbasis geprüft: Einkaufspreis{" "}
+                    {vatBasisLabel(values.purchase_price_includes_vat)}
+                    {hasDeliveryCost
+                      ? `, Lieferkosten ${vatBasisLabel(values.delivery_cost_includes_vat)}`
+                      : ""}
+                    .
+                    {issueFor("vat_basis_confirmed") ? (
+                      <span className="block text-destructive">
+                        {issueFor("vat_basis_confirmed")}
+                      </span>
+                    ) : null}
+                  </span>
+                </label>
               </div>
-            </Field>
+            </FormSection>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Verfügbar ab" required error={issueFor("available_from")}>
-                <Input
-                  id="available_from"
-                  type="datetime-local"
-                  value={values.available_from}
-                  aria-invalid={Boolean(issueFor("available_from"))}
-                  onChange={(event) => set("available_from", event.target.value)}
-                />
-              </Field>
-              <Field label="Verfügbar bis" error={issueFor("available_until")} hint="optional">
-                <Input
-                  id="available_until"
-                  type="datetime-local"
-                  value={values.available_until}
-                  aria-invalid={Boolean(issueFor("available_until"))}
-                  onChange={(event) => set("available_until", event.target.value)}
-                />
-              </Field>
-            </div>
-
-            <Field
-              label="Produktlink im Onlineshop"
-              error={issueFor("online_shop_url")}
-              hint="optional"
-            >
-              <Input
-                id="online_shop_url"
-                type="url"
-                inputMode="url"
-                placeholder="https://..."
-                value={values.online_shop_url}
-                aria-invalid={Boolean(issueFor("online_shop_url"))}
-                aria-describedby="online_shop_url_hint"
-                onChange={(event) => set("online_shop_url", event.target.value)}
-              />
-              <p id="online_shop_url_hint" className="text-xs text-muted-foreground">
-                Optionaler Direktlink zum Produkt. Wird im WhatsApp-Post angezeigt, wenn eine
-                gültige URL hinterlegt ist.
-              </p>
-            </Field>
-          </FormSection>
-
-          <FormSection
-            title="Handicap-Story"
-            description="Warum ist dieser Fisch ein Catch? Ehrlich und kurz."
-          >
-            <Field label="Grund für den Catch" required error={issueFor("handicap_reason")}>
-              <Select
-                value={values.handicap_reason}
-                onValueChange={(value) => {
-                  set("handicap_reason", value);
-                  if (!storyTouched || !values.handicap_story.trim()) {
-                    set("handicap_story", HANDICAP_REASON_SENTENCES[value as HandicapReason]);
-                  }
-                }}
-              >
-                <SelectTrigger
-                  id="handicap_reason"
-                  aria-invalid={Boolean(issueFor("handicap_reason"))}
-                >
-                  <SelectValue placeholder="Grund wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {HANDICAP_REASONS.map((reason) => (
-                    <SelectItem key={reason} value={reason}>
-                      {HANDICAP_REASON_LABELS[reason]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <Field
-              label="Story-Text"
-              error={issueFor("handicap_story")}
-              hint="automatisch vorgeschlagen, frei editierbar"
-            >
-              <Textarea
-                id="handicap_story"
-                rows={3}
-                maxLength={600}
-                value={values.handicap_story}
-                onChange={(event) => {
-                  setStoryTouched(true);
-                  set("handicap_story", event.target.value);
-                }}
-              />
-            </Field>
-          </FormSection>
-        </div>
-
-        <div className="space-y-4">
-          <FormSection
-            title="Produktbild"
-            description="Ein Hauptbild. Für den Status «Bereit» erforderlich."
-          >
-            <CatchImageField
-              path={imagePath}
-              onChange={setImagePath}
-              onUploadingChange={setUploading}
-              invalid={Boolean(issueFor("product_image"))}
-            />
-            {issueFor("product_image") ? (
-              <p className="text-xs font-medium text-destructive">{issueFor("product_image")}</p>
-            ) : null}
-          </FormSection>
-
-          <FormSection title="Interne Notiz" description="Nur intern sichtbar, nie im Post.">
-            <div className="rounded-md border border-dashed bg-muted/30 p-2">
-              <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Intern — nicht für Kundschaft
-              </p>
-              <Textarea
-                id="internal_note"
-                rows={4}
-                maxLength={1000}
-                value={values.internal_note}
-                onChange={(event) => set("internal_note", event.target.value)}
-                placeholder="Absprachen, Reservationen, Hinweise fürs Team"
-              />
-            </div>
-          </FormSection>
-
-          <div id="interner-aufwand" tabIndex={-1} className="scroll-mt-24">
             <FormSection
-              title="Interner Aufwand / DB II"
-              description="Direkt zurechenbarer Catch-Aufwand — Grundlage für DB II."
+              title="Verkaufspreis"
+              description="Was zahlt die Kundschaft? Alle Kundenpreise sind Bruttopreise inklusive MWST."
             >
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field
+                  label="Normalpreis inkl. MWST"
+                  error={issueFor("regular_price")}
+                  hint="CHF inkl. MWST, optional"
+                >
+                  <Input
+                    id="regular_price"
+                    type="number"
+                    min="0"
+                    step="0.05"
+                    inputMode="decimal"
+                    value={values.regular_price}
+                    onChange={(event) => set("regular_price", event.target.value)}
+                  />
+                </Field>
+                <Field
+                  label="Food-Catch-Preis inkl. MWST"
+                  required
+                  error={issueFor("catch_price")}
+                  hint="CHF inkl. MWST"
+                >
+                  <Input
+                    id="catch_price"
+                    type="number"
+                    min="0"
+                    step="0.05"
+                    inputMode="decimal"
+                    value={values.catch_price}
+                    aria-invalid={Boolean(issueFor("catch_price"))}
+                    onChange={(event) => set("catch_price", event.target.value)}
+                  />
+                </Field>
+                <Field
+                  label="MWST-Satz Verkauf"
+                  error={issueFor("vat_rate")}
+                  hint={`Prozent, leer = Standardsatz ${defaultVatRate} %`}
+                >
+                  <Input
+                    id="vat_rate"
+                    type="number"
+                    min="0"
+                    max="99.9"
+                    step="0.1"
+                    inputMode="decimal"
+                    value={values.vat_rate}
+                    aria-invalid={Boolean(issueFor("vat_rate"))}
+                    onChange={(event) => set("vat_rate", event.target.value)}
+                  />
+                </Field>
+              </div>
+            </FormSection>
+
+            <FormSection
+              title="Aktion"
+              description="Abholorte und Verfügbarkeit — Zeiten in Europe/Zurich."
+            >
+              <Field label="Abholort" required error={issueFor("location_ids")}>
+                <div
+                  id="location_ids"
+                  tabIndex={-1}
+                  className={cn(
+                    "space-y-2 rounded-md border p-3",
+                    issueFor("location_ids") && "border-destructive",
+                  )}
+                >
+                  {(locations.data ?? []).map((location) => (
+                    <label key={location.id} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={values.location_ids.includes(location.id)}
+                        onCheckedChange={(checked) =>
+                          set(
+                            "location_ids",
+                            checked === true
+                              ? [...values.location_ids, location.id]
+                              : values.location_ids.filter((id) => id !== location.id),
+                          )
+                        }
+                      />
+                      <span>
+                        {location.name}
+                        {location.address ? (
+                          <span className="block text-xs text-muted-foreground">
+                            {location.address}
+                          </span>
+                        ) : null}
+                      </span>
+                    </label>
+                  ))}
+                  {(locations.data ?? []).length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      Noch keine Standorte erfasst — unter Einstellungen anlegen.
+                    </p>
+                  ) : null}
+                </div>
+              </Field>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="Verfügbar ab" required error={issueFor("available_from")}>
+                  <Input
+                    id="available_from"
+                    type="datetime-local"
+                    value={values.available_from}
+                    aria-invalid={Boolean(issueFor("available_from"))}
+                    onChange={(event) => set("available_from", event.target.value)}
+                  />
+                </Field>
+                <Field label="Verfügbar bis" error={issueFor("available_until")} hint="optional">
+                  <Input
+                    id="available_until"
+                    type="datetime-local"
+                    value={values.available_until}
+                    aria-invalid={Boolean(issueFor("available_until"))}
+                    onChange={(event) => set("available_until", event.target.value)}
+                  />
+                </Field>
+              </div>
+
               <Field
-                label="Interner Aufwand pro vorbereitete Einheit"
-                error={issueFor("internal_handling_cost_per_unit")}
-                hint={`CHF / ${values.quantity_unit}`}
+                label="Produktlink im Onlineshop"
+                error={issueFor("online_shop_url")}
+                hint="optional"
               >
                 <Input
-                  id="internal_handling_cost_per_unit"
-                  type="number"
-                  min="0"
-                  step="0.05"
-                  inputMode="decimal"
-                  placeholder={defaultHandlingRate.toFixed(2)}
-                  value={values.internal_handling_cost_per_unit}
-                  aria-invalid={Boolean(issueFor("internal_handling_cost_per_unit"))}
-                  onChange={(event) => set("internal_handling_cost_per_unit", event.target.value)}
+                  id="online_shop_url"
+                  type="url"
+                  inputMode="url"
+                  placeholder="https://..."
+                  value={values.online_shop_url}
+                  aria-invalid={Boolean(issueFor("online_shop_url"))}
+                  aria-describedby="online_shop_url_hint"
+                  onChange={(event) => set("online_shop_url", event.target.value)}
+                />
+                <p id="online_shop_url_hint" className="text-xs text-muted-foreground">
+                  Optionaler Direktlink zum Produkt. Wird im WhatsApp-Post angezeigt, wenn eine
+                  gültige URL hinterlegt ist.
+                </p>
+              </Field>
+            </FormSection>
+
+            <FormSection
+              title="Handicap-Story"
+              description="Warum ist dieser Fisch ein Catch? Ehrlich und kurz."
+            >
+              <Field label="Grund für den Catch" required error={issueFor("handicap_reason")}>
+                <Select
+                  value={values.handicap_reason}
+                  onValueChange={(value) => {
+                    set("handicap_reason", value);
+                    if (!storyTouched || !values.handicap_story.trim()) {
+                      set("handicap_story", HANDICAP_REASON_SENTENCES[value as HandicapReason]);
+                    }
+                  }}
+                >
+                  <SelectTrigger
+                    id="handicap_reason"
+                    aria-invalid={Boolean(issueFor("handicap_reason"))}
+                  >
+                    <SelectValue placeholder="Grund wählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {HANDICAP_REASONS.map((reason) => (
+                      <SelectItem key={reason} value={reason}>
+                        {HANDICAP_REASON_LABELS[reason]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <Field
+                label="Story-Text"
+                error={issueFor("handicap_story")}
+                hint="automatisch vorgeschlagen, frei editierbar"
+              >
+                <Textarea
+                  id="handicap_story"
+                  rows={3}
+                  maxLength={600}
+                  value={values.handicap_story}
+                  onChange={(event) => {
+                    setStoryTouched(true);
+                    set("handicap_story", event.target.value);
+                  }}
                 />
               </Field>
-              <p className="text-xs text-muted-foreground">
-                Vorbelegt aus den Einstellungen und für diesen Catch überschreibbar. Der
-                gespeicherte Wert gilt für alle vorbereiteten Einheiten, auch wenn nicht alle
-                verkauft werden.
-              </p>
-              <Collapsible>
-                <CollapsibleTrigger className="text-xs font-medium underline underline-offset-4">
-                  Was ist enthalten?
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-2 space-y-2 rounded-md border bg-muted/20 p-3 text-xs text-muted-foreground">
-                  <p>
-                    <span className="font-medium text-foreground">Enthalten:</span> Wareneingang,
-                    interner Transport, Vorbereitung, Umpacken, Etikettierung, catchbezogene
-                    Administration sowie direktes Verpackungs- und Etikettenmaterial.
-                  </p>
-                  <p>
-                    <span className="font-medium text-foreground">Nicht enthalten:</span> Miete,
-                    Energie, allgemeine Administration, normale Ladenarbeit, allgemeines Marketing,
-                    Frequenz- und Cross-Selling-Effekte sowie übrige Gemeinkosten.
-                  </p>
-                </CollapsibleContent>
-              </Collapsible>
             </FormSection>
           </div>
 
-          <CalculationCard
-            result={calculation}
-            compact
-            description="Aktualisiert sich sofort bei Änderungen an Menge und Preisen."
-          />
+          <div className="space-y-4">
+            <FormSection
+              title="Produktbild"
+              description="Ein Hauptbild. Für den Status «Bereit» erforderlich."
+            >
+              <CatchImageField
+                path={imagePath}
+                onChange={setImagePath}
+                onUploadingChange={setUploading}
+                invalid={Boolean(issueFor("product_image"))}
+              />
+              {issueFor("product_image") ? (
+                <p className="text-xs font-medium text-destructive">{issueFor("product_image")}</p>
+              ) : null}
+            </FormSection>
 
-          <div className="sticky top-16 space-y-2 rounded-md border bg-card p-3">
-            <Button
-              type="button"
-              className="h-auto w-full whitespace-normal py-2 text-center"
-              disabled={saving || uploading || Boolean(readyBlock)}
-              title={readyBlock ?? undefined}
-              onClick={() => void persist("ready")}
-            >
-              <CheckCircle2 />
-              Speichern und WhatsApp-Post vorbereiten
-            </Button>
-            {readyBlock ? (
-              <p className="text-[11px] font-medium text-muted-foreground">{readyBlock}</p>
-            ) : null}
-            <Button
-              type="button"
-              variant="secondary"
-              className="h-auto w-full whitespace-normal py-2"
-              disabled={saving || uploading}
-              onClick={() => void saveOrdinary()}
-            >
-              <Save />
-              {ordinarySaveLabel(mode, currentStatus)}
-            </Button>
-            <Button type="button" variant="ghost" className="w-full" onClick={handleLeave}>
-              <ArrowLeft />
-              {mode === "create" ? "Abbrechen" : "Zurück zum Dashboard"}
-            </Button>
-            <p className="text-[11px] text-muted-foreground">
-              {dirty ? "Ungespeicherte Änderungen vorhanden." : "Alle Änderungen gespeichert."}
-            </p>
-            <p className="hidden text-[11px] text-muted-foreground lg:block">
-              Ctrl/⌘ + Enter: {ordinarySaveLabel(mode, currentStatus)}. Esc: Verlassen mit
-              Rückfrage.
-            </p>
+            <FormSection title="Interne Notiz" description="Nur intern sichtbar, nie im Post.">
+              <div className="rounded-md border border-dashed bg-muted/30 p-2">
+                <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Intern — nicht für Kundschaft
+                </p>
+                <Textarea
+                  id="internal_note"
+                  rows={4}
+                  maxLength={1000}
+                  value={values.internal_note}
+                  onChange={(event) => set("internal_note", event.target.value)}
+                  placeholder="Absprachen, Reservationen, Hinweise fürs Team"
+                />
+              </div>
+            </FormSection>
+
+            <div id="interner-aufwand" tabIndex={-1} className="scroll-mt-24">
+              <FormSection
+                title="Interner Aufwand / DB II"
+                description="Direkt zurechenbarer Catch-Aufwand — Grundlage für DB II."
+              >
+                <Field
+                  label="Interner Aufwand pro vorbereitete Einheit"
+                  error={issueFor("internal_handling_cost_per_unit")}
+                  hint={`CHF / ${values.quantity_unit}`}
+                >
+                  <Input
+                    id="internal_handling_cost_per_unit"
+                    type="number"
+                    min="0"
+                    step="0.05"
+                    inputMode="decimal"
+                    placeholder={defaultHandlingRate.toFixed(2)}
+                    value={values.internal_handling_cost_per_unit}
+                    aria-invalid={Boolean(issueFor("internal_handling_cost_per_unit"))}
+                    onChange={(event) => set("internal_handling_cost_per_unit", event.target.value)}
+                  />
+                </Field>
+                <p className="text-xs text-muted-foreground">
+                  Vorbelegt aus den Einstellungen und für diesen Catch überschreibbar. Der
+                  gespeicherte Wert gilt für alle vorbereiteten Einheiten, auch wenn nicht alle
+                  verkauft werden.
+                </p>
+                <Collapsible>
+                  <CollapsibleTrigger className="text-xs font-medium underline underline-offset-4">
+                    Was ist enthalten?
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2 space-y-2 rounded-md border bg-muted/20 p-3 text-xs text-muted-foreground">
+                    <p>
+                      <span className="font-medium text-foreground">Enthalten:</span> Wareneingang,
+                      interner Transport, Vorbereitung, Umpacken, Etikettierung, catchbezogene
+                      Administration sowie direktes Verpackungs- und Etikettenmaterial.
+                    </p>
+                    <p>
+                      <span className="font-medium text-foreground">Nicht enthalten:</span> Miete,
+                      Energie, allgemeine Administration, normale Ladenarbeit, allgemeines
+                      Marketing, Frequenz- und Cross-Selling-Effekte sowie übrige Gemeinkosten.
+                    </p>
+                  </CollapsibleContent>
+                </Collapsible>
+              </FormSection>
+            </div>
+
+            <CalculationCard
+              result={calculation}
+              compact
+              description="Aktualisiert sich sofort bei Änderungen an Menge und Preisen."
+            />
+
+            <div className="sticky top-16 space-y-2 rounded-md border bg-card p-3">
+              <Button
+                type="button"
+                className="h-auto w-full whitespace-normal py-2 text-center"
+                disabled={saving || uploading || Boolean(readyBlock)}
+                title={readyBlock ?? undefined}
+                onClick={() => void persist("ready")}
+              >
+                <CheckCircle2 />
+                Speichern und WhatsApp-Post vorbereiten
+              </Button>
+              {readyBlock ? (
+                <p className="text-[11px] font-medium text-muted-foreground">{readyBlock}</p>
+              ) : null}
+              <Button
+                type="button"
+                variant="secondary"
+                className="h-auto w-full whitespace-normal py-2"
+                disabled={saving || uploading}
+                onClick={() => void saveOrdinary()}
+              >
+                <Save />
+                {ordinarySaveLabel(mode, currentStatus)}
+              </Button>
+              <Button type="button" variant="ghost" className="w-full" onClick={handleLeave}>
+                <ArrowLeft />
+                {mode === "create" ? "Abbrechen" : "Zurück zum Dashboard"}
+              </Button>
+              <p className="text-[11px] text-muted-foreground">
+                {dirty ? "Ungespeicherte Änderungen vorhanden." : "Alle Änderungen gespeichert."}
+              </p>
+              <p className="hidden text-[11px] text-muted-foreground lg:block">
+                Ctrl/⌘ + Enter: {ordinarySaveLabel(mode, currentStatus)}. Esc: Verlassen mit
+                Rückfrage.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      </fieldset>
 
       <AlertDialog open={criticalOpen} onOpenChange={setCriticalOpen}>
         <AlertDialogContent>

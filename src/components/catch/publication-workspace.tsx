@@ -95,6 +95,7 @@ export function PublicationWorkspace({
   const userEdited = text.dirty;
   useEffect(() => {
     onDirtyChange?.(userEdited);
+    return () => onDirtyChange?.(false); // Beitrag beim Ausblenden entfernen
   }, [userEdited, onDirtyChange]);
 
   const image = useQuery({
