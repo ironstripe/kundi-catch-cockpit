@@ -10,7 +10,7 @@ import {
   Save,
   Send,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useEditShortcuts } from "@/hooks/use-edit-session";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoles } from "@/hooks/use-role";
 import { fetchAppSettings } from "@/lib/app-settings";
@@ -91,10 +92,15 @@ export function InstagramWorkspace({ item, onChanged }: Props) {
     [item.product_name, item.handicap_reason, item.handicap_story, instagram?.call_to_action],
   );
 
-  const [caption, setCaption] = useState(item.instagram_caption ?? generated);
+  const baseCaption = item.instagram_caption ?? generated;
+  const [caption, setCaption] = useState(baseCaption);
+  const baseRef = useRef(baseCaption);
   useEffect(() => {
-    setCaption(item.instagram_caption ?? generated);
-  }, [item.instagram_caption, generated]);
+    const previous = baseRef.current;
+    baseRef.current = baseCaption;
+    // Refetch überschreibt keinen lokal bearbeiteten Text.
+    setCaption((current) => (current === previous ? baseCaption : current));
+  }, [baseCaption]);
 
   const preview = useQuery({
     queryKey: ["instagram-asset", item.instagram_asset_path],
@@ -227,7 +233,7 @@ export function InstagramWorkspace({ item, onChanged }: Props) {
             </div>
 
             <div className="space-y-3">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5" {...captionScope}>
                 <Label className="text-xs">Instagram-Text</Label>
                 <Textarea
                   rows={9}
