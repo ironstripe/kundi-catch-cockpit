@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Boxes,
+  ChevronRight,
   Clock,
   Fish,
   History as HistoryIcon,
