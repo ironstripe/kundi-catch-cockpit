@@ -2,6 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ArrowLeft, CheckCircle2, Save } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+
+import {
+  UnsavedChangesDialog,
+  useEditShortcuts,
+  useUnsavedChangesGuard,
+} from "@/hooks/use-edit-session";
 import { toast } from "sonner";
 
 import { CalculationCard } from "@/components/catch/calculation-card";
@@ -121,7 +127,6 @@ export function CatchForm({
   const [uploading, setUploading] = useState(false);
   const [issues, setIssues] = useState<FieldIssue[]>([]);
   const [saving, setSaving] = useState(false);
-  const [leaveOpen, setLeaveOpen] = useState(false);
   const [criticalOpen, setCriticalOpen] = useState(false);
   const [storyTouched, setStoryTouched] = useState(Boolean(initialValues.handicap_story));
   const savedRef = useRef(false);
@@ -157,6 +162,25 @@ export function CatchForm({
 
   const dirty =
     JSON.stringify(values) !== JSON.stringify(baseline) || imagePath !== initialImagePath;
+
+  const guard = useUnsavedChangesGuard(dirty && !saving);
+
+  /**
+   * Tastenkürzel = gewöhnliches Speichern. Neu: Entwurf. Bestehend: Status
+   * bleibt (Entwurf/publiziert). Nie «Bereit», Freigabe, Abschluss o. Ä.
+   */
+  function shortcutSave() {
+    if (saving || uploading) return;
+    if (mode === "edit" && currentStatus === "ready") {
+      toast.info("Tastenkürzel nicht verfügbar", {
+        description:
+          "Ein bereiter Catch wird nur über «Speichern und WhatsApp-Post vorbereiten» gespeichert, damit der Status nicht unbeabsichtigt ändert.",
+      });
+      return;
+    }
+    return persist("draft");
+  }
+  const formScope = useEditShortcuts({ onCommit: shortcutSave, busy: saving || uploading });
 
   function set<K extends keyof CatchFormValues>(key: K, value: CatchFormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
@@ -210,6 +234,7 @@ export function CatchForm({
       });
       await syncImage(id);
       savedRef.current = true;
+      guard.allowNextNavigation();
       toast.success(
         status === "draft"
           ? mode === "create"
@@ -264,11 +289,8 @@ export function CatchForm({
       .insert({ catch_id: id, storage_path: imagePath, is_primary: true, sort_order: 0 });
   }
 
+  // Verlassen läuft immer über den Router-Guard (auch Sidebar, Zurück-Taste).
   function handleLeave() {
-    if (dirty && !savedRef.current) {
-      setLeaveOpen(true);
-      return;
-    }
     leaveNow();
   }
 
@@ -312,8 +334,8 @@ export function CatchForm({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3" {...formScope}>
+        <div className="min-w-0 space-y-4 lg:col-span-2">
           <FormSection title="Produkt" description="Was wird als Catch angeboten?">
             <Field label="Produktname" required error={issueFor("product_name")}>
               <Input
@@ -888,7 +910,7 @@ export function CatchForm({
           <div className="sticky top-16 space-y-2 rounded-md border bg-card p-3">
             <Button
               type="button"
-              className="w-full"
+              className="h-auto w-full whitespace-normal py-2 text-center"
               disabled={saving || uploading || Boolean(readyBlock)}
               title={readyBlock ?? undefined}
               onClick={() => void persist("ready")}
@@ -902,7 +924,7 @@ export function CatchForm({
             <Button
               type="button"
               variant="secondary"
-              className="w-full"
+              className="h-auto w-full whitespace-normal py-2"
               disabled={saving || uploading}
               onClick={() => void persist("draft")}
             >
@@ -915,6 +937,9 @@ export function CatchForm({
             </Button>
             <p className="text-[11px] text-muted-foreground">
               {dirty ? "Ungespeicherte Änderungen vorhanden." : "Alle Änderungen gespeichert."}
+            </p>
+            <p className="hidden text-[11px] text-muted-foreground lg:block">
+              Ctrl/⌘ + Enter speichert {mode === "create" ? "als Entwurf" : "ohne Statuswechsel"}.
             </p>
           </div>
         </div>
@@ -937,21 +962,7 @@ export function CatchForm({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={leaveOpen} onOpenChange={setLeaveOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Ungespeicherte Änderungen verwerfen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Es gibt Änderungen, die noch nicht gespeichert wurden. Beim Verlassen gehen sie
-              verloren.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Weiter bearbeiten</AlertDialogCancel>
-            <AlertDialogAction onClick={leaveNow}>Verwerfen und verlassen</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <UnsavedChangesDialog guard={guard} />
     </>
   );
 }
