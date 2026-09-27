@@ -28,6 +28,7 @@ export function CaseTitleEditor({
   const dirty = draft !== null && draft.trim() !== title;
   useEffect(() => {
     onDirtyChange?.(dirty);
+    return () => onDirtyChange?.(false); // Beitrag beim Ausblenden entfernen
   }, [dirty, onDirtyChange]);
 
   useEffect(() => {

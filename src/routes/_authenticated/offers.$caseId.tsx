@@ -191,9 +191,11 @@ function OfferCaseDetail({ caseId }: { caseId: string }) {
       });
       // Erst nach bestätigtem Erfolg: Refetch darf den abgesendeten Stand ersetzen,
       // aber keine Eingaben, die nach dem Absenden getippt wurden.
-      fields.markSaved(submitted);
       toast.success(result.message);
-      await refetch();
+      const refreshed = await refetch();
+      if (refreshed.data) {
+        fields.reconcileSaved(submitted, offerToFormValues(refreshed.data.consolidated_data));
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Speichern fehlgeschlagen.");
     } finally {

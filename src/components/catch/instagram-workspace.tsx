@@ -101,6 +101,7 @@ export function InstagramWorkspace({ item, onChanged, onDirtyChange }: Props) {
   const setCaption = draft.setValue;
   useEffect(() => {
     onDirtyChange?.(draft.dirty);
+    return () => onDirtyChange?.(false); // Beitrag beim Ausblenden entfernen
   }, [draft.dirty, onDirtyChange]);
 
   const preview = useQuery({

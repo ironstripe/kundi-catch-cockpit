@@ -26,7 +26,16 @@ export function useSyncedDraft<T>(identity: string, server: T) {
   useEffect(() => {
     const previous = baseRef.current;
     baseRef.current = { identity, server };
-    if (previous.identity === identity && same(previous.server, server)) return;
+    if (previous.identity === identity && same(previous.server, server)) {
+      // Gleicher Serverwert: eine bestätigte Speicherung trotzdem quittieren.
+      const pending = savedRef.current;
+      if (pending && same(valueRef.current, pending.snapshot)) {
+        savedRef.current = null;
+        openingRef.current = server;
+        setValue(server);
+      }
+      return;
+    }
     const saved = savedRef.current;
     savedRef.current = null;
     const current = valueRef.current;
@@ -44,6 +53,21 @@ export function useSyncedDraft<T>(identity: string, server: T) {
     savedRef.current = { snapshot };
   }, []);
 
+  /**
+   * Nach bestätigtem Speichern mit den frisch geladenen, kanonischen Serverdaten
+   * abgleichen (z. B. «1.0» → «1»). Greift auch, wenn der Refetch denselben
+   * Wert/dieselbe Referenz liefert. Nach dem Absenden Getipptes bleibt erhalten.
+   */
+  const reconcileSaved = useCallback(
+    (snapshot: T, canonical: T) => {
+      savedRef.current = null;
+      if (!same(valueRef.current, snapshot)) return;
+      openingRef.current = canonical;
+      setValue(canonical);
+    },
+    [setValue],
+  );
+
   const restoreOpening = useCallback(() => setValue(openingRef.current), [setValue]);
 
   return {
@@ -52,6 +76,7 @@ export function useSyncedDraft<T>(identity: string, server: T) {
     base: server,
     dirty: !same(value, server),
     markSaved,
+    reconcileSaved,
     restoreOpening,
   };
 }
