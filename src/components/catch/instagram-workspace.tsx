@@ -152,6 +152,17 @@ export function InstagramWorkspace({ item, onChanged }: Props) {
       }),
   });
 
+  const captionDirty = caption !== (item.instagram_caption ?? "");
+  const captionScope = useEditShortcuts({
+    onCommit: () =>
+      persistCaption.isPending || !captionDirty
+        ? undefined
+        : persistCaption.mutateAsync().catch(() => undefined),
+    onCancel: () => setCaption(baseRef.current),
+    busy: persistCaption.isPending,
+    enabled: !locked && canEdit,
+  });
+
   const publish = useMutation({
     mutationFn: (isRetry: boolean) =>
       isRetry
