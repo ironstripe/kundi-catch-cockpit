@@ -407,6 +407,9 @@ function HistoryPage() {
                     <TableHead className="text-right">DB II</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Post</TableHead>
+                    <TableHead className="w-8">
+                      <span className="sr-only">Öffnen</span>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -497,8 +500,18 @@ function Thumb({ row }: { row: CatchListItem }) {
 
 function HistoryRow({ row }: { row: CatchListItem }) {
   const { v, duration } = useRowValues(row);
+  const navigate = useNavigate();
   return (
-    <TableRow>
+    <TableRow
+      // Ganze Zeile führt zum Catch; der Produktname ist der einzige Tab-Stopp dafür.
+      className="cursor-pointer transition-colors hover:bg-muted/60 focus-within:bg-muted/60"
+      onClick={(event) => {
+        if ((event.target as Element).closest("a,button,input,select,textarea,[role=button]"))
+          return;
+        if (window.getSelection()?.toString()) return;
+        void navigate({ to: "/catches/$catchId", params: { catchId: row.id } });
+      }}
+    >
       <TableCell>
         <span className="flex items-center gap-2 font-mono text-xs">
           <Thumb row={row} />
@@ -564,6 +577,9 @@ function HistoryRow({ row }: { row: CatchListItem }) {
         ) : (
           <span className="text-xs text-muted-foreground">—</span>
         )}
+      </TableCell>
+      <TableCell className="w-8 text-muted-foreground">
+        <ChevronRight className="size-4" aria-hidden />
       </TableCell>
     </TableRow>
   );
