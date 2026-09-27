@@ -35,6 +35,7 @@ import {
   useEditShortcuts,
   useUnsavedChangesGuard,
 } from "@/hooks/use-edit-session";
+import { useSyncedDraft } from "@/hooks/use-synced-draft";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -342,6 +343,7 @@ function OfferCaseDetail({ caseId }: { caseId: string }) {
                   title={dossier.title}
                   disabled={busy !== null}
                   onSave={(title) => run("rename", () => renameCase({ data: { caseId, title } }))}
+                  onDirtyChange={setTitleDirty}
                 />
               ) : null}
 
@@ -648,6 +650,29 @@ function OfferCaseDetail({ caseId }: { caseId: string }) {
               }}
             >
               Catch-Entwurf erstellen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Änderungen an den Feldern verwerfen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Die Felder werden auf den Stand beim Beginn der Bearbeitung zurückgesetzt. Es wird
+              nichts gespeichert.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Weiter bearbeiten</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmDiscard(false);
+                fields.restoreOpening();
+              }}
+            >
+              Verwerfen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
