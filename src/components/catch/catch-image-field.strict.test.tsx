@@ -23,7 +23,7 @@ const db = vi.hoisted(() => ({
   uploads: [] as { path: string; contentType: string | undefined }[],
   removed: [] as string[],
   signCalls: [] as string[],
-  failSignOnce: new Set<string>(),
+  failSign: new Map<string, number>(),
   deleteAfterUpload: false,
   nextId: 1,
 }));
@@ -46,8 +46,9 @@ vi.mock("@/integrations/supabase/client", () => {
     },
     createSignedUrl: async (path: string) => {
       db.signCalls.push(path);
-      if (db.failSignOnce.has(path)) {
-        db.failSignOnce.delete(path);
+      const remaining = db.failSign.get(path) ?? 0;
+      if (remaining > 0) {
+        db.failSign.set(path, remaining - 1);
         return { data: null, error: { message: "Netzwerkfehler" } };
       }
       if (!db.objects.has(path)) return { data: null, error: { message: "Object not found" } };
@@ -181,7 +182,7 @@ beforeEach(() => {
   db.uploads = [];
   db.removed = [];
   db.signCalls = [];
-  db.failSignOnce.clear();
+  db.failSign.clear();
   db.deleteAfterUpload = false;
   db.nextId = 1;
   (URL as unknown as { createObjectURL: (blob: Blob) => string }).createObjectURL = () =>
@@ -293,7 +294,8 @@ describe("Zweites Produktbild unter StrictMode", () => {
 
   it("zeigt bei Signierfehler eine klare Meldung und lädt mit neuer URL erneut", async () => {
     const initialRows = seedOriginal();
-    db.failSignOnce.add("original.jpg");
+    // Erster Versuch + automatischer Wiederholversuch scheitern.
+    db.failSign.set("original.jpg", 2);
     renderStrict(initialRows);
 
     // Ein Wiederholversuch des Signierens, dann klare Meldung (kein Dauerspinner).
