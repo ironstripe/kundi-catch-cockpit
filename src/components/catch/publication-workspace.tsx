@@ -287,7 +287,10 @@ export function PublicationWorkspace({
   return (
     <>
       {missing.length > 0 ? (
-        <p role="status" className="rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">
+        <p
+          role="status"
+          className="rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground"
+        >
           Noch nicht erfasst: {missing.join(", ")}. Fehlende Angaben werden im generierten Text
           weggelassen. Du kannst den Post trotzdem vorbereiten.
         </p>

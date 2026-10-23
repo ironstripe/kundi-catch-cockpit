@@ -345,7 +345,11 @@ export function CatchForm({
       ) : null}
 
       {/* Während des Speicherns eingefroren: nichts nach dem Absenden Getipptes geht verloren. */}
-      <fieldset disabled={readOnly || saving} aria-busy={saving} className="m-0 min-w-0 border-0 p-0">
+      <fieldset
+        disabled={readOnly || saving}
+        aria-busy={saving}
+        className="m-0 min-w-0 border-0 p-0"
+      >
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3" {...formScope}>
           <div className="min-w-0 space-y-4 lg:col-span-2">
             <FormSection title="Produkt" description="Was wird als Catch angeboten?">

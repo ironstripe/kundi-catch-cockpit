@@ -89,4 +89,3 @@ export const draftCatch: CatchDetail = {
   instagram_permalink: null,
   instagram_error: null,
 };
-
