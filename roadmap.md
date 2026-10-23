@@ -76,7 +76,7 @@
 - [x] Musterprüfung (Ausstehend/Bestanden/Nicht bestanden) mit serverseitiger Person und Zeit, Rücksetzung bei geänderter Produktidentität
 - [x] Sounding: Prüfende wählen, unveränderlicher Steckbrief, Teams-Nachricht kopieren, Teams öffnen, Rückmeldungen, Abschluss, neue Runde
 - [x] Geschützte Review-Seite `/catches/{id}/review` inkl. Rückkehr nach der Anmeldung
-- [x] Freigabe auf «Bereit» nur nach bestandener Musterprüfung und abgeschlossenem, aktuellem Sounding (UI und Datenbank)
+- [x] Musterprüfung und Sounding sind optionale Qualitätsaufzeichnungen, keine WhatsApp-Voraussetzungen
 - [x] Einstellungs-Tab «Sounding» mit Teams-Gruppenchat-Link und Standard-Prüfenden
 - [x] Kundenkommunikation über WhatsApp unverändert
 - [ ] Teams-Gruppenchat-Link in den Einstellungen hinterlegen (nur der Admin kennt die Adresse)
@@ -91,3 +91,8 @@
 - [x] Feld «Interner Aufwand pro vorbereitete Einheit» (Standard CHF 2.50 für neue Catches, Altbestand bleibt leer)
 - [x] DB I / DB II in Vor- und Nachkalkulation, Prüfseite, Teams-Sounding, Historie, Export
 - [ ] Teams-Gruppenchat-Link unter Einstellungen › Sounding hinterlegen
+
+## WhatsApp unabhängig von Qualitätsfreigaben (2026-10-23)
+- [ ] Entwurf speichern und Vorbereitung öffnen, ohne Statuswechsel/Qualitätsgate
+- [ ] Manuelle Publikation aus Entwurf zulassen, übrige Rechte/Lifecycle erhalten
+- [ ] Gerenderte Regressionen und Gesamtsuite prüfen; keine echten Datensätze ändern
