@@ -208,7 +208,9 @@ describe("syncCatchImages", () => {
     // den Speicherpfad wieder.
     const { client, state } = fakeClient({ existing: [legacyRow], insertFails: true });
     const desired = addImages(toFormImages([legacyRow]), ["neu.jpg"]);
-    await expect(syncCatchImages(client, "c1", desired, ["a1"])).rejects.toThrow(/nicht gespeichert/);
+    await expect(syncCatchImages(client, "c1", desired, ["a1"])).rejects.toThrow(
+      /nicht gespeichert/,
+    );
 
     const retry = fakeClient({
       existing: [

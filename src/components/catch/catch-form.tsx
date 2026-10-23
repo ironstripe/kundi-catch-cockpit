@@ -211,7 +211,10 @@ export function CatchForm({
               .select("id, storage_path, is_primary, sort_order")
               .eq("catch_id", id);
             if (error) return;
-            safe = uploadsSafeToRemove(pending, (data ?? []).map((row) => row.storage_path));
+            safe = uploadsSafeToRemove(
+              pending,
+              (data ?? []).map((row) => row.storage_path),
+            );
           } catch {
             return;
           }
@@ -227,11 +230,9 @@ export function CatchForm({
     if (unmountedRef.current) {
       // Upload kam nach dem Verlassen fertig an: sofort best effort aufräumen.
       void import("@/integrations/supabase/client").then(({ supabase }) =>
-        removeStorageObjects(
-          supabase as unknown as CatchImageSyncClient,
-          CATCH_IMAGE_BUCKET,
-          [storagePath],
-        ),
+        removeStorageObjects(supabase as unknown as CatchImageSyncClient, CATCH_IMAGE_BUCKET, [
+          storagePath,
+        ]),
       );
       return;
     }
