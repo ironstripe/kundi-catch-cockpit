@@ -15,6 +15,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { CatchImageGallery } from "@/components/catch/catch-image-gallery";
 import { WhatsappPreview } from "@/components/catch/whatsapp-preview";
 import {
   AlertDialog,
@@ -42,6 +43,7 @@ import {
   ensureOptimizedImage,
   keepOutdatedPost,
   markCatchPublished,
+  prepareAllImages,
   savePostVersion,
 } from "@/lib/publication";
 import {
@@ -212,6 +214,39 @@ export function PublicationWorkspace({
     if (!prepared) return;
     const extension = prepared.blob.type === "image/png" ? "png" : "jpg";
     downloadBlob(prepared.blob, optimizedFileName(item.catch_number, item.product_name, extension));
+  }
+
+  /** Lädt alle Catch-Bilder in Reihenfolge für das manuelle Anfügen herunter. */
+  async function handleDownloadAll() {
+    if (downloadingAll) return;
+    setDownloadingAll(true);
+    try {
+      const prepared = await prepareAllImages(catchId);
+      if (prepared.length === 0) {
+        toast.error("Keine Bilder vorhanden.");
+        return;
+      }
+      for (const [index, entry] of prepared.entries()) {
+        const extension = entry.blob.type === "image/png" ? "png" : "jpg";
+        const single = optimizedFileName(item.catch_number, item.product_name, extension);
+        const name =
+          index === 0
+            ? single
+            : single.replace(new RegExp(`\\.${extension}$`), `-${index + 1}.${extension}`);
+        downloadBlob(entry.blob, name);
+        // Browser drosseln mehrere gleichzeitige Downloads — kurz warten.
+        await new Promise((resolve) => window.setTimeout(resolve, 400));
+      }
+      toast.success(`${prepared.length} Bild${prepared.length === 1 ? "" : "er"} heruntergeladen`, {
+        description: "Jetzt alle Dateien in WhatsApp anfügen.",
+      });
+    } catch (error) {
+      toast.error("Bilder konnten nicht heruntergeladen werden", {
+        description: error instanceof Error ? error.message : "Unbekannter Fehler.",
+      });
+    } finally {
+      setDownloadingAll(false);
+    }
   }
 
   async function handleCopyText(text: string) {
