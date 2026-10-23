@@ -53,15 +53,16 @@ import { calculateCatch } from "@/lib/catch-calculation";
 import { validateDraft, validateReady, type FieldIssue } from "@/lib/catch-validation";
 import {
   abandonedUploads,
+  cleanupAbandonedUploads,
   imagesDirty,
   removeStorageObjects,
   syncCatchImages,
   toFormImages,
-  uploadsSafeToRemove,
   type CatchImageRecord,
   type CatchImageSyncClient,
   type FormCatchImage,
 } from "@/lib/catch-images";
+import { useSessionUploads } from "@/hooks/use-session-uploads";
 import {
   CATCH_IMAGE_BUCKET,
   fetchLocations,
