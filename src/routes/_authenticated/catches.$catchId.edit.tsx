@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { catchDetailToForm, fetchCatch } from "@/lib/catches";
-import { currentRound, fetchReviewRounds, readyBlockReason } from "@/lib/sounding";
 
 export const Route = createFileRoute("/_authenticated/catches/$catchId/edit")({
   head: () => ({
@@ -18,9 +17,11 @@ export const Route = createFileRoute("/_authenticated/catches/$catchId/edit")({
       {
         name: "description",
         content:
-          "Bestehenden Catch bearbeiten: Angaben ergänzen, Produktbild ersetzen und Status auf Bereit setzen.",
+          "Bestehenden Catch bearbeiten: Angaben und Produktbilder ergänzen und einen WhatsApp-Post vorbereiten.",
       },
       { property: "og:title", content: "Catch bearbeiten — Food Catch Cockpit" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         property: "og:description",
         content: "Bearbeitungsmaske für einen bestehenden Food Catch.",
@@ -35,10 +36,6 @@ function EditCatchPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["catch", catchId], queryFn: () => fetchCatch(catchId) });
-  const rounds = useQuery({
-    queryKey: ["review-rounds", catchId],
-    queryFn: () => fetchReviewRounds(catchId),
-  });
 
   if (query.isLoading) return <Skeleton className="h-64 w-full" />;
 
@@ -87,7 +84,6 @@ function EditCatchPage() {
         item={item}
         onChanged={() => {
           void queryClient.invalidateQueries({ queryKey: ["catch", catchId] });
-          void rounds.refetch();
         }}
       />
 
@@ -97,21 +93,13 @@ function EditCatchPage() {
         initialValues={catchDetailToForm(item)}
         initialImages={item.images}
         currentStatus={item.status}
-        readyBlock={
-          item.status === "draft"
-            ? readyBlockReason(
-                item.sample_check_status,
-                rounds.data ? currentRound(rounds.data) : null,
-              )
-            : null
-        }
-        onSaved={(id, savedStatus) => {
+        onSaved={(id, _savedStatus, preparePost) => {
           void queryClient.invalidateQueries({ queryKey: ["catch", id] });
           void queryClient.invalidateQueries({ queryKey: ["catches"] });
           void navigate({
             to: "/catches/$catchId",
             params: { catchId: id },
-            ...(savedStatus === "ready" ? { hash: "publikation" } : {}),
+            ...(preparePost ? { hash: "publikation" } : {}),
           });
         }}
       />

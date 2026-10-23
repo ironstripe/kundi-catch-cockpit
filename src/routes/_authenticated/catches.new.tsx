@@ -17,6 +17,8 @@ export const Route = createFileRoute("/_authenticated/catches/new")({
           "Neuen Catch erfassen: Produkt, Produktbild, Beschaffung, Verkaufspreis, Aktion und Handicap-Story.",
       },
       { property: "og:title", content: "Neuer Catch — Food Catch Cockpit" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         property: "og:description",
         content: "Erfassungsmaske für einen neuen Catch des Kundelfingerhofs.",
@@ -48,11 +50,11 @@ function NewCatchPage() {
             settings.data?.calculation_defaults.internal_handling_cost_per_unit ?? null,
           )}
           initialImages={[]}
-          onSaved={(catchId, savedStatus) =>
+          onSaved={(catchId, _savedStatus, preparePost) =>
             void navigate({
               to: "/catches/$catchId",
               params: { catchId },
-              ...(savedStatus === "ready" ? { hash: "publikation" } : {}),
+              ...(preparePost ? { hash: "publikation" } : {}),
             })
           }
         />
