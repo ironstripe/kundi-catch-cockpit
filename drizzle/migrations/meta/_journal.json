@@ -8,6 +8,13 @@
       "when": 1790261908500,
       "tag": "0000_audit_case_and_image_transfer_actions",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792766145012,
+      "tag": "0001_optional_quality_manual_publication",
+      "breakpoints": true
     }
   ]
 }
