@@ -891,7 +891,7 @@ export function CatchForm({
               <CatchImagesField
                 images={images}
                 onChange={setImages}
-                onUploaded={(storagePath) => uploadedRef.current.add(storagePath)}
+                onUploaded={handleUploaded}
                 onUploadingChange={setUploading}
                 invalid={Boolean(issueFor("product_image"))}
               />
