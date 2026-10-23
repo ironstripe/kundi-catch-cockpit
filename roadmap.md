@@ -93,6 +93,6 @@
 - [ ] Teams-Gruppenchat-Link unter Einstellungen › Sounding hinterlegen
 
 ## WhatsApp unabhängig von Qualitätsfreigaben (2026-10-23)
-- [ ] Entwurf speichern und Vorbereitung öffnen, ohne Statuswechsel/Qualitätsgate
-- [ ] Manuelle Publikation aus Entwurf zulassen, übrige Rechte/Lifecycle erhalten
-- [ ] Gerenderte Regressionen und Gesamtsuite prüfen; keine echten Datensätze ändern
+- [x] Entwurf speichern und Vorbereitung öffnen, ohne Statuswechsel/Qualitätsgate
+- [x] Manuelle Publikation aus Entwurf zulassen, übrige Rechte/Lifecycle erhalten
+- [x] Gerenderte Regressionen und Gesamtsuite prüfen; keine echten Datensätze ändern (249 Tests; angemeldeter Browser-Test nicht verfügbar)

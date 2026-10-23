@@ -59,9 +59,9 @@ Page guards (one per page):
 |---|---|---|---|---|
 | Catch form, new | multi-field route form | "Als Entwurf speichern" → draft | same ordinary save (draft) | leave with confirmation, no write |
 | Catch form, existing draft | same | "Als Entwurf speichern" → draft | same | same |
-| Catch form, existing ready | same | "Änderungen speichern" → keeps ready, with the existing ready validation, sample check/Sounding lock and critical-calculation confirmation | same | same |
+| Catch form, existing ready | same | "Änderungen speichern" → keeps ready, with existing commercial validation and critical-calculation confirmation; quality records are optional | same | same |
 | Catch form, published | same | "Änderungen speichern"; `saveCatch` keeps published | same | same |
-| Catch form, prepare CTA | separate intent | "Speichern und WhatsApp-Post vorbereiten" | never | – |
+| Catch form, prepare CTA | separate intent | "Speichern und WhatsApp-Post vorbereiten" → draft/current status, draft validation, opens publication without a quality or calculation prerequisite | never | – |
 | Dossier fields | multi-field form | "Änderungen speichern" | same | confirm, then restore opening values (no write) |
 | Dossier title | pencil session | "Fertig", closes only on success | same | restores the opening value; ignored while saving |
 | WhatsApp text | freeform | "Text sichern" (text only) | same | restores the session opening text |
@@ -81,12 +81,13 @@ Conversion: the misleading hint is gone. The final CTA is "Catch-Entwurf erstell
 History (§8): the whole row navigates. The product name is the only link and the only tab stop for the row. The row has hover and focus-within states and a chevron. "Post ansehen" stays a separate destination, and clicks on it do not trigger the row.
 
 Verification:
-- 237 vitest tests pass (incl. rendered StrictMode regression for the second manual photo — effect replay keeps the new upload, save/reload keeps both in order, true discard deletes only unreferenced session uploads, late upload after unmount cleaned up, signed-URL and `<img>` load errors show «Bild konnte nicht geladen werden» with «Erneut laden»; same-value normalised save acknowledgement via `reconcileSaved`, typing after submit retained, dirty contribution cleared on editor unmount, multi-image form helpers and `syncCatchImages` append/order/remove/retry — non-destructive order (updates, inserts, then baseline-scoped removals), insert failure preserves prior rows/storage, concurrently added rows survive, session-upload cleanup excludes referenced paths — dossier-image append mode).
+- 249 vitest tests pass (18 files, 2026-10-23), including 12 new draft preparation/publication regressions. Existing rendered StrictMode second-photo, save/reload, safe discard, late upload, image retry, normalised acknowledgement, dirty unmount, collection persistence and dossier append tests remain green.
 - Multi-image product photos (2026-10-23): the Catch form manages the full `catch_images` collection — append-only uploads, main-image choice, reordering, individual removal; persistence and cleanup happen only on confirmed save (discard preserves saved images), and a partially created Catch is retried via its remembered id. Detail, review, and publication show all images in order; "Alle Bilder herunterladen" fetches every image for manual WhatsApp attachment (text clipboard never implies images). Converted dossiers can append selected photos without touching existing Catch images.
 - CatchForm fields are frozen (`fieldset disabled`) during the ordinary save; the leave guard stays active.
 - Consumer tests render the real `CaseTitleEditor`: focus, commit once, rejected/failed save, Esc while pending.
 - Hook tests cover `useSyncedDraft` (same-id vs different-id, save sequencing) and the pure `ordinarySaveStatus`/`ordinarySaveLabel`.
 - Router-harness tests cover `useUnsavedChangesGuard`: block/stay/proceed/post-save, title-only dirty, aggregated second source standing in for Instagram.
-- CatchForm, the dossier page and the WhatsApp/Instagram workspaces themselves are **not** rendered in tests; button and shortcut share `saveOrdinary()` by code.
-- Typecheck is clean.
+- CatchForm and PublicationWorkspace are now rendered together in isolated consumer tests: pending/failed/passed sample without Sounding, save/open/copy/text save, separate publication confirmation, omitted unknown customer data, two-image preservation, current-status preservation, and Viewer/closed/cancelled read-only. The dossier page and Instagram workspace are not rendered as whole-page tests.
+- The actual new migration runs in isolated PostgreSQL tests: draft→published with no quantity/reviews, truthful sample state/audit, optional quality on ready, positive quantity for ready/close, cancelled immutability and admin/reason checks for reopening. Production RLS is unchanged (verified by read-only inspection); these isolated tests are not authenticated production E2E.
+- Touched-file lint: 0 errors, 0 warnings. Automatic preview build reports build OK; no manual production build or typecheck was run (managed by the platform).
 - No authenticated browser session was available, so real Catch and supplier-image E2E flows and signed-in widths are **not** verified.
