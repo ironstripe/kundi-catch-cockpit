@@ -68,7 +68,6 @@ function ReviewPage() {
     queryKey: ["review-rounds", catchId],
     queryFn: () => fetchReviewRounds(catchId),
   });
-  const image = useSignedImage(catchQuery.data?.image_path);
 
   const [decision, setDecision] = useState<ReviewDecision | null>(null);
   const [comment, setComment] = useState("");
@@ -161,19 +160,10 @@ function ReviewPage() {
               <CardTitle className="text-section-title">Produkt</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="aspect-[4/3] w-full overflow-hidden rounded-md border bg-muted/30">
-                {image.data ? (
-                  <img
-                    src={image.data}
-                    alt={`Produktbild von ${item.product_name}`}
-                    className="size-full object-cover"
-                  />
-                ) : (
-                  <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
-                    Kein Bild hinterlegt
-                  </div>
-                )}
-              </div>
+              <CatchImageGallery
+                images={item.images}
+                alt={`Produktbild von ${item.product_name}`}
+              />
               <Row label="Produkt" value={item.product_name} />
               <Row label="Artikelnummer" value={item.article_number} />
               <Row label="Lieferant" value={item.supplier_name} />
