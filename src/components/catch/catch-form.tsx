@@ -150,6 +150,12 @@ export function CatchForm({
   // Merkt sich die Id nach einem Teilerfolg (z. B. Bild-Synchronisierung
   // fehlgeschlagen): ein erneuter Versuch aktualisiert statt neu anzulegen.
   const catchIdRef = useRef<string | undefined>(catchId);
+  // Nach dem Unmount fertig hochgeladene Objekte sofort aufräumen,
+  // statt als Waisen liegen zu lassen.
+  const unmountedRef = useRef(false);
+  // Beim Laden bekannte Bild-Datensätze: nur bewusste Entfernungen dieser
+  // Datensätze werden gespeichert — nebenläufig Hinzugefügtes bleibt.
+  const baselineIds = useMemo(() => initialImages.map((row) => row.id), [initialImages]);
 
   const settings = useQuery({ queryKey: ["app-settings"], queryFn: fetchAppSettings });
   const defaultVatRate = settings.data?.vat.rate ?? DEFAULT_VAT_RATE;
