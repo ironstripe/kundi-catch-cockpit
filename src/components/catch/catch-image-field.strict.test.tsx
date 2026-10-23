@@ -24,6 +24,7 @@ const db = vi.hoisted(() => ({
   removed: [] as string[],
   signCalls: [] as string[],
   failSignOnce: new Set<string>(),
+  deleteAfterUpload: false,
   nextId: 1,
 }));
 
@@ -33,6 +34,7 @@ vi.mock("@/integrations/supabase/client", () => {
       const contentType = options?.contentType ?? file.type;
       db.objects.set(path, { contentType, size: file.size });
       db.uploads.push({ path, contentType });
+      if (db.deleteAfterUpload) db.objects.delete(path);
       return { data: { path }, error: null };
     },
     remove: async (paths: string[]) => {
@@ -180,6 +182,7 @@ beforeEach(() => {
   db.removed = [];
   db.signCalls = [];
   db.failSignOnce.clear();
+  db.deleteAfterUpload = false;
   db.nextId = 1;
   (URL as unknown as { createObjectURL: (blob: Blob) => string }).createObjectURL = () =>
     "blob:local-preview";
@@ -293,7 +296,8 @@ describe("Zweites Produktbild unter StrictMode", () => {
     db.failSignOnce.add("original.jpg");
     renderStrict(initialRows);
 
-    await screen.findByText("Bild konnte nicht geladen werden");
+    // Ein Wiederholversuch des Signierens, dann klare Meldung (kein Dauerspinner).
+    await screen.findByText("Bild konnte nicht geladen werden", undefined, { timeout: 4000 });
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Erneut laden" }));
     });
@@ -327,11 +331,10 @@ describe("Zweites Produktbild unter StrictMode", () => {
   });
 
   it("macht ein gelöschtes Objekt sichtbar statt es hinter der lokalen Vorschau zu verstecken", async () => {
+    // Modelliert den alten Fehler: Objekt wird direkt nach dem Upload gelöscht.
+    db.deleteAfterUpload = true;
     const { container } = renderStrict([]);
     await chooseFiles(container, [jpeg("weg.jpg")]);
-    const uploaded = db.uploads[0]!.path;
-    // Objekt verschwindet serverseitig (z. B. fremde Löschung).
-    db.objects.delete(uploaded);
-    await screen.findByText("Bild konnte nicht geladen werden");
+    await screen.findByText("Bild konnte nicht geladen werden", undefined, { timeout: 4000 });
   });
 });
