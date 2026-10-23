@@ -46,7 +46,7 @@ const felchen: PostSource = {
   image_path: "bild.jpg",
 };
 
-const expected = `🐟 *FOOD CATCH*
+const expected = `🐟 *FOOD CATCH* - Bitte teilt, diesen Beitrag, damit wir möglichst viel retten können😍👌
 
 *Guter Fisch. Kleines Handicap. Grosser Fang.*
 
@@ -139,9 +139,12 @@ describe("generatePostText", () => {
     expect(text).not.toContain("günstiger");
   });
 
-  it("behält Emojis und Zeilenumbrüche", () => {
+  it("behält Emojis, Zeilenumbrüche und den Appell im Header", () => {
     const text = generatePostText(felchen);
-    expect(text.startsWith("🐟 *FOOD CATCH*")).toBe(true);
+    const header =
+      "🐟 *FOOD CATCH* - Bitte teilt, diesen Beitrag, damit wir möglichst viel retten können😍👌";
+    expect(text.startsWith(header)).toBe(true);
+    expect(text.match(/Bitte teilt, diesen Beitrag/g)).toHaveLength(1);
     expect(text.split("\n").length).toBeGreaterThan(15);
   });
 
