@@ -85,7 +85,7 @@ describe("Einstellungen › WhatsApp-Vorlage", () => {
   it("Viewer sieht die Vorlage nur lesend", async () => {
     mocks.isAdmin = false;
     renderSection();
-    expect((await title()).disabled).toBe(true);
+    expect((await title()).closest("fieldset")?.disabled).toBe(true);
     expect(screen.queryByRole("button", { name: "Speichern" })).toBeNull();
   });
 
