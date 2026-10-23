@@ -203,7 +203,7 @@ describe("syncCatchImages", () => {
     // Erster Versuch: Einfügen schlägt fehl, der Datensatz existiert aber schon
     // (z. B. vor dem Abbruch angelegt) — der zweite Versuch erkennt ihn über
     // den Speicherpfad wieder.
-    const { client, state } = fakeClient({ insertFails: true });
+    const { client, state } = fakeClient({ existing: [legacyRow], insertFails: true });
     const desired = addImages(toFormImages([legacyRow]), ["neu.jpg"]);
     await expect(syncCatchImages(client, "c1", desired)).rejects.toThrow(/nicht gespeichert/);
 
