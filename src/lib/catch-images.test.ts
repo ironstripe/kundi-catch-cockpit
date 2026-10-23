@@ -9,6 +9,7 @@ import {
   removeImage,
   syncCatchImages,
   toFormImages,
+  uploadsSafeToRemove,
   type CatchImageRecord,
   type CatchImageSyncClient,
 } from "@/lib/catch-images";
@@ -150,7 +151,7 @@ describe("syncCatchImages", () => {
   it("fügt ein zweites Bild hinzu, ohne das erste zu ersetzen", async () => {
     const { client, state } = fakeClient({ existing: [legacyRow] });
     const desired = addImages(toFormImages([legacyRow]), ["neu.jpg"]);
-    const result = await syncCatchImages(client, "c1", desired);
+    const result = await syncCatchImages(client, "c1", desired, ["a1"]);
     expect(result).toEqual({ inserted: 1, removed: 0, updated: 0 });
     expect(state.rows.map((row) => row.storage_path)).toEqual(["altes-bild.jpg", "neu.jpg"]);
     expect(state.rows.find((row) => row.storage_path === "altes-bild.jpg")?.is_primary).toBe(true);
@@ -164,7 +165,7 @@ describe("syncCatchImages", () => {
     ];
     const { client, state } = fakeClient({ existing: rows });
     const desired = makePrimary(toFormImages(rows), "a2");
-    const result = await syncCatchImages(client, "c1", desired);
+    const result = await syncCatchImages(client, "c1", desired, ["a1", "a2"]);
     expect(result.updated).toBe(2);
     expect(state.rows.find((row) => row.id === "a2")).toMatchObject({
       is_primary: true,
@@ -183,7 +184,7 @@ describe("syncCatchImages", () => {
     ];
     const { client, state } = fakeClient({ existing: rows });
     const desired = removeImage(toFormImages(rows), "a2");
-    const result = await syncCatchImages(client, "c1", desired);
+    const result = await syncCatchImages(client, "c1", desired, ["a1", "a2"]);
     expect(result.removed).toBe(1);
     expect(state.rows.map((row) => row.id)).toEqual(["a1"]);
     expect(state.removed).toEqual(["zwei.jpg"]);
@@ -196,7 +197,7 @@ describe("syncCatchImages", () => {
     ];
     const { client, state } = fakeClient({ existing: rows, deleteFails: true });
     await expect(
-      syncCatchImages(client, "c1", removeImage(toFormImages(rows), "a2")),
+      syncCatchImages(client, "c1", removeImage(toFormImages(rows), "a2"), ["a1", "a2"]),
     ).rejects.toThrow(/nicht entfernt/);
     expect(state.removed).toEqual([]);
   });
