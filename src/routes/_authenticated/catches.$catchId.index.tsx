@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Pencil, Scale } from "lucide-react";
+import { ArrowLeft, Pencil, Scale, MessageSquare } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { CalculationCard } from "@/components/catch/calculation-card";
@@ -42,6 +42,8 @@ export const Route = createFileRoute("/_authenticated/catches/$catchId/")({
           "Alle Angaben zu einem Catch: Produkt, Beschaffung, Preise, Standorte, Verfügbarkeit und Handicap-Story.",
       },
       { property: "og:title", content: "Catch-Detail — Food Catch Cockpit" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         property: "og:description",
         content: "Detailansicht eines Food Catch mit allen erfassten Angaben.",
@@ -137,6 +139,14 @@ function CatchDetailPage() {
                 <a href="#nachkalkulation">
                   <Scale />
                   Catch abschliessen
+                </a>
+              </Button>
+            ) : null}
+            {canEdit && (item.status === "draft" || item.status === "ready") ? (
+              <Button asChild>
+                <a href="#publikation">
+                  <MessageSquare />
+                  WhatsApp-Post erstellen
                 </a>
               </Button>
             ) : null}
@@ -281,7 +291,7 @@ function CatchDetailPage() {
       <PageSection
         id="musterpruefung"
         title="Musterprüfung"
-        description="Vor dem internen Sounding muss ein aufgetautes Produktmuster geprüft werden."
+        description="Optionale Qualitätsaufzeichnung — unabhängig von der WhatsApp-Vorbereitung."
       >
         <SampleCheckCard item={item} onChanged={invalidate} />
       </PageSection>
@@ -308,21 +318,6 @@ function CatchDetailPage() {
 
         {item.status === "closed" || item.status === "cancelled" ? (
           <PublishedPostCard item={item} />
-        ) : item.status === "draft" ? (
-          <Card>
-            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
-              <p className="text-sm text-muted-foreground">
-                Sobald der Catch vollständig und auf «Bereit» gesetzt ist, wird hier der
-                WhatsApp-Post erstellt.
-              </p>
-              <Button size="sm" asChild>
-                <Link to="/catches/$catchId/edit" params={{ catchId }}>
-                  <Pencil />
-                  Catch vervollständigen und WhatsApp-Post vorbereiten
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
         ) : canEdit ? (
           <PublicationWorkspace
             key={item.id}

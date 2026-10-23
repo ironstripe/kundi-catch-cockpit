@@ -52,7 +52,12 @@ import {
   optimizedFileName,
   supportsTextClipboard,
 } from "@/lib/whatsapp-image";
-import { generatePostText, isTemplateOnlyChange, postSourceSignature } from "@/lib/whatsapp-post";
+import {
+  generatePostText,
+  isTemplateOnlyChange,
+  missingPostDetails,
+  postSourceSignature,
+} from "@/lib/whatsapp-post";
 
 const WHATSAPP_WEB_URL = "https://web.whatsapp.com";
 
@@ -80,6 +85,7 @@ export function PublicationWorkspace({
   const source = useMemo(() => catchToPostSource(item), [item]);
   const generated = useMemo(() => generatePostText(source), [source]);
   const signature = useMemo(() => postSourceSignature(source), [source]);
+  const missing = missingPostDetails(source);
 
   const [confirm, setConfirm] = useState<null | "regenerate" | "reset" | "publish">(null);
   const [downloadingAll, setDownloadingAll] = useState(false);
@@ -280,6 +286,15 @@ export function PublicationWorkspace({
 
   return (
     <>
+      {missing.length > 0 ? (
+        <p
+          role="status"
+          className="rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground"
+        >
+          Noch nicht erfasst: {missing.join(", ")}. Fehlende Angaben werden im generierten Text
+          weggelassen. Du kannst den Post trotzdem vorbereiten.
+        </p>
+      ) : null}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         {/* Linke Spalte: Inhalt und Text */}
         <div className="space-y-4">

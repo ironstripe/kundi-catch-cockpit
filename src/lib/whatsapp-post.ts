@@ -131,6 +131,20 @@ function clean(value: string | null | undefined): string | null {
   return trimmed === "" ? null : trimmed;
 }
 
+/** Nicht blockierend: nur fehlende Kundendaten, keine internen Prüfungen. */
+export function missingPostDetails(source: PostSource): string[] {
+  const missing: string[] = [];
+  if (
+    source.catch_price === null ||
+    !Number.isFinite(source.catch_price) ||
+    source.catch_price <= 0
+  )
+    missing.push("Catch-Preis");
+  if (!source.locations.some((location) => location.name.trim())) missing.push("Abholort");
+  if (!source.available_from) missing.push("Verfügbarkeit");
+  return missing;
+}
+
 /**
  * Erzeugt den vollständigen WhatsApp-Text.
  * Optionale Zeilen ohne Wert entfallen restlos.

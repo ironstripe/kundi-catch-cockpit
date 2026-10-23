@@ -63,6 +63,7 @@ import {
   type FormCatchImage,
 } from "@/lib/catch-images";
 import { useSessionUploads } from "@/hooks/use-session-uploads";
+import { useRoles } from "@/hooks/use-role";
 import {
   CATCH_IMAGE_BUCKET,
   fetchLocations,
@@ -89,12 +90,7 @@ interface CatchFormProps {
   initialImages: CatchImageRecord[];
   /** Aktueller Status, damit ein publizierter Catch beim Speichern publiziert bleibt. */
   currentStatus?: "draft" | "ready" | "published" | "closed" | "cancelled";
-  /**
-   * Grund, weshalb der Catch nicht auf «Bereit» gesetzt werden darf
-   * (Musterprüfung oder Sounding offen). Verbindlich prüft die Datenbank.
-   */
-  readyBlock?: string | null;
-  onSaved: (catchId: string, savedStatus: "draft" | "ready") => void;
+  onSaved: (catchId: string, savedStatus: "draft" | "ready", preparePost?: boolean) => void;
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -124,10 +120,11 @@ export function CatchForm({
   initialValues,
   initialImages,
   currentStatus,
-  readyBlock = null,
   onSaved,
 }: CatchFormProps) {
   const navigate = useNavigate();
+  const { canEdit } = useRoles();
+  const readOnly = !canEdit || currentStatus === "closed" || currentStatus === "cancelled";
 
   const baseline = useMemo(
     () => ({
@@ -208,13 +205,13 @@ export function CatchForm({
    * Prüfungen). Ein Entwurf wird dadurch nie «Bereit».
    */
   function saveOrdinary() {
-    if (saving || uploading) return;
+    if (readOnly || saving || uploading) return;
     return persist(ordinaryIntent);
   }
   const formScope = useEditShortcuts({
     onCommit: saveOrdinary,
     onCancel: handleLeave,
-    busy: saving || uploading,
+    busy: readOnly || saving || uploading,
   });
 
   function set<K extends keyof CatchFormValues>(key: K, value: CatchFormValues[K]) {
@@ -233,13 +230,16 @@ export function CatchForm({
     (element as HTMLElement | null)?.focus?.();
   }
 
-  async function persist(status: "draft" | "ready", confirmedCritical = false) {
-    if (status === "ready" && readyBlock) {
-      toast.error("Freigabe nicht möglich", { description: readyBlock });
-      return;
-    }
+  async function persist(
+    status: "draft" | "ready",
+    confirmedCritical = false,
+    preparePost = false,
+  ) {
+    if (readOnly || saving || uploading) return;
     const found =
-      status === "draft" ? validateDraft(values) : validateReady(values, images.length > 0);
+      preparePost || status === "draft"
+        ? validateDraft(values)
+        : validateReady(values, images.length > 0);
     setIssues(found);
     if (found.length > 0) {
       focusFirst(found);
@@ -251,7 +251,7 @@ export function CatchForm({
       return;
     }
 
-    if (status === "ready" && calculation.level === "red" && !confirmedCritical) {
+    if (!preparePost && status === "ready" && calculation.level === "red" && !confirmedCritical) {
       setCriticalOpen(true);
       return;
     }
@@ -289,7 +289,7 @@ export function CatchForm({
           : "Catch ist bereit",
         { description: `Zeitstempel und Nutzer wurden erfasst.` },
       );
-      onSaved(id, status);
+      onSaved(id, status, preparePost);
     } catch (error) {
       toast.error("Speichern fehlgeschlagen", {
         description: error instanceof Error ? error.message : "Unbekannter Fehler.",
@@ -345,7 +345,11 @@ export function CatchForm({
       ) : null}
 
       {/* Während des Speicherns eingefroren: nichts nach dem Absenden Getipptes geht verloren. */}
-      <fieldset disabled={saving} aria-busy={saving} className="m-0 min-w-0 border-0 p-0">
+      <fieldset
+        disabled={readOnly || saving}
+        aria-busy={saving}
+        className="m-0 min-w-0 border-0 p-0"
+      >
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3" {...formScope}>
           <div className="min-w-0 space-y-4 lg:col-span-2">
             <FormSection title="Produkt" description="Was wird als Catch angeboten?">
@@ -846,7 +850,7 @@ export function CatchForm({
           <div className="space-y-4">
             <FormSection
               title="Produktbilder"
-              description="Ein Hauptbild ist für den Status «Bereit» erforderlich. Weitere Fotos sind optional."
+              description="Produktbilder sind optional. Das Hauptbild wird beim Kopieren verwendet."
             >
               <CatchImagesField
                 images={images}
@@ -933,16 +937,12 @@ export function CatchForm({
               <Button
                 type="button"
                 className="h-auto w-full whitespace-normal py-2 text-center"
-                disabled={saving || uploading || Boolean(readyBlock)}
-                title={readyBlock ?? undefined}
-                onClick={() => void persist("ready")}
+                disabled={saving || uploading}
+                onClick={() => void persist(ordinaryIntent, false, true)}
               >
                 <CheckCircle2 />
                 Speichern und WhatsApp-Post vorbereiten
               </Button>
-              {readyBlock ? (
-                <p className="text-[11px] font-medium text-muted-foreground">{readyBlock}</p>
-              ) : null}
               <Button
                 type="button"
                 variant="secondary"
