@@ -120,7 +120,7 @@ export function CatchForm({
   mode,
   catchId,
   initialValues,
-  initialImagePath,
+  initialImages,
   currentStatus,
   readyBlock = null,
   onSaved,
@@ -137,13 +137,19 @@ export function CatchForm({
   );
 
   const [values, setValues] = useState<CatchFormValues>(baseline);
-  const [imagePath, setImagePath] = useState<string | null>(initialImagePath);
+  const [images, setImages] = useState<FormCatchImage[]>(() => toFormImages(initialImages));
   const [uploading, setUploading] = useState(false);
   const [issues, setIssues] = useState<FieldIssue[]>([]);
   const [saving, setSaving] = useState(false);
   const [criticalOpen, setCriticalOpen] = useState(false);
   const [storyTouched, setStoryTouched] = useState(Boolean(initialValues.handicap_story));
   const savedRef = useRef(false);
+  // Frisch hochgeladene Objekte dieser Sitzung: werden beim Speichern
+  // referenziert oder beim Verlassen aufgeräumt — nie vorher gelöscht.
+  const uploadedRef = useRef<Set<string>>(new Set());
+  // Merkt sich die Id nach einem Teilerfolg (z. B. Bild-Synchronisierung
+  // fehlgeschlagen): ein erneuter Versuch aktualisiert statt neu anzulegen.
+  const catchIdRef = useRef<string | undefined>(catchId);
 
   const settings = useQuery({ queryKey: ["app-settings"], queryFn: fetchAppSettings });
   const defaultVatRate = settings.data?.vat.rate ?? DEFAULT_VAT_RATE;
