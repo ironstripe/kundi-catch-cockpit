@@ -119,7 +119,8 @@ function OfferCaseDetail({ caseId }: { caseId: string }) {
   const [mergeOpen, setMergeOpen] = useState(false);
   const [imageChoice, setImageChoice] = useState<ImageChoice>(null);
   const [convertError, setConvertError] = useState<string | null>(null);
-  const [confirmReplace, setConfirmReplace] = useState(false);
+  /** Bild-Ids, die dem bereits konvertierten Catch angefügt werden sollen. */
+  const [appendIds, setAppendIds] = useState<string[]>([]);
   const [titleDirty, setTitleDirty] = useState(false);
 
   const serverValues = useMemo(
@@ -213,18 +214,48 @@ function OfferCaseDetail({ caseId }: { caseId: string }) {
     enabled: editable,
   });
 
-  async function transferImage(replace: boolean) {
-    if (!chosenImage) return;
-    setBusy("transfer");
+  function toggleAppend(id: string) {
+    setAppendIds((current) =>
+      current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id],
+    );
+  }
+
+  /**
+   * Fügt die gewählten Dossier-Bilder dem bereits konvertierten Catch hinzu.
+   * Bestehende Catch-Bilder bleiben unverändert; fehlgeschlagene Bilder
+   * bleiben ausgewählt und sind sicher wiederholbar.
+   */
+  async function appendSelected() {
+    const target = dossier?.converted_catch_id;
+    if (!target || appendIds.length === 0) return;
+    setBusy("append");
+    let succeeded = 0;
+    const failed: string[] = [];
     try {
-      const result = await transferCaseImageToCatch({
-        data: { caseId, attachmentId: chosenImage.id, replace },
-      });
-      toast.success(result.message);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Übernahme fehlgeschlagen.";
-      if (message.includes(CATCH_IMAGE_EXISTS_MARKER)) setConfirmReplace(true);
-      else toast.error(message);
+      for (const attachmentId of appendIds) {
+        try {
+          await transferCaseImageToCatch({ data: { caseId, attachmentId, append: true } });
+          succeeded += 1;
+        } catch {
+          failed.push(attachmentId);
+        }
+      }
+      if (succeeded > 0) {
+        await queryClient.invalidateQueries({ queryKey: ["catch", target] });
+        await queryClient.invalidateQueries({ queryKey: ["catches"] });
+      }
+      if (failed.length === 0) {
+        toast.success(
+          `${succeeded} Bild${succeeded === 1 ? "" : "er"} in den Catch übernommen.`,
+        );
+      } else if (succeeded === 0) {
+        toast.error("Bilder konnten nicht übernommen werden. Bitte erneut versuchen.");
+      } else {
+        toast.warning(
+          `${succeeded} von ${succeeded + failed.length} Bildern übernommen — die übrigen bleiben ausgewählt und können erneut übernommen werden.`,
+        );
+      }
+      setAppendIds(failed);
     } finally {
       setBusy(null);
     }
