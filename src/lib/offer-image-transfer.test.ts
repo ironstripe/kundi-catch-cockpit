@@ -95,6 +95,23 @@ describe("transferImageToCatch", () => {
     expect(state.rows.map((row) => row.id)).not.toContain("old");
   });
 
+  it("fügt mit append ein zweites Bild hinten an, ohne Bestehendes zu löschen", async () => {
+    const { client, state } = fakeClient({ existing: [{ id: "old", storage_path: "old.jpg" }] });
+    const result = await transferImageToCatch(client, { ...base, append: true });
+    expect(result.appended).toBe(true);
+    expect(result.replaced).toBe(0);
+    expect(state.removed).toEqual([]);
+    expect(state.rows.map((row) => row.storage_path)).toEqual(["old.jpg", "c1/x-Crevetten_2.jpg"]);
+  });
+
+  it("verlangt im append-Modus keine Bestätigung und legt kein Ersatz-Löschen an", async () => {
+    const { client, state } = fakeClient({ existing: [{ id: "old", storage_path: "old.jpg" }] });
+    await expect(transferImageToCatch(client, base)).rejects.toThrow(CATCH_IMAGE_EXISTS_MARKER);
+    expect(state.rows).toHaveLength(1);
+    await transferImageToCatch(client, { ...base, append: true });
+    expect(state.rows).toHaveLength(2);
+  });
+
   it("lehnt Nicht-Bilder ab", async () => {
     const { client } = fakeClient({});
     await expect(
