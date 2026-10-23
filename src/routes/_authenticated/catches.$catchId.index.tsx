@@ -22,7 +22,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { UnsavedChangesDialog, useUnsavedChangesGuard } from "@/hooks/use-edit-session";
 import { useRoles } from "@/hooks/use-role";
-import { useSignedImage } from "@/hooks/use-signed-image";
 import { WHATSAPP_STATUS_LABELS, whatsappStatus } from "@/lib/whatsapp-status";
 import {
   HANDICAP_REASON_LABELS,
