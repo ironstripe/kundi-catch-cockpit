@@ -56,21 +56,31 @@ async function download(path: string): Promise<Blob> {
   return data;
 }
 
-/**
- * Liefert die WhatsApp-optimierte Bildvariante und erzeugt sie bei Bedarf.
- * Das Original wird nie überschrieben; bei Fehlern dient es als Fallback.
- */
-export async function ensureOptimizedImage(catchId: string): Promise<PreparedImage | null> {
-  const { data: rows, error } = await supabase
+interface CatchImageRow {
+  id: string;
+  storage_path: string;
+  optimized_path: string | null;
+  optimized_source_path: string | null;
+}
+
+/** Alle Bilder des Catches in Reihenfolge (Hauptbild zuerst). */
+async function fetchCatchImageRows(catchId: string): Promise<CatchImageRow[]> {
+  const { data, error } = await supabase
     .from("catch_images")
     .select("id, storage_path, optimized_path, optimized_source_path, is_primary, sort_order")
     .eq("catch_id", catchId)
     .order("is_primary", { ascending: false })
     .order("sort_order", { ascending: true });
   if (error) throw error;
-  const row = rows?.[0];
-  if (!row) return null;
+  return data ?? [];
+}
 
+/**
+ * Liefert die WhatsApp-optimierte Variante eines Bildes und erzeugt sie bei
+ * Bedarf. Das Original wird nie überschrieben; bei Fehlern dient es als
+ * Fallback.
+ */
+async function prepareImageRow(row: CatchImageRow): Promise<PreparedImage> {
   if (row.optimized_path && row.optimized_source_path === row.storage_path) {
     try {
       const blob = await download(row.optimized_path);
@@ -125,6 +135,34 @@ export async function ensureOptimizedImage(catchId: string): Promise<PreparedIma
     url: await signedUrl(objectPath),
     optimized: true,
   };
+}
+
+/**
+ * Das Hauptbild für die Publikation (kopieren, publizieren).
+ * null, wenn der Catch kein Bild hat.
+ */
+export async function ensureOptimizedImage(catchId: string): Promise<PreparedImage | null> {
+  const rows = await fetchCatchImageRows(catchId);
+  const row = rows[0];
+  if (!row) return null;
+  return prepareImageRow(row);
+}
+
+/**
+ * Alle Bilder des Catches in Reihenfolge für das manuelle Anfügen in
+ * WhatsApp. Einzelne Ausfälle überspringen die restlichen Bilder nicht.
+ */
+export async function prepareAllImages(catchId: string): Promise<PreparedImage[]> {
+  const rows = await fetchCatchImageRows(catchId);
+  const result: PreparedImage[] = [];
+  for (const row of rows) {
+    try {
+      result.push(await prepareImageRow(row));
+    } catch {
+      /* einzelnes Bild überspringen */
+    }
+  }
+  return result;
 }
 
 interface SavePostArgs {
