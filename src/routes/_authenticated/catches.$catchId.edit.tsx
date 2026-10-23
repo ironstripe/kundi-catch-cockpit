@@ -95,7 +95,7 @@ function EditCatchPage() {
         mode="edit"
         catchId={catchId}
         initialValues={catchDetailToForm(item)}
-        initialImagePath={item.image_path}
+        initialImages={item.images}
         currentStatus={item.status}
         readyBlock={
           item.status === "draft"

@@ -47,7 +47,7 @@ function NewCatchPage() {
             EMPTY_CATCH_FORM,
             settings.data?.calculation_defaults.internal_handling_cost_per_unit ?? null,
           )}
-          initialImagePath={null}
+          initialImages={[]}
           onSaved={(catchId, savedStatus) =>
             void navigate({
               to: "/catches/$catchId",
