@@ -145,99 +145,28 @@ export function CatchForm({
   const [criticalOpen, setCriticalOpen] = useState(false);
   const [storyTouched, setStoryTouched] = useState(Boolean(initialValues.handicap_story));
   const savedRef = useRef(false);
-  // Frisch hochgeladene Objekte dieser Sitzung: werden beim Speichern
-  // referenziert oder beim Verlassen aufgeräumt — nie vorher gelöscht.
-  const uploadedRef = useRef<Set<string>>(new Set());
   // Merkt sich die Id nach einem Teilerfolg (z. B. Bild-Synchronisierung
   // fehlgeschlagen): ein erneuter Versuch aktualisiert statt neu anzulegen.
   const catchIdRef = useRef<string | undefined>(catchId);
-  // Nach dem Unmount fertig hochgeladene Objekte sofort aufräumen,
-  // statt als Waisen liegen zu lassen.
-  const unmountedRef = useRef(false);
   // Beim Laden bekannte Bild-Datensätze: nur bewusste Entfernungen dieser
   // Datensätze werden gespeichert — nebenläufig Hinzugefügtes bleibt.
   const baselineIds = useMemo(() => initialImages.map((row) => row.id), [initialImages]);
-
-  const settings = useQuery({ queryKey: ["app-settings"], queryFn: fetchAppSettings });
-  const defaultVatRate = settings.data?.vat.rate ?? DEFAULT_VAT_RATE;
-  const defaultHandlingRate =
-    settings.data?.calculation_defaults.internal_handling_cost_per_unit ??
-    DEFAULT_INTERNAL_HANDLING_COST;
-
-  /** Deep-Link «#interner-aufwand» zuverlässig anspringen. */
-  useEffect(() => {
-    if (typeof window === "undefined" || window.location.hash !== "#interner-aufwand") return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timer = window.setTimeout(() => {
-      const element = document.getElementById("interner-aufwand");
-      element?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
-      document.getElementById("internal_handling_cost_per_unit")?.focus();
-    }, 80);
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  const calculation = useMemo(
-    () => calculateCatch(formValuesToCalculationInput(values, defaultVatRate)),
-    [values, defaultVatRate],
-  );
-
-  const suppliers = useQuery({ queryKey: ["suppliers"], queryFn: fetchSuppliers });
-  const locations = useQuery({ queryKey: ["locations"], queryFn: fetchLocations });
-
-  const hasDeliveryCost =
-    !values.delivery_included && (Number(values.delivery_cost.replace(",", ".")) || 0) > 0;
-
+...
   const dirty =
     JSON.stringify(values) !== JSON.stringify(baseline) || imagesDirty(images, initialImages);
 
-  // Frisch hochgeladene, nie gespeicherte Objekte beim Verlassen aufräumen
-  // (Verwerfen, Abbrechen, Navigation). Nach Erfolg ist die Menge geleert.
-  // Sicher nach Teilerfolg: Pfade, die inzwischen von catch_images des
-  // gemerkten Catches referenziert werden, werden nie gelöscht; schlägt die
-  // Prüfung fehl, bleiben die Objekte bewahrt.
-  useEffect(
-    () => () => {
-      unmountedRef.current = true;
-      const pending = [...uploadedRef.current];
-      if (pending.length === 0) return;
-      void import("@/integrations/supabase/client").then(async ({ supabase }) => {
-        const client = supabase as unknown as CatchImageSyncClient;
-        let safe = pending;
-        const id = catchIdRef.current;
-        if (id) {
-          try {
-            const { data, error } = await client
-              .from("catch_images")
-              .select("id, storage_path, is_primary, sort_order")
-              .eq("catch_id", id);
-            if (error) return;
-            safe = uploadsSafeToRemove(
-              pending,
-              (data ?? []).map((row) => row.storage_path),
-            );
-          } catch {
-            return;
-          }
-        }
-        await removeStorageObjects(client, CATCH_IMAGE_BUCKET, safe);
-      });
-    },
-    [],
-  );
-
-  /** Meldet frisch hochgeladene Pfade für das Aufräumen beim Verwerfen. */
-  function handleUploaded(storagePath: string) {
-    if (unmountedRef.current) {
-      // Upload kam nach dem Verlassen fertig an: sofort best effort aufräumen.
-      void import("@/integrations/supabase/client").then(({ supabase }) =>
-        removeStorageObjects(supabase as unknown as CatchImageSyncClient, CATCH_IMAGE_BUCKET, [
-          storagePath,
-        ]),
-      );
-      return;
-    }
-    uploadedRef.current.add(storagePath);
-  }
+  // Frisch hochgeladene Objekte dieser Sitzung: werden beim Speichern
+  // referenziert oder bei echtem Verlassen aufgeräumt — nie während das
+  // Formular gemountet ist (auch nicht bei StrictMode-/Fast-Refresh-Replay).
+  const sessionUploads = useSessionUploads(async (pending) => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    await cleanupAbandonedUploads(
+      supabase as unknown as CatchImageSyncClient,
+      catchIdRef.current,
+      pending,
+    );
+  });
+  const handleUploaded = sessionUploads.register;
 
   // Schutz bleibt bis zum bestätigten Erfolg aktiv (auch während des Speicherns).
   const guard = useUnsavedChangesGuard(dirty);
