@@ -137,6 +137,37 @@ export async function removeStorageObjects(
   }
 }
 
+/**
+ * Räumt verlassene Sitzungs-Uploads auf. Nach einem Teilerfolg (Catch
+ * existiert) werden nur Objekte gelöscht, die kein catch_images-Datensatz
+ * referenziert; schlägt diese Prüfung fehl, bleibt alles erhalten.
+ */
+export async function cleanupAbandonedUploads(
+  client: CatchImageSyncClient,
+  catchId: string | undefined,
+  pending: string[],
+): Promise<string[]> {
+  if (pending.length === 0) return [];
+  let safe = pending;
+  if (catchId) {
+    try {
+      const { data, error } = await client
+        .from("catch_images")
+        .select("id, storage_path, is_primary, sort_order")
+        .eq("catch_id", catchId);
+      if (error) return [];
+      safe = uploadsSafeToRemove(
+        pending,
+        (data ?? []).map((row) => row.storage_path),
+      );
+    } catch {
+      return [];
+    }
+  }
+  await removeStorageObjects(client, CATCH_IMAGE_BUCKET, safe);
+  return safe;
+}
+
 export interface SyncResult {
   inserted: number;
   removed: number;

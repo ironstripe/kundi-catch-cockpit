@@ -1,21 +1,8 @@
-import { ImageIcon, Loader2 } from "lucide-react";
+import { ImageIcon } from "lucide-react";
 
-import { useSignedImage } from "@/hooks/use-signed-image";
+import { SignedImage } from "@/components/catch/signed-image";
 import type { CatchImageInfo } from "@/lib/catches";
 import { cn } from "@/lib/utils";
-
-function GalleryImage({ path, alt }: { path: string; alt: string }) {
-  const signed = useSignedImage(path);
-  if (signed.data) {
-    return <img src={signed.data} alt={alt} className="size-full object-cover" />;
-  }
-  return (
-    <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
-      <Loader2 className="mr-2 size-4 animate-spin" />
-      Bild wird geladen
-    </div>
-  );
-}
 
 /**
  * Alle Produktbilder eines Catches in Reihenfolge: das Hauptbild gross,
@@ -51,7 +38,7 @@ export function CatchImageGallery({
   return (
     <div className={cn("space-y-2", className)}>
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md border bg-muted/30">
-        <GalleryImage path={primary!.storage_path} alt={`${alt} (Hauptbild)`} />
+        <SignedImage path={primary!.storage_path} alt={`${alt} (Hauptbild)`} />
         <span className="absolute left-2 top-2 rounded bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
           Hauptbild
         </span>
@@ -63,7 +50,7 @@ export function CatchImageGallery({
               key={image.id}
               className="relative aspect-square overflow-hidden rounded-md border bg-muted/30"
             >
-              <GalleryImage path={image.storage_path} alt={`${alt} (${index + 2})`} />
+              <SignedImage path={image.storage_path} alt={`${alt} (${index + 2})`} />
             </div>
           ))}
         </div>

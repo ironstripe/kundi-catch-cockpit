@@ -9,5 +9,7 @@ export function useSignedImage(path: string | null | undefined) {
     queryFn: () => createSignedImageUrl(path!),
     enabled: Boolean(path),
     staleTime: 1000 * 60 * 30,
+    // Fehlende Objekte schnell melden statt lange Spinner zu zeigen.
+    retry: 1,
   });
 }

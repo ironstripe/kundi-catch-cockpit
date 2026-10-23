@@ -1,9 +1,9 @@
 import { ArrowDown, ArrowUp, Crown, Image as ImageIcon, Loader2, Plus, Trash2 } from "lucide-react";
-import { useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useSignedImage } from "@/hooks/use-signed-image";
+import { SignedImage } from "@/components/catch/signed-image";
 import { supabase } from "@/integrations/supabase/client";
 import {
   addImages,
@@ -18,6 +18,21 @@ import { cn } from "@/lib/utils";
 const ACCEPTED = ["image/jpeg", "image/jpg", "image/png", "image/heic", "image/heif"];
 const ACCEPTED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".heic"];
 const MAX_BYTES = 15 * 1024 * 1024;
+/** Formate, die der Browser direkt als lokale Vorschau anzeigen kann. */
+const LOCAL_PREVIEW_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+const EXTENSION_TYPES: Record<string, string> = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".heic": "image/heic",
+};
+
+/** MIME-Typ für den Upload: Dateityp oder, falls leer, aus der Endung. */
+function uploadContentType(file: File): string | undefined {
+  if (file.type) return file.type;
+  const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+  return EXTENSION_TYPES[extension];
+}
 
 interface CatchImagesFieldProps {
   images: FormCatchImage[];
@@ -56,6 +71,16 @@ export function CatchImagesField({
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
+  // Lokale Vorschau nur bis die signierte URL des gespeicherten Objekts da ist.
+  const [localPreviews, setLocalPreviews] = useState<Record<string, string>>({});
+  const previewsRef = useRef(localPreviews);
+  previewsRef.current = localPreviews;
+  useEffect(
+    () => () => {
+      for (const url of Object.values(previewsRef.current)) URL.revokeObjectURL(url);
+    },
+    [],
+  );
 
   function setBusy(value: boolean) {
     setUploading(value);
@@ -80,14 +105,21 @@ export function CatchImagesField({
       for (const file of valid) {
         const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
         const objectPath = `${crypto.randomUUID()}${extension || ".jpg"}`;
-        const { error } = await supabase.storage
-          .from(CATCH_IMAGE_BUCKET)
-          .upload(objectPath, file, { cacheControl: "3600", upsert: false });
+        const contentType = uploadContentType(file);
+        const { error } = await supabase.storage.from(CATCH_IMAGE_BUCKET).upload(objectPath, file, {
+          cacheControl: "3600",
+          upsert: false,
+          ...(contentType ? { contentType } : {}),
+        });
         if (error) {
           messages.push(`${file.name}: ${error.message}`);
           continue;
         }
         onUploaded(objectPath);
+        if (LOCAL_PREVIEW_TYPES.includes(file.type.toLowerCase()) && URL.createObjectURL) {
+          const url = URL.createObjectURL(file);
+          setLocalPreviews((current) => ({ ...current, [objectPath]: url }));
+        }
         onChange((current) => addImages(current, [objectPath]));
         done += 1;
         setProgress(Math.round(5 + (done / valid.length) * 90));
@@ -125,6 +157,7 @@ export function CatchImagesField({
             <CatchImageTile
               key={image.key}
               image={image}
+              localPreviewUrl={localPreviews[image.storagePath]}
               index={index}
               total={images.length}
               busy={uploading}
@@ -206,6 +239,7 @@ export function CatchImagesField({
 
 function CatchImageTile({
   image,
+  localPreviewUrl,
   index,
   total,
   busy,
@@ -214,6 +248,7 @@ function CatchImageTile({
   onRemove,
 }: {
   image: FormCatchImage;
+  localPreviewUrl?: string | undefined;
   index: number;
   total: number;
   busy: boolean;
@@ -221,7 +256,6 @@ function CatchImageTile({
   onMove: (delta: -1 | 1) => void;
   onRemove: () => void;
 }) {
-  const preview = useSignedImage(image.storagePath);
   const isPrimary = index === 0;
 
   return (
@@ -232,18 +266,12 @@ function CatchImageTile({
           isPrimary && "border-primary ring-2 ring-primary/40",
         )}
       >
-        {preview.data ? (
-          <img
-            src={preview.data}
-            alt={`Produktbild ${index + 1}`}
-            className="size-full object-cover"
-          />
-        ) : (
-          <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
-            <Loader2 className="mr-2 size-4 animate-spin" />
-            Vorschau
-          </div>
-        )}
+        <SignedImage
+          path={image.storagePath}
+          alt={`Produktbild ${index + 1}`}
+          localPreviewUrl={localPreviewUrl}
+          loadingLabel="Vorschau"
+        />
         {isPrimary ? (
           <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
             <Crown className="size-3" aria-hidden />
