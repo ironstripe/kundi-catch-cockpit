@@ -13,7 +13,7 @@ import {
 import { toast } from "sonner";
 
 import { CalculationCard } from "@/components/catch/calculation-card";
-import { CatchImageField } from "@/components/catch/catch-image-field";
+import { CatchImagesField } from "@/components/catch/catch-image-field";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +52,17 @@ import {
 import { calculateCatch } from "@/lib/catch-calculation";
 import { validateDraft, validateReady, type FieldIssue } from "@/lib/catch-validation";
 import {
+  abandonedUploads,
+  imagesDirty,
+  removeStorageObjects,
+  syncCatchImages,
+  toFormImages,
+  type CatchImageRecord,
+  type CatchImageSyncClient,
+  type FormCatchImage,
+} from "@/lib/catch-images";
+import {
+  CATCH_IMAGE_BUCKET,
   fetchLocations,
   fetchSuppliers,
   formValuesToCalculationInput,
@@ -72,7 +83,8 @@ interface CatchFormProps {
   mode: "create" | "edit";
   catchId?: string;
   initialValues: CatchFormValues;
-  initialImagePath: string | null;
+  /** Alle gespeicherten Produktbilder (Hauptbild zuerst); leer beim Erstellen. */
+  initialImages: CatchImageRecord[];
   /** Aktueller Status, damit ein publizierter Catch beim Speichern publiziert bleibt. */
   currentStatus?: "draft" | "ready" | "published" | "closed" | "cancelled";
   /**
