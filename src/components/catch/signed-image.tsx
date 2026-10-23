@@ -23,7 +23,7 @@ export function SignedImage({
   path: string;
   alt: string;
   className?: string;
-  localPreviewUrl?: string;
+  localPreviewUrl?: string | undefined;
   loadingLabel?: string;
 }) {
   const signed = useSignedImage(path);

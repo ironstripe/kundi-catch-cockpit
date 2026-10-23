@@ -52,7 +52,10 @@ vi.mock("@/integrations/supabase/client", () => {
         return { data: null, error: { message: "Netzwerkfehler" } };
       }
       if (!db.objects.has(path)) return { data: null, error: { message: "Object not found" } };
-      return { data: { signedUrl: `https://signed.test/${path}?n=${db.signCalls.length}` }, error: null };
+      return {
+        data: { signedUrl: `https://signed.test/${path}?n=${db.signCalls.length}` },
+        error: null,
+      };
     },
   };
   const table = {
@@ -119,7 +122,12 @@ function Harness({ initialRows }: { initialRows: CatchImageRecord[] }) {
       <button
         type="button"
         onClick={async () => {
-          await syncCatchImages(client, CATCH_ID, images, initialRows.map((row) => row.id));
+          await syncCatchImages(
+            client,
+            CATCH_ID,
+            images,
+            initialRows.map((row) => row.id),
+          );
           await removeStorageObjects(
             client,
             CATCH_IMAGE_BUCKET,
@@ -212,9 +220,9 @@ describe("Zweites Produktbild unter StrictMode", () => {
       const second = screen.getByAltText("Produktbild 2") as HTMLImageElement;
       expect(second.getAttribute("src")).toContain(`https://signed.test/${uploaded.path}`);
     });
-    expect((screen.getByAltText("Produktbild 1") as HTMLImageElement).getAttribute("src")).toContain(
-      "original.jpg",
-    );
+    expect(
+      (screen.getByAltText("Produktbild 1") as HTMLImageElement).getAttribute("src"),
+    ).toContain("original.jpg");
 
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
@@ -241,9 +249,9 @@ describe("Zweites Produktbild unter StrictMode", () => {
     const reloaded = db.rows.map((row) => ({ ...row }));
     renderStrict(reloaded);
     await waitFor(() => {
-      expect((screen.getByAltText("Produktbild 2") as HTMLImageElement).getAttribute("src")).toContain(
-        uploaded.path,
-      );
+      expect(
+        (screen.getByAltText("Produktbild 2") as HTMLImageElement).getAttribute("src"),
+      ).toContain(uploaded.path);
     });
     expect(screen.queryByText("Bild konnte nicht geladen werden")).toBeNull();
   });
