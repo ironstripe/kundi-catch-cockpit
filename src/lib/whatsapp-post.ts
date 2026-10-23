@@ -13,7 +13,7 @@ export const BRAND_CLAIM = "Guter Fisch. Kleines Handicap. Grosser Fang.";
 export const BRAND_PURPOSE = "Gut essen. Food Waste vermeiden.";
 
 /** Version der deterministischen Vorlage. Erhöhen, wenn sich der Aufbau ändert. */
-export const POST_TEMPLATE_VERSION = 5;
+export const POST_TEMPLATE_VERSION = 6;
 
 /** Kundenpreise sind Bruttopreise — im Post kurz und einmalig ausgewiesen. */
 export const VAT_NOTE = "inkl. MWST";
@@ -155,7 +155,9 @@ export function generatePostText(
 ): string {
   const blocks: string[] = [];
 
-  blocks.push("🐟 *FOOD CATCH*");
+  blocks.push(
+    "🐟 *FOOD CATCH* - Bitte teilt, diesen Beitrag, damit wir möglichst viel retten können😍👌",
+  );
   blocks.push(`*${BRAND_CLAIM}*`);
 
   const story = clean(source.handicap_story);
