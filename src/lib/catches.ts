@@ -245,17 +245,18 @@ const DETAIL_SELECT = `
 `;
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-function primaryImagePath(row: any): string | null {
-  const images = (row.catch_images ?? []) as {
-    storage_path: string;
-    is_primary: boolean;
-    sort_order: number;
-  }[];
-  if (images.length === 0) return null;
-  const sorted = [...images].sort(
-    (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order,
+function mapImages(row: any): CatchImageInfo[] {
+  const images = (row.catch_images ?? []) as CatchImageInfo[];
+  return [...images].sort(
+    (a, b) =>
+      Number(b.is_primary) - Number(a.is_primary) ||
+      a.sort_order - b.sort_order ||
+      a.id.localeCompare(b.id),
   );
-  return sorted[0]?.storage_path ?? null;
+}
+
+function primaryImagePath(row: any): string | null {
+  return mapImages(row)[0]?.storage_path ?? null;
 }
 
 function mapList(row: any): CatchListItem {
@@ -303,6 +304,7 @@ function mapList(row: any): CatchListItem {
     cancelled_at: row.cancelled_at ?? null,
     cancellation_reason: row.cancellation_reason ?? null,
     image_path: primaryImagePath(row),
+    images: mapImages(row),
     location_names: (row.catch_locations ?? [])
       .map((cl: any) => cl.locations?.name)
       .filter(Boolean),
