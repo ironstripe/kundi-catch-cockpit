@@ -629,7 +629,12 @@ export const transferCaseImageToCatch = createServerFn({ method: "POST" })
         attachment_id: attachment.id,
         file_name: attachment.file_name,
         replaced: result.replaced,
-        summary: result.replaced ? "Produktbild aus Dossier ersetzt" : "Produktbild aus Dossier übernommen",
+        appended: result.appended,
+        summary: result.appended
+          ? "Produktbild aus Dossier angefügt"
+          : result.replaced
+            ? "Produktbild aus Dossier ersetzt"
+            : "Produktbild aus Dossier übernommen",
       } as never,
     });
     return {
