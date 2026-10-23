@@ -241,7 +241,7 @@ export function CatchForm({
       return;
     }
     const found =
-      status === "draft" ? validateDraft(values) : validateReady(values, Boolean(imagePath));
+      status === "draft" ? validateDraft(values) : validateReady(values, images.length > 0);
     setIssues(found);
     if (found.length > 0) {
       focusFirst(found);
@@ -261,7 +261,7 @@ export function CatchForm({
     setSaving(true);
     try {
       const id = await saveCatch({
-        id: catchId,
+        id: catchIdRef.current,
         values,
         status: currentStatus === "published" ? "published" : status,
         audit: {
@@ -269,7 +269,18 @@ export function CatchForm({
           ...(confirmedCritical ? { critical_calculation_confirmed: true } : {}),
         },
       });
-      await syncImage(id);
+      // Ab hier existiert der Catch: ein Retry nach Teilfehler aktualisiert
+      // ihn, statt einen zweiten anzulegen.
+      catchIdRef.current = id;
+
+      const { supabase } = await import("@/integrations/supabase/client");
+      const client = supabase as unknown as CatchImageSyncClient;
+      await syncCatchImages(client, id, images);
+      // Frisch hochgeladene, im Formular wieder entfernte Objekte aufräumen.
+      const abandoned = abandonedUploads(uploadedRef.current, images);
+      await removeStorageObjects(client, CATCH_IMAGE_BUCKET, abandoned);
+      uploadedRef.current.clear();
+
       savedRef.current = true;
       guard.allowNextNavigation();
       toast.success(
