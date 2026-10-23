@@ -42,37 +42,49 @@ export function CaseImagePicker({
   choice,
   onChoose,
   disabled,
+  mode = "single",
+  selectedIds = [],
+  onToggle,
   footer,
 }: {
   images: OfferAttachment[];
   choice: ImageChoice;
   onChoose: (choice: ImageChoice) => void;
   disabled: boolean;
+  /** "single" für die Konvertierung, "multi" für das Anfügen mehrerer Bilder. */
+  mode?: "single" | "multi";
+  selectedIds?: string[];
+  onToggle?: (id: string) => void;
   footer?: React.ReactNode;
 }) {
   if (!images.length) return null;
+  const multi = mode === "multi";
   return (
     <Card id="case-image-picker" className="scroll-mt-24">
       <CardHeader>
         <CardTitle className="text-section-title">
-          Produktbild für den Catch ({images.length} Bilder)
+          {multi
+            ? `Weitere Bilder anfügen (${images.length} Bilder)`
+            : `Produktbild für den Catch (${images.length} Bilder)`}
         </CardTitle>
         <CardDescription className="text-xs">
-          Bitte das Produktfoto anklicken. Logos und Signaturbilder nicht wählen. Die
-          Originalanhänge bleiben im Dossier.
+          {multi
+            ? "Bilder anklicken, um sie dem Catch anzufügen. Bestehende Catch-Bilder bleiben unverändert; die Originalanhänge bleiben im Dossier."
+            : "Bitte das Produktfoto anklicken. Logos und Signaturbilder nicht wählen. Die Originalanhänge bleiben im Dossier."}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {images.map((image) => {
-            const selected = choice === image.id;
+            const selected = multi ? selectedIds.includes(image.id) : choice === image.id;
+            const order = multi ? selectedIds.indexOf(image.id) + 1 : 0;
             return (
               <button
                 key={image.id}
                 type="button"
                 disabled={disabled}
                 aria-pressed={selected}
-                onClick={() => onChoose(image.id)}
+                onClick={() => (multi ? onToggle?.(image.id) : onChoose(image.id))}
                 className={cn(
                   "group relative overflow-hidden rounded-md border text-left transition disabled:cursor-default",
                   selected ? "border-primary ring-4 ring-primary" : "opacity-80 hover:opacity-100",
@@ -84,7 +96,7 @@ export function CaseImagePicker({
                 {selected ? (
                   <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
                     <Check className="size-3" aria-hidden />
-                    Hauptbild
+                    {multi ? `Bild ${order}` : "Hauptbild"}
                   </span>
                 ) : null}
                 <p className="truncate border-t bg-background px-2 py-1 text-[11px]">
@@ -93,21 +105,23 @@ export function CaseImagePicker({
               </button>
             );
           })}
-          <button
-            type="button"
-            disabled={disabled}
-            aria-pressed={choice === "none"}
-            onClick={() => onChoose("none")}
-            className={cn(
-              "flex aspect-square flex-col items-center justify-center gap-2 rounded-md border border-dashed p-2 text-center text-xs",
-              choice === "none" ? "border-primary ring-4 ring-primary" : "text-muted-foreground",
-            )}
-          >
-            <ImageOff className="size-5" aria-hidden />
-            Ohne Bild fortfahren
-          </button>
+          {!multi ? (
+            <button
+              type="button"
+              disabled={disabled}
+              aria-pressed={choice === "none"}
+              onClick={() => onChoose("none")}
+              className={cn(
+                "flex aspect-square flex-col items-center justify-center gap-2 rounded-md border border-dashed p-2 text-center text-xs",
+                choice === "none" ? "border-primary ring-4 ring-primary" : "text-muted-foreground",
+              )}
+            >
+              <ImageOff className="size-5" aria-hidden />
+              Ohne Bild fortfahren
+            </button>
+          ) : null}
         </div>
-        {choice === null && !disabled ? (
+        {!multi && choice === null && !disabled ? (
           <p className="text-xs font-medium text-destructive">
             Noch keine Wahl: Produktbild wählen oder «Ohne Bild fortfahren».
           </p>

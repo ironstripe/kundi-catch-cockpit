@@ -28,10 +28,15 @@ export interface ImageTransferClient {
   };
   from(table: "catch_images"): {
     select(columns: string): {
-      eq(column: string, value: string): PromiseLike<StorageResult<{ id: string; storage_path: string }[]>>;
+      eq(
+        column: string,
+        value: string,
+      ): PromiseLike<StorageResult<{ id: string; storage_path: string }[]>>;
     };
     insert(row: Record<string, unknown>): PromiseLike<{ error: { message: string } | null }>;
-    delete(): { in(column: string, values: string[]): PromiseLike<{ error: { message: string } | null }> };
+    delete(): {
+      in(column: string, values: string[]): PromiseLike<{ error: { message: string } | null }>;
+    };
   };
 }
 
@@ -53,23 +58,35 @@ export async function transferImageToCatch(
     sourceBucket: string;
     targetBucket: string;
     replace: boolean;
+    /**
+     * TRUE = als zusätzliches Bild hinten anfügen; überschreibt nie
+     * Bestehendes und verlangt keine Bestätigung.
+     */
+    append?: boolean | undefined;
     id?: () => string;
   },
-): Promise<{ storagePath: string; replaced: number }> {
+): Promise<{ storagePath: string; replaced: number; appended: boolean }> {
   if (!args.attachment.mime_type.startsWith("image/")) {
     throw new Error("Der gewählte Anhang ist kein Bild.");
   }
 
-  const existing = await client.from("catch_images").select("id, storage_path").eq("catch_id", args.catchId);
-  if (existing.error) throw new Error(`Bilder des Catches konnten nicht gelesen werden: ${existing.error.message}`);
+  const existing = await client
+    .from("catch_images")
+    .select("id, storage_path")
+    .eq("catch_id", args.catchId);
+  if (existing.error)
+    throw new Error(`Bilder des Catches konnten nicht gelesen werden: ${existing.error.message}`);
   const current = existing.data ?? [];
-  if (current.length && !args.replace) {
+  const append = Boolean(args.append);
+  if (current.length && !append && !args.replace) {
     throw new Error(
       `${CATCH_IMAGE_EXISTS_MARKER} Der Catch hat bereits ein Bild. Zum Ersetzen bitte bestätigen.`,
     );
   }
 
-  const download = await client.storage.from(args.sourceBucket).download(args.attachment.storage_path);
+  const download = await client.storage
+    .from(args.sourceBucket)
+    .download(args.attachment.storage_path);
   if (download.error || !download.data) {
     throw new Error(
       `Das Bild «${args.attachment.file_name}» konnte nicht aus dem Dossier geladen werden${
@@ -89,8 +106,14 @@ export async function transferImageToCatch(
     throw new Error(`Das Bild konnte nicht im Catch gespeichert werden: ${upload.error.message}`);
   }
 
-  if (current.length) {
-    const removed = await client.from("catch_images").delete().in("id", current.map((row) => row.id));
+  if (current.length && !append) {
+    const removed = await client
+      .from("catch_images")
+      .delete()
+      .in(
+        "id",
+        current.map((row) => row.id),
+      );
     if (removed.error) {
       await client.storage.from(args.targetBucket).remove([target]);
       throw new Error(`Das bisherige Bild konnte nicht ersetzt werden: ${removed.error.message}`);
@@ -100,12 +123,12 @@ export async function transferImageToCatch(
   const inserted = await client.from("catch_images").insert({
     catch_id: args.catchId,
     storage_path: target,
-    is_primary: true,
-    sort_order: 0,
+    is_primary: current.length === 0,
+    sort_order: current.length,
   });
   if (inserted.error) {
     await client.storage.from(args.targetBucket).remove([target]);
     throw new Error(`Der Bilddatensatz konnte nicht angelegt werden: ${inserted.error.message}`);
   }
-  return { storagePath: target, replaced: current.length };
+  return { storagePath: target, replaced: append ? 0 : current.length, appended: append };
 }

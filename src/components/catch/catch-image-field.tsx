@@ -1,10 +1,17 @@
-import { Image as ImageIcon, Loader2, Trash2, Upload } from "lucide-react";
-import { useRef, useState } from "react";
+import { ArrowDown, ArrowUp, Crown, Image as ImageIcon, Loader2, Plus, Trash2 } from "lucide-react";
+import { useRef, useState, type Dispatch, type SetStateAction } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useSignedImage } from "@/hooks/use-signed-image";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  addImages,
+  makePrimary,
+  moveImage,
+  removeImage,
+  type FormCatchImage,
+} from "@/lib/catch-images";
 import { CATCH_IMAGE_BUCKET } from "@/lib/catches";
 import { cn } from "@/lib/utils";
 
@@ -12,86 +19,89 @@ const ACCEPTED = ["image/jpeg", "image/jpg", "image/png", "image/heic", "image/h
 const ACCEPTED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".heic"];
 const MAX_BYTES = 15 * 1024 * 1024;
 
-interface CatchImageFieldProps {
-  path: string | null;
-  onChange: (path: string | null) => void;
+interface CatchImagesFieldProps {
+  images: FormCatchImage[];
+  onChange: Dispatch<SetStateAction<FormCatchImage[]>>;
+  /** Meldet frisch hochgeladene Pfade für das Aufräumen beim Verwerfen. */
+  onUploaded: (storagePath: string) => void;
   onUploadingChange?: (uploading: boolean) => void;
   invalid?: boolean;
 }
 
+function validateFile(file: File): string | null {
+  const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+  const typeOk = ACCEPTED.includes(file.type.toLowerCase());
+  const extensionOk = ACCEPTED_EXTENSIONS.includes(extension);
+  if (!typeOk && !extensionOk) return "Nur JPG, JPEG, PNG oder HEIC sind erlaubt.";
+  if (file.size > MAX_BYTES) return "Die Datei ist grösser als 15 MB.";
+  return null;
+}
+
 /**
- * Hauptbild eines Catches: Drag-and-Drop oder Dateiauswahl,
- * Vorschau über signierte URL, Ersetzen und Entfernen.
+ * Produktbilder eines Catches: Mehrfach-Auswahl und Drag-and-Drop hängen
+ * Bilder an, ersetzen nie stillschweigend Bestehendes. Das erste Bild ist
+ * das Hauptbild; Reihenfolge und Hauptbild sind frei wählbar. Hochgeladene
+ * Objekte werden erst beim bestätigten Speichern referenziert oder
+ * aufgeräumt — nie vorher gelöscht.
  */
-export function CatchImageField({
-  path,
+export function CatchImagesField({
+  images,
   onChange,
+  onUploaded,
   onUploadingChange,
   invalid,
-}: CatchImageFieldProps) {
+}: CatchImagesFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const preview = useSignedImage(path);
+  const [errors, setErrors] = useState<string[]>([]);
 
   function setBusy(value: boolean) {
     setUploading(value);
     onUploadingChange?.(value);
   }
 
-  async function handleFile(file: File) {
-    setError(null);
-
-    const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
-    const typeOk = ACCEPTED.includes(file.type.toLowerCase());
-    const extensionOk = ACCEPTED_EXTENSIONS.includes(extension);
-    if (!typeOk && !extensionOk) {
-      setError("Nur JPG, JPEG, PNG oder HEIC sind erlaubt.");
-      return;
+  async function handleFiles(files: File[]) {
+    const messages: string[] = [];
+    const valid: File[] = [];
+    for (const file of files) {
+      const problem = validateFile(file);
+      if (problem) messages.push(`${file.name}: ${problem}`);
+      else valid.push(file);
     }
-    if (file.size > MAX_BYTES) {
-      setError("Die Datei ist grösser als 15 MB.");
-      return;
-    }
+    setErrors(messages);
+    if (valid.length === 0) return;
 
     setBusy(true);
-    setProgress(15);
-    const ticker = window.setInterval(() => {
-      setProgress((value) => (value < 85 ? value + 7 : value));
-    }, 200);
-
+    setProgress(5);
+    let done = 0;
     try {
-      const objectPath = `${crypto.randomUUID()}${extension || ".jpg"}`;
-      const { error: uploadError } = await supabase.storage
-        .from(CATCH_IMAGE_BUCKET)
-        .upload(objectPath, file, { cacheControl: "3600", upsert: false });
-      if (uploadError) throw uploadError;
-
-      if (path) {
-        await supabase.storage.from(CATCH_IMAGE_BUCKET).remove([path]);
+      for (const file of valid) {
+        const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+        const objectPath = `${crypto.randomUUID()}${extension || ".jpg"}`;
+        const { error } = await supabase.storage
+          .from(CATCH_IMAGE_BUCKET)
+          .upload(objectPath, file, { cacheControl: "3600", upsert: false });
+        if (error) {
+          messages.push(`${file.name}: ${error.message}`);
+          continue;
+        }
+        onUploaded(objectPath);
+        onChange((current) => addImages(current, [objectPath]));
+        done += 1;
+        setProgress(Math.round(5 + (done / valid.length) * 90));
       }
       setProgress(100);
-      onChange(objectPath);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload fehlgeschlagen.");
+      if (messages.length > 0) setErrors(messages);
     } finally {
-      window.clearInterval(ticker);
-      setBusy(false);
       window.setTimeout(() => setProgress(0), 600);
+      setBusy(false);
     }
   }
 
-  async function handleRemove() {
-    if (!path) return;
-    setBusy(true);
-    try {
-      await supabase.storage.from(CATCH_IMAGE_BUCKET).remove([path]);
-      onChange(null);
-    } finally {
-      setBusy(false);
-    }
+  function openPicker() {
+    inputRef.current?.click();
   }
 
   return (
@@ -99,98 +109,193 @@ export function CatchImageField({
       <input
         ref={inputRef}
         type="file"
+        multiple
         accept=".jpg,.jpeg,.png,.heic,image/jpeg,image/png,image/heic"
         className="sr-only"
         onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) void handleFile(file);
+          const files = Array.from(event.target.files ?? []);
+          if (files.length > 0) void handleFiles(files);
           event.target.value = "";
         }}
       />
 
-      {path ? (
-        <div className="space-y-2">
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md border bg-muted/30">
-            {preview.data ? (
-              <img
-                src={preview.data}
-                alt="Vorschau des Produktbilds"
-                className="size-full object-cover"
-              />
-            ) : (
-              <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Vorschau wird geladen
-              </div>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={uploading}
-              onClick={() => inputRef.current?.click()}
-            >
-              <Upload />
-              Ersetzen
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={uploading}
-              onClick={() => void handleRemove()}
-            >
-              <Trash2 />
-              Entfernen
-            </Button>
-          </div>
+      {images.length > 0 ? (
+        <div className="grid grid-cols-2 gap-3">
+          {images.map((image, index) => (
+            <CatchImageTile
+              key={image.key}
+              image={image}
+              index={index}
+              total={images.length}
+              busy={uploading}
+              onSetPrimary={() => onChange((current) => makePrimary(current, image.key))}
+              onMove={(delta) => onChange((current) => moveImage(current, image.key, delta))}
+              onRemove={() => onChange((current) => removeImage(current, image.key))}
+            />
+          ))}
         </div>
-      ) : (
-        <div
-          role="button"
-          tabIndex={0}
-          aria-label="Produktbild hochladen"
-          onClick={() => inputRef.current?.click()}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") inputRef.current?.click();
-          }}
-          onDragOver={(event) => {
+      ) : null}
+
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label="Produktbilder hochladen"
+        onClick={openPicker}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
-            setDragActive(true);
-          }}
-          onDragLeave={() => setDragActive(false)}
-          onDrop={(event) => {
-            event.preventDefault();
-            setDragActive(false);
-            const file = event.dataTransfer.files?.[0];
-            if (file) void handleFile(file);
-          }}
-          className={cn(
-            "flex aspect-[4/3] w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed bg-muted/30 p-4 text-center transition-colors placeholder-hatch",
-            dragActive && "border-primary bg-accent",
-            invalid && "border-destructive",
-          )}
-        >
-          <ImageIcon className="size-5 text-muted-foreground" />
-          <p className="text-xs font-medium">Bild hierher ziehen oder klicken</p>
-          <p className="text-[11px] text-muted-foreground">JPG, JPEG, PNG oder HEIC — max. 15 MB</p>
-        </div>
-      )}
+            openPicker();
+          }
+        }}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setDragActive(true);
+        }}
+        onDragLeave={() => setDragActive(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setDragActive(false);
+          const files = Array.from(event.dataTransfer.files ?? []);
+          if (files.length > 0) void handleFiles(files);
+        }}
+        className={cn(
+          "flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-md border border-dashed bg-muted/30 p-4 text-center transition-colors placeholder-hatch",
+          images.length === 0 && "aspect-[4/3]",
+          dragActive && "border-primary bg-accent",
+          invalid && "border-destructive",
+        )}
+      >
+        <ImageIcon className="size-5 text-muted-foreground" />
+        <p className="text-xs font-medium">Bilder hierher ziehen oder klicken</p>
+        <p className="text-[11px] text-muted-foreground">
+          JPG, JPEG, PNG oder HEIC — max. 15 MB pro Bild, mehrere möglich
+        </p>
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="w-full"
+        disabled={uploading}
+        onClick={openPicker}
+      >
+        {uploading ? <Loader2 className="animate-spin" /> : <Plus />}
+        Bilder hinzufügen
+      </Button>
 
       {uploading || progress > 0 ? (
         <div className="space-y-1">
           <Progress value={progress} className="h-1.5" />
-          <p className="text-[11px] text-muted-foreground">Bild wird hochgeladen …</p>
+          <p className="text-[11px] text-muted-foreground">Bilder werden hochgeladen …</p>
         </div>
       ) : null}
 
-      {error ? (
-        <p role="alert" className="text-xs font-medium text-destructive">
-          {error}
-        </p>
+      {errors.length > 0 ? (
+        <div role="alert" className="space-y-0.5">
+          {errors.map((message) => (
+            <p key={message} className="text-xs font-medium text-destructive">
+              {message}
+            </p>
+          ))}
+        </div>
       ) : null}
+    </div>
+  );
+}
+
+function CatchImageTile({
+  image,
+  index,
+  total,
+  busy,
+  onSetPrimary,
+  onMove,
+  onRemove,
+}: {
+  image: FormCatchImage;
+  index: number;
+  total: number;
+  busy: boolean;
+  onSetPrimary: () => void;
+  onMove: (delta: -1 | 1) => void;
+  onRemove: () => void;
+}) {
+  const preview = useSignedImage(image.storagePath);
+  const isPrimary = index === 0;
+
+  return (
+    <div className="space-y-1.5">
+      <div
+        className={cn(
+          "relative aspect-[4/3] w-full overflow-hidden rounded-md border bg-muted/30",
+          isPrimary && "border-primary ring-2 ring-primary/40",
+        )}
+      >
+        {preview.data ? (
+          <img
+            src={preview.data}
+            alt={`Produktbild ${index + 1}`}
+            className="size-full object-cover"
+          />
+        ) : (
+          <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
+            <Loader2 className="mr-2 size-4 animate-spin" />
+            Vorschau
+          </div>
+        )}
+        {isPrimary ? (
+          <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+            <Crown className="size-3" aria-hidden />
+            Hauptbild
+          </span>
+        ) : null}
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {!isPrimary ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            aria-label="Als Hauptbild setzen"
+            onClick={onSetPrimary}
+          >
+            <Crown />
+            Hauptbild
+          </Button>
+        ) : null}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={busy || index === 0}
+          aria-label="Bild nach vorne"
+          onClick={() => onMove(-1)}
+        >
+          <ArrowUp />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={busy || index === total - 1}
+          aria-label="Bild nach hinten"
+          onClick={() => onMove(1)}
+        >
+          <ArrowDown />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={busy}
+          aria-label="Bild entfernen"
+          onClick={onRemove}
+        >
+          <Trash2 />
+        </Button>
+      </div>
     </div>
   );
 }

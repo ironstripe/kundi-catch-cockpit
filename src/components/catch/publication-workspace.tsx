@@ -15,6 +15,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { CatchImageGallery } from "@/components/catch/catch-image-gallery";
 import { WhatsappPreview } from "@/components/catch/whatsapp-preview";
 import {
   AlertDialog,
@@ -42,6 +43,7 @@ import {
   ensureOptimizedImage,
   keepOutdatedPost,
   markCatchPublished,
+  prepareAllImages,
   savePostVersion,
 } from "@/lib/publication";
 import {
@@ -80,6 +82,7 @@ export function PublicationWorkspace({
   const signature = useMemo(() => postSourceSignature(source), [source]);
 
   const [confirm, setConfirm] = useState<null | "regenerate" | "reset" | "publish">(null);
+  const [downloadingAll, setDownloadingAll] = useState(false);
   const [imageFallback, setImageFallback] = useState(false);
   const [textFallback, setTextFallback] = useState(false);
   const [copiedImage, setCopiedImage] = useState(false);
@@ -214,6 +217,39 @@ export function PublicationWorkspace({
     downloadBlob(prepared.blob, optimizedFileName(item.catch_number, item.product_name, extension));
   }
 
+  /** Lädt alle Catch-Bilder in Reihenfolge für das manuelle Anfügen herunter. */
+  async function handleDownloadAll() {
+    if (downloadingAll) return;
+    setDownloadingAll(true);
+    try {
+      const prepared = await prepareAllImages(catchId);
+      if (prepared.length === 0) {
+        toast.error("Keine Bilder vorhanden.");
+        return;
+      }
+      for (const [index, entry] of prepared.entries()) {
+        const extension = entry.blob.type === "image/png" ? "png" : "jpg";
+        const single = optimizedFileName(item.catch_number, item.product_name, extension);
+        const name =
+          index === 0
+            ? single
+            : single.replace(new RegExp(`\\.${extension}$`), `-${index + 1}.${extension}`);
+        downloadBlob(entry.blob, name);
+        // Browser drosseln mehrere gleichzeitige Downloads — kurz warten.
+        await new Promise((resolve) => window.setTimeout(resolve, 400));
+      }
+      toast.success(`${prepared.length} Bild${prepared.length === 1 ? "" : "er"} heruntergeladen`, {
+        description: "Jetzt alle Dateien in WhatsApp anfügen.",
+      });
+    } catch (error) {
+      toast.error("Bilder konnten nicht heruntergeladen werden", {
+        description: error instanceof Error ? error.message : "Unbekannter Fehler.",
+      });
+    } finally {
+      setDownloadingAll(false);
+    }
+  }
+
   async function handleCopyText(text: string) {
     if (!supportsTextClipboard()) {
       setTextFallback(true);
@@ -297,29 +333,22 @@ export function PublicationWorkspace({
 
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">
-                  Bild, das nach WhatsApp kopiert wird
+                  Bilder des Catches ({item.images.length})
                 </Label>
-                <div className="aspect-[4/3] w-full max-w-xs overflow-hidden rounded-md border bg-muted/30">
-                  {image.isLoading ? (
-                    <Skeleton className="size-full" />
-                  ) : image.data ? (
-                    <img
-                      src={image.data.url}
-                      alt={`WhatsApp-Bild von ${item.product_name}`}
-                      className="size-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex size-full items-center justify-center text-xs text-muted-foreground placeholder-hatch">
-                      Kein Produktbild hinterlegt
-                    </div>
-                  )}
-                </div>
+                <CatchImageGallery
+                  images={item.images}
+                  alt={`Produktbild von ${item.product_name}`}
+                  emptyText="Kein Produktbild hinterlegt"
+                  className="max-w-xs"
+                />
                 <p className="text-xs text-muted-foreground">
                   {image.data
                     ? image.data.optimized
-                      ? "Für WhatsApp optimiert (max. 1080 px, ohne Metadaten). Das Original bleibt erhalten."
-                      : "Optimierung nicht möglich — es wird das Originalbild verwendet."
-                    : "Ohne Bild kann nur der Text kopiert werden."}
+                      ? "«Bild kopieren» verwendet das Hauptbild, für WhatsApp optimiert (max. 1080 px, ohne Metadaten). Das Original bleibt erhalten."
+                      : "«Bild kopieren» verwendet das Hauptbild — Optimierung nicht möglich, es wird das Original verwendet."
+                    : "Ohne Bild kann nur der Text kopiert werden."}{" "}
+                  Der kopierte Text enthält keine Bilddateien; weitere Bilder über «Alle Bilder
+                  herunterladen» einzeln anfügen.
                 </p>
               </div>
             </CardContent>
@@ -427,7 +456,18 @@ export function PublicationWorkspace({
                     disabled={!image.data}
                   >
                     <Download />
-                    Bild herunterladen
+                    Hauptbild herunterladen
+                  </Button>
+                ) : null}
+                {item.images.length > 1 ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void handleDownloadAll()}
+                    disabled={downloadingAll}
+                  >
+                    {downloadingAll ? <Loader2 className="animate-spin" /> : <Download />}
+                    Alle Bilder herunterladen ({item.images.length})
                   </Button>
                 ) : null}
                 <Button size="sm" onClick={() => void handleCopyText(finalText)}>

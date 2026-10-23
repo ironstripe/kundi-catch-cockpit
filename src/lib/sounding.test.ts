@@ -63,6 +63,14 @@ const catchItem: CatchDetail = {
   updated_at: "2026-09-15T10:00:00.000Z",
   expected_sell_through: null,
   image_path: "catch-1/bild.jpg",
+  images: [
+    {
+      id: "img-1",
+      storage_path: "catch-1/bild.jpg",
+      is_primary: true,
+      sort_order: 0,
+    },
+  ],
   location_names: ["Kundelfingerhof"],
   location_ids: ["loc-1"],
   locations: [

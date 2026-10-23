@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Archive,
@@ -52,7 +52,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useRoles } from "@/hooks/use-role";
 import { formatDateTime } from "@/lib/format";
 import { fetchCase } from "@/lib/offer-cases";
-import { CATCH_IMAGE_EXISTS_MARKER } from "@/lib/offer-image-transfer";
 import {
   assignEmailToCase,
   convertCaseToCatch,
@@ -103,6 +102,7 @@ function OfferCaseDetailPage() {
 const EMPTY_VALUES: OfferFormValues = {};
 
 function OfferCaseDetail({ caseId }: { caseId: string }) {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { canEdit } = useRoles();
 
@@ -119,7 +119,8 @@ function OfferCaseDetail({ caseId }: { caseId: string }) {
   const [mergeOpen, setMergeOpen] = useState(false);
   const [imageChoice, setImageChoice] = useState<ImageChoice>(null);
   const [convertError, setConvertError] = useState<string | null>(null);
-  const [confirmReplace, setConfirmReplace] = useState(false);
+  /** Bild-Ids, die dem bereits konvertierten Catch angefügt werden sollen. */
+  const [appendIds, setAppendIds] = useState<string[]>([]);
   const [titleDirty, setTitleDirty] = useState(false);
 
   const serverValues = useMemo(
@@ -213,18 +214,46 @@ function OfferCaseDetail({ caseId }: { caseId: string }) {
     enabled: editable,
   });
 
-  async function transferImage(replace: boolean) {
-    if (!chosenImage) return;
-    setBusy("transfer");
+  function toggleAppend(id: string) {
+    setAppendIds((current) =>
+      current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id],
+    );
+  }
+
+  /**
+   * Fügt die gewählten Dossier-Bilder dem bereits konvertierten Catch hinzu.
+   * Bestehende Catch-Bilder bleiben unverändert; fehlgeschlagene Bilder
+   * bleiben ausgewählt und sind sicher wiederholbar.
+   */
+  async function appendSelected() {
+    const target = dossier?.converted_catch_id;
+    if (!target || appendIds.length === 0) return;
+    setBusy("append");
+    let succeeded = 0;
+    const failed: string[] = [];
     try {
-      const result = await transferCaseImageToCatch({
-        data: { caseId, attachmentId: chosenImage.id, replace },
-      });
-      toast.success(result.message);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Übernahme fehlgeschlagen.";
-      if (message.includes(CATCH_IMAGE_EXISTS_MARKER)) setConfirmReplace(true);
-      else toast.error(message);
+      for (const attachmentId of appendIds) {
+        try {
+          await transferCaseImageToCatch({ data: { caseId, attachmentId, append: true } });
+          succeeded += 1;
+        } catch {
+          failed.push(attachmentId);
+        }
+      }
+      if (succeeded > 0) {
+        await queryClient.invalidateQueries({ queryKey: ["catch", target] });
+        await queryClient.invalidateQueries({ queryKey: ["catches"] });
+      }
+      if (failed.length === 0) {
+        toast.success(`${succeeded} Bild${succeeded === 1 ? "" : "er"} in den Catch übernommen.`);
+      } else if (succeeded === 0) {
+        toast.error("Bilder konnten nicht übernommen werden. Bitte erneut versuchen.");
+      } else {
+        toast.warning(
+          `${succeeded} von ${succeeded + failed.length} Bildern übernommen — die übrigen bleiben ausgewählt und können erneut übernommen werden.`,
+        );
+      }
+      setAppendIds(failed);
     } finally {
       setBusy(null);
     }
@@ -317,19 +346,25 @@ function OfferCaseDetail({ caseId }: { caseId: string }) {
             choice={imageChoice}
             onChoose={setImageChoice}
             disabled={!canEdit || (locked && !dossier.converted_catch_id)}
+            mode={locked && dossier.converted_catch_id ? "multi" : "single"}
+            selectedIds={appendIds}
+            onToggle={toggleAppend}
             footer={
               locked && dossier.converted_catch_id && canEdit ? (
                 <div className="flex flex-wrap items-center gap-2 border-t pt-3">
                   <Button
                     size="sm"
-                    disabled={!chosenImage || busy !== null}
-                    onClick={() => void transferImage(false)}
+                    disabled={appendIds.length === 0 || busy !== null}
+                    onClick={() => void appendSelected()}
                   >
                     <ImageUp className="mr-2 size-4" aria-hidden />
-                    Gewähltes Bild in den Catch übernehmen
+                    {appendIds.length > 0
+                      ? `${appendIds.length} Bild${appendIds.length === 1 ? "" : "er"} dem Catch anfügen`
+                      : "Bilder dem Catch anfügen"}
                   </Button>
                   <span className="text-xs text-muted-foreground">
-                    Ein vorhandenes Catch-Bild wird nur nach Bestätigung ersetzt.
+                    Bestehende Catch-Bilder bleiben unverändert. Die Originalanhänge bleiben im
+                    Dossier.
                   </span>
                 </div>
               ) : null
@@ -532,29 +567,6 @@ function OfferCaseDetail({ caseId }: { caseId: string }) {
               }}
             >
               Neu auswerten
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={confirmReplace} onOpenChange={setConfirmReplace}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Bestehendes Catch-Bild ersetzen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Der Catch hat bereits ein Bild. Es wird durch «{chosenImage?.file_name}» ersetzt. Eine
-              bestandene Musterprüfung und laufende Soundings werden dadurch zurückgesetzt.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setConfirmReplace(false);
-                void transferImage(true);
-              }}
-            >
-              Bild ersetzen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

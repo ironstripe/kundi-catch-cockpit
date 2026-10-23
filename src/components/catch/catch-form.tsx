@@ -13,7 +13,7 @@ import {
 import { toast } from "sonner";
 
 import { CalculationCard } from "@/components/catch/calculation-card";
-import { CatchImageField } from "@/components/catch/catch-image-field";
+import { CatchImagesField } from "@/components/catch/catch-image-field";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +52,17 @@ import {
 import { calculateCatch } from "@/lib/catch-calculation";
 import { validateDraft, validateReady, type FieldIssue } from "@/lib/catch-validation";
 import {
+  abandonedUploads,
+  imagesDirty,
+  removeStorageObjects,
+  syncCatchImages,
+  toFormImages,
+  type CatchImageRecord,
+  type CatchImageSyncClient,
+  type FormCatchImage,
+} from "@/lib/catch-images";
+import {
+  CATCH_IMAGE_BUCKET,
   fetchLocations,
   fetchSuppliers,
   formValuesToCalculationInput,
@@ -72,7 +83,8 @@ interface CatchFormProps {
   mode: "create" | "edit";
   catchId?: string;
   initialValues: CatchFormValues;
-  initialImagePath: string | null;
+  /** Alle gespeicherten Produktbilder (Hauptbild zuerst); leer beim Erstellen. */
+  initialImages: CatchImageRecord[];
   /** Aktueller Status, damit ein publizierter Catch beim Speichern publiziert bleibt. */
   currentStatus?: "draft" | "ready" | "published" | "closed" | "cancelled";
   /**
@@ -108,7 +120,7 @@ export function CatchForm({
   mode,
   catchId,
   initialValues,
-  initialImagePath,
+  initialImages,
   currentStatus,
   readyBlock = null,
   onSaved,
@@ -125,13 +137,19 @@ export function CatchForm({
   );
 
   const [values, setValues] = useState<CatchFormValues>(baseline);
-  const [imagePath, setImagePath] = useState<string | null>(initialImagePath);
+  const [images, setImages] = useState<FormCatchImage[]>(() => toFormImages(initialImages));
   const [uploading, setUploading] = useState(false);
   const [issues, setIssues] = useState<FieldIssue[]>([]);
   const [saving, setSaving] = useState(false);
   const [criticalOpen, setCriticalOpen] = useState(false);
   const [storyTouched, setStoryTouched] = useState(Boolean(initialValues.handicap_story));
   const savedRef = useRef(false);
+  // Frisch hochgeladene Objekte dieser Sitzung: werden beim Speichern
+  // referenziert oder beim Verlassen aufgeräumt — nie vorher gelöscht.
+  const uploadedRef = useRef<Set<string>>(new Set());
+  // Merkt sich die Id nach einem Teilerfolg (z. B. Bild-Synchronisierung
+  // fehlgeschlagen): ein erneuter Versuch aktualisiert statt neu anzulegen.
+  const catchIdRef = useRef<string | undefined>(catchId);
 
   const settings = useQuery({ queryKey: ["app-settings"], queryFn: fetchAppSettings });
   const defaultVatRate = settings.data?.vat.rate ?? DEFAULT_VAT_RATE;
@@ -163,7 +181,24 @@ export function CatchForm({
     !values.delivery_included && (Number(values.delivery_cost.replace(",", ".")) || 0) > 0;
 
   const dirty =
-    JSON.stringify(values) !== JSON.stringify(baseline) || imagePath !== initialImagePath;
+    JSON.stringify(values) !== JSON.stringify(baseline) || imagesDirty(images, initialImages);
+
+  // Frisch hochgeladene, nie gespeicherte Objekte beim Verlassen aufräumen
+  // (Verwerfen, Abbrechen, Navigation). Nach Erfolg ist die Menge geleert.
+  useEffect(
+    () => () => {
+      const pending = [...uploadedRef.current];
+      if (pending.length === 0) return;
+      void import("@/integrations/supabase/client").then(({ supabase }) =>
+        removeStorageObjects(
+          supabase as unknown as CatchImageSyncClient,
+          CATCH_IMAGE_BUCKET,
+          pending,
+        ),
+      );
+    },
+    [],
+  );
 
   // Schutz bleibt bis zum bestätigten Erfolg aktiv (auch während des Speicherns).
   const guard = useUnsavedChangesGuard(dirty);
@@ -206,7 +241,7 @@ export function CatchForm({
       return;
     }
     const found =
-      status === "draft" ? validateDraft(values) : validateReady(values, Boolean(imagePath));
+      status === "draft" ? validateDraft(values) : validateReady(values, images.length > 0);
     setIssues(found);
     if (found.length > 0) {
       focusFirst(found);
@@ -226,7 +261,7 @@ export function CatchForm({
     setSaving(true);
     try {
       const id = await saveCatch({
-        id: catchId,
+        id: catchIdRef.current,
         values,
         status: currentStatus === "published" ? "published" : status,
         audit: {
@@ -234,7 +269,18 @@ export function CatchForm({
           ...(confirmedCritical ? { critical_calculation_confirmed: true } : {}),
         },
       });
-      await syncImage(id);
+      // Ab hier existiert der Catch: ein Retry nach Teilfehler aktualisiert
+      // ihn, statt einen zweiten anzulegen.
+      catchIdRef.current = id;
+
+      const { supabase } = await import("@/integrations/supabase/client");
+      const client = supabase as unknown as CatchImageSyncClient;
+      await syncCatchImages(client, id, images);
+      // Frisch hochgeladene, im Formular wieder entfernte Objekte aufräumen.
+      const abandoned = abandonedUploads(uploadedRef.current, images);
+      await removeStorageObjects(client, CATCH_IMAGE_BUCKET, abandoned);
+      uploadedRef.current.clear();
+
       savedRef.current = true;
       guard.allowNextNavigation();
       toast.success(
@@ -253,42 +299,6 @@ export function CatchForm({
     } finally {
       setSaving(false);
     }
-  }
-
-  async function syncImage(id: string) {
-    const { supabase } = await import("@/integrations/supabase/client");
-    const { data: existing } = await supabase
-      .from("catch_images")
-      .select("id, storage_path")
-      .eq("catch_id", id);
-
-    const rows = existing ?? [];
-    if (!imagePath) {
-      if (rows.length > 0) {
-        await supabase
-          .from("catch_images")
-          .delete()
-          .in(
-            "id",
-            rows.map((row) => row.id),
-          );
-      }
-      return;
-    }
-    if (rows.some((row) => row.storage_path === imagePath)) return;
-
-    if (rows.length > 0) {
-      await supabase
-        .from("catch_images")
-        .delete()
-        .in(
-          "id",
-          rows.map((row) => row.id),
-        );
-    }
-    await supabase
-      .from("catch_images")
-      .insert({ catch_id: id, storage_path: imagePath, is_primary: true, sort_order: 0 });
   }
 
   // Verlassen läuft immer über den Router-Guard (auch Sidebar, Zurück-Taste).
@@ -837,12 +847,13 @@ export function CatchForm({
 
           <div className="space-y-4">
             <FormSection
-              title="Produktbild"
-              description="Ein Hauptbild. Für den Status «Bereit» erforderlich."
+              title="Produktbilder"
+              description="Ein Hauptbild ist für den Status «Bereit» erforderlich. Weitere Fotos sind optional."
             >
-              <CatchImageField
-                path={imagePath}
-                onChange={setImagePath}
+              <CatchImagesField
+                images={images}
+                onChange={setImages}
+                onUploaded={(storagePath) => uploadedRef.current.add(storagePath)}
                 onUploadingChange={setUploading}
                 invalid={Boolean(issueFor("product_image"))}
               />

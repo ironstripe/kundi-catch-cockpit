@@ -108,6 +108,14 @@ export function withInternalHandlingDefault(
   return { ...values, internal_handling_cost_per_unit: defaultRate.toFixed(2) };
 }
 
+/** Gespeichertes Produktbild eines Catches. */
+export interface CatchImageInfo {
+  id: string;
+  storage_path: string;
+  is_primary: boolean;
+  sort_order: number;
+}
+
 export interface CatchListItem {
   id: string;
   catch_number: string | null;
@@ -132,6 +140,8 @@ export interface CatchListItem {
   updated_at: string;
   expected_sell_through: number | null;
   image_path: string | null;
+  /** Alle Produktbilder in Reihenfolge (Hauptbild zuerst). */
+  images: CatchImageInfo[];
   location_names: string[];
   location_ids: string[];
   /** Abholorte mit Adresse und Abholhinweis aus den Stammdaten. */
@@ -205,7 +215,7 @@ const LIST_SELECT = `
   closed_at, cancelled_at, cancellation_reason, online_shop_url,
   internal_handling_cost_per_unit,
   suppliers ( id, name ),
-  catch_images ( storage_path, is_primary, sort_order ),
+  catch_images ( id, storage_path, is_primary, sort_order ),
   catch_locations ( location_id, locations ( id, name, address, pickup_note ) )
 `;
 
@@ -235,17 +245,18 @@ const DETAIL_SELECT = `
 `;
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-function primaryImagePath(row: any): string | null {
-  const images = (row.catch_images ?? []) as {
-    storage_path: string;
-    is_primary: boolean;
-    sort_order: number;
-  }[];
-  if (images.length === 0) return null;
-  const sorted = [...images].sort(
-    (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order,
+function mapImages(row: any): CatchImageInfo[] {
+  const images = (row.catch_images ?? []) as CatchImageInfo[];
+  return [...images].sort(
+    (a, b) =>
+      Number(b.is_primary) - Number(a.is_primary) ||
+      a.sort_order - b.sort_order ||
+      a.id.localeCompare(b.id),
   );
-  return sorted[0]?.storage_path ?? null;
+}
+
+function primaryImagePath(row: any): string | null {
+  return mapImages(row)[0]?.storage_path ?? null;
 }
 
 function mapList(row: any): CatchListItem {
@@ -293,6 +304,7 @@ function mapList(row: any): CatchListItem {
     cancelled_at: row.cancelled_at ?? null,
     cancellation_reason: row.cancellation_reason ?? null,
     image_path: primaryImagePath(row),
+    images: mapImages(row),
     location_names: (row.catch_locations ?? [])
       .map((cl: any) => cl.locations?.name)
       .filter(Boolean),

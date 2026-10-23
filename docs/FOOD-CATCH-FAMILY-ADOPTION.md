@@ -81,7 +81,8 @@ Conversion: the misleading hint is gone. The final CTA is "Catch-Entwurf erstell
 History (§8): the whole row navigates. The product name is the only link and the only tab stop for the row. The row has hover and focus-within states and a chevron. "Post ansehen" stays a separate destination, and clicks on it do not trigger the row.
 
 Verification:
-- 211 vitest tests pass (incl. same-value normalised save acknowledgement via `reconcileSaved`, typing after submit retained, dirty contribution cleared on editor unmount).
+- 226 vitest tests pass (incl. same-value normalised save acknowledgement via `reconcileSaved`, typing after submit retained, dirty contribution cleared on editor unmount, multi-image form helpers and `syncCatchImages` append/order/remove/retry, dossier-image append mode).
+- Multi-image product photos (2026-10-23): the Catch form manages the full `catch_images` collection — append-only uploads, main-image choice, reordering, individual removal; persistence and cleanup happen only on confirmed save (discard preserves saved images), and a partially created Catch is retried via its remembered id. Detail, review, and publication show all images in order; "Alle Bilder herunterladen" fetches every image for manual WhatsApp attachment (text clipboard never implies images). Converted dossiers can append selected photos without touching existing Catch images.
 - CatchForm fields are frozen (`fieldset disabled`) during the ordinary save; the leave guard stays active.
 - Consumer tests render the real `CaseTitleEditor`: focus, commit once, rejected/failed save, Esc while pending.
 - Hook tests cover `useSyncedDraft` (same-id vs different-id, save sequencing) and the pure `ordinarySaveStatus`/`ordinarySaveLabel`.

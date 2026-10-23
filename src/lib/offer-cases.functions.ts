@@ -465,38 +465,39 @@ export const convertCaseToCatch = createServerFn({ method: "POST" })
     const { data: created, error: createError } = earlier
       ? { data: earlier, error: null }
       : await supabaseAdmin
-      .from("catches")
-      .insert({
-        product_name: String(fieldValue(offer, "product_name")),
-        temperature,
-        status: "draft",
-        description: details.join(" · ") || null,
-        packaging: (fieldValue(offer, "packaging") as string | null) ?? null,
-        expiry_date: (fieldValue(offer, "expiry_date") as string | null) ?? null,
-        supplier_id: supplierId,
-        purchase_quantity: numberOrNull(fieldValue(offer, "available_quantity")) ?? 0,
-        quantity_unit: (fieldValue(offer, "quantity_unit") as string | null) ?? "kg",
-        purchase_price: numberOrNull(fieldValue(offer, "purchase_price")),
-        // Steuerbasis: nur übernehmen, wenn das Angebot sie ausdrücklich nennt.
-        purchase_price_includes_vat:
-          vatBasisIncluded(offer, "purchase_price_includes_vat") ?? false,
-        purchase_vat_rate:
-          numberOrNull(fieldValue(offer, "purchase_vat_rate")) ?? DEFAULT_PURCHASE_VAT_RATE,
-        regular_price: numberOrNull(fieldValue(offer, "regular_price")),
-        delivery_cost: numberOrNull(fieldValue(offer, "delivery_cost")) ?? 0,
-        delivery_cost_includes_vat: vatBasisIncluded(offer, "delivery_cost_includes_vat") ?? false,
-        delivery_vat_rate:
-          numberOrNull(fieldValue(offer, "delivery_vat_rate")) ?? DEFAULT_DELIVERY_VAT_RATE,
-        vat_basis_confirmed: false,
-        available_from: typeof availableFrom === "string" ? `${availableFrom}T00:00:00Z` : null,
-        handicap_reason: (fieldValue(offer, "offer_reason") as string | null) ?? null,
-        internal_note: internalNote || null,
-        created_by: context.userId,
-        source_offer_id: first.id,
-        source_case_id: data.caseId,
-      })
-      .select("id, catch_number")
-      .single();
+          .from("catches")
+          .insert({
+            product_name: String(fieldValue(offer, "product_name")),
+            temperature,
+            status: "draft",
+            description: details.join(" · ") || null,
+            packaging: (fieldValue(offer, "packaging") as string | null) ?? null,
+            expiry_date: (fieldValue(offer, "expiry_date") as string | null) ?? null,
+            supplier_id: supplierId,
+            purchase_quantity: numberOrNull(fieldValue(offer, "available_quantity")) ?? 0,
+            quantity_unit: (fieldValue(offer, "quantity_unit") as string | null) ?? "kg",
+            purchase_price: numberOrNull(fieldValue(offer, "purchase_price")),
+            // Steuerbasis: nur übernehmen, wenn das Angebot sie ausdrücklich nennt.
+            purchase_price_includes_vat:
+              vatBasisIncluded(offer, "purchase_price_includes_vat") ?? false,
+            purchase_vat_rate:
+              numberOrNull(fieldValue(offer, "purchase_vat_rate")) ?? DEFAULT_PURCHASE_VAT_RATE,
+            regular_price: numberOrNull(fieldValue(offer, "regular_price")),
+            delivery_cost: numberOrNull(fieldValue(offer, "delivery_cost")) ?? 0,
+            delivery_cost_includes_vat:
+              vatBasisIncluded(offer, "delivery_cost_includes_vat") ?? false,
+            delivery_vat_rate:
+              numberOrNull(fieldValue(offer, "delivery_vat_rate")) ?? DEFAULT_DELIVERY_VAT_RATE,
+            vat_basis_confirmed: false,
+            available_from: typeof availableFrom === "string" ? `${availableFrom}T00:00:00Z` : null,
+            handicap_reason: (fieldValue(offer, "offer_reason") as string | null) ?? null,
+            internal_note: internalNote || null,
+            created_by: context.userId,
+            source_offer_id: first.id,
+            source_case_id: data.caseId,
+          })
+          .select("id, catch_number")
+          .single();
     if (createError || !created) {
       throw new Error(createError?.message ?? "Der Catch-Entwurf konnte nicht angelegt werden.");
     }
@@ -561,7 +562,9 @@ export const convertCaseToCatch = createServerFn({ method: "POST" })
 
     return {
       status: "converted",
-      message: attachment ? "Catch-Entwurf mit Bild erstellt." : "Catch-Entwurf ohne Bild erstellt.",
+      message: attachment
+        ? "Catch-Entwurf mit Bild erstellt."
+        : "Catch-Entwurf ohne Bild erstellt.",
       catchId,
     };
   });
@@ -577,7 +580,9 @@ async function catchHasImage(supabaseAdmin: AdminClient, catchId: string): Promi
 async function loadCaseImage(supabaseAdmin: AdminClient, caseId: string, attachmentId: string) {
   const { data: attachment } = await supabaseAdmin
     .from("supplier_offer_attachments")
-    .select("id, storage_path, file_name, mime_type, offer_id, supplier_offer_emails!inner(case_id)")
+    .select(
+      "id, storage_path, file_name, mime_type, offer_id, supplier_offer_emails!inner(case_id)",
+    )
     .eq("id", attachmentId)
     .maybeSingle();
   const owner = attachment?.supplier_offer_emails as { case_id: string | null } | null | undefined;
@@ -593,7 +598,9 @@ async function loadCaseImage(supabaseAdmin: AdminClient, caseId: string, attachm
 /** Bild aus einem bereits übernommenen Dossier in dessen Catch übertragen. */
 export const transferCaseImageToCatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { caseId: string; attachmentId: string; replace?: boolean }) => input)
+  .inputValidator(
+    (input: { caseId: string; attachmentId: string; replace?: boolean; append?: boolean }) => input,
+  )
   .handler(async ({ data, context }): Promise<CaseActionResult & { catchId: string }> => {
     await assertEditor(context.supabase as unknown as Supa, context.userId);
     const { row, supabaseAdmin } = await loadCase(data.caseId);
@@ -614,6 +621,7 @@ export const transferCaseImageToCatch = createServerFn({ method: "POST" })
       sourceBucket: SUPPLIER_OFFER_BUCKET,
       targetBucket: "catch-images",
       replace: Boolean(data.replace),
+      append: Boolean(data.append),
     });
     await supabaseAdmin.from("audit_events").insert({
       entity_type: "catch",
@@ -625,7 +633,12 @@ export const transferCaseImageToCatch = createServerFn({ method: "POST" })
         attachment_id: attachment.id,
         file_name: attachment.file_name,
         replaced: result.replaced,
-        summary: result.replaced ? "Produktbild aus Dossier ersetzt" : "Produktbild aus Dossier übernommen",
+        appended: result.appended,
+        summary: result.appended
+          ? "Produktbild aus Dossier angefügt"
+          : result.replaced
+            ? "Produktbild aus Dossier ersetzt"
+            : "Produktbild aus Dossier übernommen",
       } as never,
     });
     return {

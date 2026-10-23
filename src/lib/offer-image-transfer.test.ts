@@ -57,8 +57,19 @@ function fakeClient(opts: {
   return { client, state };
 }
 
-const attachment = { storage_path: "o/a.jpg", file_name: "Crevetten 2.jpg", mime_type: "image/jpeg" };
-const base = { catchId: "c1", attachment, sourceBucket: "s", targetBucket: "t", replace: false, id: () => "x" };
+const attachment = {
+  storage_path: "o/a.jpg",
+  file_name: "Crevetten 2.jpg",
+  mime_type: "image/jpeg",
+};
+const base = {
+  catchId: "c1",
+  attachment,
+  sourceBucket: "s",
+  targetBucket: "t",
+  replace: false,
+  id: () => "x",
+};
 
 describe("transferImageToCatch", () => {
   it("überträgt das gewählte Bild und legt den Datensatz an", async () => {
@@ -95,10 +106,30 @@ describe("transferImageToCatch", () => {
     expect(state.rows.map((row) => row.id)).not.toContain("old");
   });
 
+  it("fügt mit append ein zweites Bild hinten an, ohne Bestehendes zu löschen", async () => {
+    const { client, state } = fakeClient({ existing: [{ id: "old", storage_path: "old.jpg" }] });
+    const result = await transferImageToCatch(client, { ...base, append: true });
+    expect(result.appended).toBe(true);
+    expect(result.replaced).toBe(0);
+    expect(state.removed).toEqual([]);
+    expect(state.rows.map((row) => row.storage_path)).toEqual(["old.jpg", "c1/x-Crevetten_2.jpg"]);
+  });
+
+  it("verlangt im append-Modus keine Bestätigung und legt kein Ersatz-Löschen an", async () => {
+    const { client, state } = fakeClient({ existing: [{ id: "old", storage_path: "old.jpg" }] });
+    await expect(transferImageToCatch(client, base)).rejects.toThrow(CATCH_IMAGE_EXISTS_MARKER);
+    expect(state.rows).toHaveLength(1);
+    await transferImageToCatch(client, { ...base, append: true });
+    expect(state.rows).toHaveLength(2);
+  });
+
   it("lehnt Nicht-Bilder ab", async () => {
     const { client } = fakeClient({});
     await expect(
-      transferImageToCatch(client, { ...base, attachment: { ...attachment, mime_type: "application/pdf" } }),
+      transferImageToCatch(client, {
+        ...base,
+        attachment: { ...attachment, mime_type: "application/pdf" },
+      }),
     ).rejects.toThrow(/kein Bild/);
   });
 });
