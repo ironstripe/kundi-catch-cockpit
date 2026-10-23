@@ -57,6 +57,7 @@ import {
   removeStorageObjects,
   syncCatchImages,
   toFormImages,
+  uploadsSafeToRemove,
   type CatchImageRecord,
   type CatchImageSyncClient,
   type FormCatchImage,
@@ -312,7 +313,7 @@ export function CatchForm({
 
       const { supabase } = await import("@/integrations/supabase/client");
       const client = supabase as unknown as CatchImageSyncClient;
-      await syncCatchImages(client, id, images);
+      await syncCatchImages(client, id, images, baselineIds);
       // Frisch hochgeladene, im Formular wieder entfernte Objekte aufräumen.
       const abandoned = abandonedUploads(uploadedRef.current, images);
       await removeStorageObjects(client, CATCH_IMAGE_BUCKET, abandoned);
