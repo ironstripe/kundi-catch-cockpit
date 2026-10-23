@@ -12,3 +12,4 @@
 ## Project rules
 - Session-upload cleanup goes through `useSessionUploads` (deferred, replay-safe): React StrictMode/Fast Refresh replays effect cleanup on mounted editors, so never delete storage objects directly in an effect cleanup.
 - Private images render via `SignedImage`, which shows an explicit load error with retry instead of a broken image or endless spinner.
+- Preparation navigation is an explicit form-save intent independent of Catch status; use draft validation for it so optional quality workflows cannot gate WhatsApp preparation.
