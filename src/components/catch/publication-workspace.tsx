@@ -456,7 +456,18 @@ export function PublicationWorkspace({
                     disabled={!image.data}
                   >
                     <Download />
-                    Bild herunterladen
+                    Hauptbild herunterladen
+                  </Button>
+                ) : null}
+                {item.images.length > 1 ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void handleDownloadAll()}
+                    disabled={downloadingAll}
+                  >
+                    {downloadingAll ? <Loader2 className="animate-spin" /> : <Download />}
+                    Alle Bilder herunterladen ({item.images.length})
                   </Button>
                 ) : null}
                 <Button size="sm" onClick={() => void handleCopyText(finalText)}>
