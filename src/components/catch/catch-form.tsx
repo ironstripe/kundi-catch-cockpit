@@ -151,7 +151,36 @@ export function CatchForm({
   // Beim Laden bekannte Bild-Datensätze: nur bewusste Entfernungen dieser
   // Datensätze werden gespeichert — nebenläufig Hinzugefügtes bleibt.
   const baselineIds = useMemo(() => initialImages.map((row) => row.id), [initialImages]);
-...
+
+  const settings = useQuery({ queryKey: ["app-settings"], queryFn: fetchAppSettings });
+  const defaultVatRate = settings.data?.vat.rate ?? DEFAULT_VAT_RATE;
+  const defaultHandlingRate =
+    settings.data?.calculation_defaults.internal_handling_cost_per_unit ??
+    DEFAULT_INTERNAL_HANDLING_COST;
+
+  /** Deep-Link «#interner-aufwand» zuverlässig anspringen. */
+  useEffect(() => {
+    if (typeof window === "undefined" || window.location.hash !== "#interner-aufwand") return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(() => {
+      const element = document.getElementById("interner-aufwand");
+      element?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+      document.getElementById("internal_handling_cost_per_unit")?.focus();
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const calculation = useMemo(
+    () => calculateCatch(formValuesToCalculationInput(values, defaultVatRate)),
+    [values, defaultVatRate],
+  );
+
+  const suppliers = useQuery({ queryKey: ["suppliers"], queryFn: fetchSuppliers });
+  const locations = useQuery({ queryKey: ["locations"], queryFn: fetchLocations });
+
+  const hasDeliveryCost =
+    !values.delivery_included && (Number(values.delivery_cost.replace(",", ".")) || 0) > 0;
+
   const dirty =
     JSON.stringify(values) !== JSON.stringify(baseline) || imagesDirty(images, initialImages);
 
