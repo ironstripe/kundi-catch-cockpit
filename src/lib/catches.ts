@@ -108,6 +108,14 @@ export function withInternalHandlingDefault(
   return { ...values, internal_handling_cost_per_unit: defaultRate.toFixed(2) };
 }
 
+/** Gespeichertes Produktbild eines Catches. */
+export interface CatchImageInfo {
+  id: string;
+  storage_path: string;
+  is_primary: boolean;
+  sort_order: number;
+}
+
 export interface CatchListItem {
   id: string;
   catch_number: string | null;
@@ -132,6 +140,8 @@ export interface CatchListItem {
   updated_at: string;
   expected_sell_through: number | null;
   image_path: string | null;
+  /** Alle Produktbilder in Reihenfolge (Hauptbild zuerst). */
+  images: CatchImageInfo[];
   location_names: string[];
   location_ids: string[];
   /** Abholorte mit Adresse und Abholhinweis aus den Stammdaten. */
@@ -205,7 +215,7 @@ const LIST_SELECT = `
   closed_at, cancelled_at, cancellation_reason, online_shop_url,
   internal_handling_cost_per_unit,
   suppliers ( id, name ),
-  catch_images ( storage_path, is_primary, sort_order ),
+  catch_images ( id, storage_path, is_primary, sort_order ),
   catch_locations ( location_id, locations ( id, name, address, pickup_note ) )
 `;
 
