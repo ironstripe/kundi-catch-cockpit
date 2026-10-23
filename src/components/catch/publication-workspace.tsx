@@ -82,6 +82,7 @@ export function PublicationWorkspace({
   const signature = useMemo(() => postSourceSignature(source), [source]);
 
   const [confirm, setConfirm] = useState<null | "regenerate" | "reset" | "publish">(null);
+  const [downloadingAll, setDownloadingAll] = useState(false);
   const [imageFallback, setImageFallback] = useState(false);
   const [textFallback, setTextFallback] = useState(false);
   const [copiedImage, setCopiedImage] = useState(false);
@@ -332,29 +333,22 @@ export function PublicationWorkspace({
 
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">
-                  Bild, das nach WhatsApp kopiert wird
+                  Bilder des Catches ({item.images.length})
                 </Label>
-                <div className="aspect-[4/3] w-full max-w-xs overflow-hidden rounded-md border bg-muted/30">
-                  {image.isLoading ? (
-                    <Skeleton className="size-full" />
-                  ) : image.data ? (
-                    <img
-                      src={image.data.url}
-                      alt={`WhatsApp-Bild von ${item.product_name}`}
-                      className="size-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex size-full items-center justify-center text-xs text-muted-foreground placeholder-hatch">
-                      Kein Produktbild hinterlegt
-                    </div>
-                  )}
-                </div>
+                <CatchImageGallery
+                  images={item.images}
+                  alt={`Produktbild von ${item.product_name}`}
+                  emptyText="Kein Produktbild hinterlegt"
+                  className="max-w-xs"
+                />
                 <p className="text-xs text-muted-foreground">
                   {image.data
                     ? image.data.optimized
-                      ? "Für WhatsApp optimiert (max. 1080 px, ohne Metadaten). Das Original bleibt erhalten."
-                      : "Optimierung nicht möglich — es wird das Originalbild verwendet."
-                    : "Ohne Bild kann nur der Text kopiert werden."}
+                      ? "«Bild kopieren» verwendet das Hauptbild, für WhatsApp optimiert (max. 1080 px, ohne Metadaten). Das Original bleibt erhalten."
+                      : "«Bild kopieren» verwendet das Hauptbild — Optimierung nicht möglich, es wird das Original verwendet."
+                    : "Ohne Bild kann nur der Text kopiert werden."}{" "}
+                  Der kopierte Text enthält keine Bilddateien; weitere Bilder über «Alle Bilder
+                  herunterladen» einzeln anfügen.
                 </p>
               </div>
             </CardContent>
