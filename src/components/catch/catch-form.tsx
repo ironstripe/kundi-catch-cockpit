@@ -301,42 +301,6 @@ export function CatchForm({
     }
   }
 
-  async function syncImage(id: string) {
-    const { supabase } = await import("@/integrations/supabase/client");
-    const { data: existing } = await supabase
-      .from("catch_images")
-      .select("id, storage_path")
-      .eq("catch_id", id);
-
-    const rows = existing ?? [];
-    if (!imagePath) {
-      if (rows.length > 0) {
-        await supabase
-          .from("catch_images")
-          .delete()
-          .in(
-            "id",
-            rows.map((row) => row.id),
-          );
-      }
-      return;
-    }
-    if (rows.some((row) => row.storage_path === imagePath)) return;
-
-    if (rows.length > 0) {
-      await supabase
-        .from("catch_images")
-        .delete()
-        .in(
-          "id",
-          rows.map((row) => row.id),
-        );
-    }
-    await supabase
-      .from("catch_images")
-      .insert({ catch_id: id, storage_path: imagePath, is_primary: true, sort_order: 0 });
-  }
-
   // Verlassen läuft immer über den Router-Guard (auch Sidebar, Zurück-Taste).
   function handleLeave() {
     leaveNow();
@@ -883,12 +847,13 @@ export function CatchForm({
 
           <div className="space-y-4">
             <FormSection
-              title="Produktbild"
-              description="Ein Hauptbild. Für den Status «Bereit» erforderlich."
+              title="Produktbilder"
+              description="Ein Hauptbild ist für den Status «Bereit» erforderlich. Weitere Fotos sind optional."
             >
-              <CatchImageField
-                path={imagePath}
-                onChange={setImagePath}
+              <CatchImagesField
+                images={images}
+                onChange={setImages}
+                onUploaded={(storagePath) => uploadedRef.current.add(storagePath)}
                 onUploadingChange={setUploading}
                 invalid={Boolean(issueFor("product_image"))}
               />
