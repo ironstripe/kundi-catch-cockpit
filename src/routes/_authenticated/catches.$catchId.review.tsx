@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useRoles } from "@/hooks/use-role";
-import { useSignedImage } from "@/hooks/use-signed-image";
+import { CatchImageGallery } from "@/components/catch/catch-image-gallery";
 import { calculateCatch } from "@/lib/catch-calculation";
 import { catchToCalculationInput, fetchCatch } from "@/lib/catches";
 import { formatDateTime, formatQuantity } from "@/lib/format";
