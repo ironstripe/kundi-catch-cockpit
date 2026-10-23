@@ -7,6 +7,9 @@ import { CatchForm } from "@/components/catch/catch-form";
 import { PublicationWorkspace } from "@/components/catch/publication-workspace";
 import { EMPTY_CATCH_FORM } from "@/lib/catches";
 import { draftCatch } from "@/test/catch-fixture";
+import { normalizeTemplate } from "@/lib/app-settings";
+import { catchToPostSource } from "@/lib/publication";
+import { postSourceSignature } from "@/lib/whatsapp-post";
 
 const mocks = vi.hoisted(() => ({
   save: vi.fn(),
@@ -15,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   saveText: vi.fn(),
   copy: vi.fn(),
   canEdit: true,
+  template: {} as Record<string, unknown>,
 }));
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => vi.fn() }));
 vi.mock("@/hooks/use-role", () => ({ useRoles: () => ({ canEdit: mocks.canEdit }) }));
@@ -29,13 +33,17 @@ vi.mock("@/lib/catches", async (original) => ({
   fetchSuppliers: async () => [],
   fetchLocations: async () => [],
 }));
-vi.mock("@/lib/app-settings", async (original) => ({
-  ...(await original<typeof import("@/lib/app-settings")>()),
-  fetchAppSettings: async () => ({
-    vat: { rate: 2.6 },
-    calculation_defaults: { internal_handling_cost_per_unit: 2.5 },
-  }),
-}));
+vi.mock("@/lib/app-settings", async (original) => {
+  const actual = await original<typeof import("@/lib/app-settings")>();
+  return {
+    ...actual,
+    fetchAppSettings: async () => ({
+      vat: { rate: 2.6 },
+      calculation_defaults: { internal_handling_cost_per_unit: 2.5 },
+      template: actual.normalizeTemplate(mocks.template),
+    }),
+  };
+});
 vi.mock("@/lib/catch-images", async (original) => ({
   ...(await original<typeof import("@/lib/catch-images")>()),
   syncCatchImages: mocks.sync,
@@ -63,6 +71,7 @@ afterEach(cleanup);
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.canEdit = true;
+  mocks.template = {};
   mocks.save.mockResolvedValue("catch-1");
   mocks.sync.mockResolvedValue(undefined);
   mocks.saveText.mockResolvedValue(undefined);
@@ -186,5 +195,49 @@ describe("saved draft → WhatsApp preparation", () => {
       screen.getByRole("button", { name: "Speichern und WhatsApp-Post vorbereiten" }),
     );
     expect(mocks.save).not.toHaveBeenCalled();
+  });
+});
+
+describe("saved WhatsApp template in the real preparation workspace", () => {
+  const source = catchToPostSource(draftCatch);
+  it("generates, saves and copies with the saved header, not the code default", async () => {
+    mocks.template = { header: "🐟 *Teilt mit allen!*", intro: "Frisch eingetroffen." };
+    render(wrap(<PublicationWorkspace item={{ ...draftCatch }} onChanged={vi.fn()} />));
+    const area = (await screen.findByLabelText("WhatsApp-Post-Text")) as HTMLTextAreaElement;
+    expect(area.value.split("\n")[0]).toBe("🐟 *Teilt mit allen!*");
+    expect(area.value).toContain("Frisch eingetroffen.");
+    fireEvent.click(screen.getByRole("button", { name: "Text kopieren" }));
+    await waitFor(() => expect(mocks.copy).toHaveBeenCalledWith(area.value));
+    fireEvent.click(screen.getByRole("button", { name: /Aus Catch-Daten neu generieren/ }));
+    await waitFor(() => expect(mocks.saveText).toHaveBeenCalledTimes(1));
+    const saved = mocks.saveText.mock.calls[0]![0];
+    expect(saved.generatedText.startsWith("🐟 *Teilt mit allen!*")).toBe(true);
+    expect(saved.signature).toBe(postSourceSignature(source, normalizeTemplate(mocks.template)));
+  });
+
+  it("flags a saved post after a template change, keeps its text, regenerates only on request", async () => {
+    const oldText = "Mein gespeicherter Text";
+    mocks.template = { header: "Neuer Titel" };
+    render(
+      wrap(
+        <PublicationWorkspace
+          item={{
+            ...draftCatch,
+            post_final_text: oldText,
+            post_generated_text: oldText,
+            post_source_signature: postSourceSignature(source),
+            post_outdated_decision: null,
+          }}
+          onChanged={vi.fn()}
+        />,
+      ),
+    );
+    expect(await screen.findByText(/Vorlage geändert/)).toBeTruthy();
+    const area = screen.getByLabelText("WhatsApp-Post-Text") as HTMLTextAreaElement;
+    expect(area.value).toBe(oldText);
+    expect(mocks.saveText).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Post neu generieren" }));
+    await waitFor(() => expect(mocks.saveText).toHaveBeenCalledTimes(1));
+    expect(mocks.saveText.mock.calls[0]![0].finalText.startsWith("Neuer Titel")).toBe(true);
   });
 });
