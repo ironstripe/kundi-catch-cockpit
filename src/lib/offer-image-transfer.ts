@@ -95,7 +95,7 @@ export async function transferImageToCatch(
     throw new Error(`Das Bild konnte nicht im Catch gespeichert werden: ${upload.error.message}`);
   }
 
-  if (current.length) {
+  if (current.length && !append) {
     const removed = await client.from("catch_images").delete().in("id", current.map((row) => row.id));
     if (removed.error) {
       await client.storage.from(args.targetBucket).remove([target]);
@@ -106,12 +106,12 @@ export async function transferImageToCatch(
   const inserted = await client.from("catch_images").insert({
     catch_id: args.catchId,
     storage_path: target,
-    is_primary: true,
-    sort_order: 0,
+    is_primary: current.length === 0,
+    sort_order: current.length,
   });
   if (inserted.error) {
     await client.storage.from(args.targetBucket).remove([target]);
     throw new Error(`Der Bilddatensatz konnte nicht angelegt werden: ${inserted.error.message}`);
   }
-  return { storagePath: target, replaced: current.length };
+  return { storagePath: target, replaced: append ? 0 : current.length, appended: append };
 }
