@@ -8,3 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Project rules
+- Session-upload cleanup goes through `useSessionUploads` (deferred, replay-safe): React StrictMode/Fast Refresh replays effect cleanup on mounted editors, so never delete storage objects directly in an effect cleanup.
+- Private images render via `SignedImage`, which shows an explicit load error with retry instead of a broken image or endless spinner.
