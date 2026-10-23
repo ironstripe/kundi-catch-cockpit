@@ -88,6 +88,17 @@ export function abandonedUploads(uploaded: Iterable<string>, images: FormCatchIm
   return [...uploaded].filter((path) => !kept.has(path));
 }
 
+/**
+ * Sitzungs-Uploads, die beim Verlassen gefahrlos gelöscht werden dürfen:
+ * nur Objekte, die von keinem catch_images-Datensatz referenziert werden.
+ * Nach einem Teilerfolg kann ein frischer Upload bereits gespeichert sein —
+ * dieses Objekt darf nicht entfernt werden.
+ */
+export function uploadsSafeToRemove(pending: string[], referencedPaths: string[]): string[] {
+  const referenced = new Set(referencedPaths);
+  return pending.filter((path) => !referenced.has(path));
+}
+
 /** Minimale Client-Schnittstelle — erlaubt Tests ohne echte Datenbank. */
 export interface CatchImageSyncClient {
   storage: {
