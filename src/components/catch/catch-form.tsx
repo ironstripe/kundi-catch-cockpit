@@ -191,20 +191,51 @@ export function CatchForm({
 
   // Frisch hochgeladene, nie gespeicherte Objekte beim Verlassen aufräumen
   // (Verwerfen, Abbrechen, Navigation). Nach Erfolg ist die Menge geleert.
+  // Sicher nach Teilerfolg: Pfade, die inzwischen von catch_images des
+  // gemerkten Catches referenziert werden, werden nie gelöscht; schlägt die
+  // Prüfung fehl, bleiben die Objekte bewahrt.
   useEffect(
     () => () => {
+      unmountedRef.current = true;
       const pending = [...uploadedRef.current];
       if (pending.length === 0) return;
+      void import("@/integrations/supabase/client").then(async ({ supabase }) => {
+        const client = supabase as unknown as CatchImageSyncClient;
+        let safe = pending;
+        const id = catchIdRef.current;
+        if (id) {
+          try {
+            const { data, error } = await client
+              .from("catch_images")
+              .select("id, storage_path, is_primary, sort_order")
+              .eq("catch_id", id);
+            if (error) return;
+            safe = uploadsSafeToRemove(pending, (data ?? []).map((row) => row.storage_path));
+          } catch {
+            return;
+          }
+        }
+        await removeStorageObjects(client, CATCH_IMAGE_BUCKET, safe);
+      });
+    },
+    [],
+  );
+
+  /** Meldet frisch hochgeladene Pfade für das Aufräumen beim Verwerfen. */
+  function handleUploaded(storagePath: string) {
+    if (unmountedRef.current) {
+      // Upload kam nach dem Verlassen fertig an: sofort best effort aufräumen.
       void import("@/integrations/supabase/client").then(({ supabase }) =>
         removeStorageObjects(
           supabase as unknown as CatchImageSyncClient,
           CATCH_IMAGE_BUCKET,
-          pending,
+          [storagePath],
         ),
       );
-    },
-    [],
-  );
+      return;
+    }
+    uploadedRef.current.add(storagePath);
+  }
 
   // Schutz bleibt bis zum bestätigten Erfolg aktiv (auch während des Speicherns).
   const guard = useUnsavedChangesGuard(dirty);
