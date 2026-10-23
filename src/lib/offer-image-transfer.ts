@@ -53,9 +53,14 @@ export async function transferImageToCatch(
     sourceBucket: string;
     targetBucket: string;
     replace: boolean;
+    /**
+     * TRUE = als zusätzliches Bild hinten anfügen; überschreibt nie
+     * Bestehendes und verlangt keine Bestätigung.
+     */
+    append?: boolean | undefined;
     id?: () => string;
   },
-): Promise<{ storagePath: string; replaced: number }> {
+): Promise<{ storagePath: string; replaced: number; appended: boolean }> {
   if (!args.attachment.mime_type.startsWith("image/")) {
     throw new Error("Der gewählte Anhang ist kein Bild.");
   }
@@ -63,7 +68,8 @@ export async function transferImageToCatch(
   const existing = await client.from("catch_images").select("id, storage_path").eq("catch_id", args.catchId);
   if (existing.error) throw new Error(`Bilder des Catches konnten nicht gelesen werden: ${existing.error.message}`);
   const current = existing.data ?? [];
-  if (current.length && !args.replace) {
+  const append = Boolean(args.append);
+  if (current.length && !append && !args.replace) {
     throw new Error(
       `${CATCH_IMAGE_EXISTS_MARKER} Der Catch hat bereits ein Bild. Zum Ersetzen bitte bestätigen.`,
     );
