@@ -105,10 +105,11 @@ export function CatchImagesField({
       for (const file of valid) {
         const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
         const objectPath = `${crypto.randomUUID()}${extension || ".jpg"}`;
+        const contentType = uploadContentType(file);
         const { error } = await supabase.storage.from(CATCH_IMAGE_BUCKET).upload(objectPath, file, {
           cacheControl: "3600",
           upsert: false,
-          contentType: uploadContentType(file),
+          ...(contentType ? { contentType } : {}),
         });
         if (error) {
           messages.push(`${file.name}: ${error.message}`);

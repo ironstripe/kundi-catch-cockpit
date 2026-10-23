@@ -275,9 +275,9 @@ export function CatchForm({
       const client = supabase as unknown as CatchImageSyncClient;
       await syncCatchImages(client, id, images, baselineIds);
       // Frisch hochgeladene, im Formular wieder entfernte Objekte aufräumen.
-      const abandoned = abandonedUploads(uploadedRef.current, images);
+      const abandoned = abandonedUploads(sessionUploads.pending(), images);
       await removeStorageObjects(client, CATCH_IMAGE_BUCKET, abandoned);
-      uploadedRef.current.clear();
+      sessionUploads.clear();
 
       savedRef.current = true;
       guard.allowNextNavigation();
