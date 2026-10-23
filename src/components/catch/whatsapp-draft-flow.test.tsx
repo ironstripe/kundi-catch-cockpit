@@ -24,7 +24,7 @@ vi.mock("@/lib/catches", async (original) => ({
   saveCatch: mocks.save, fetchSuppliers: async () => [], fetchLocations: async () => [],
 }));
 vi.mock("@/lib/app-settings", async (original) => ({
-  ...(await original<typeof import("@/lib/app-settings")>()), fetchAppSettings: async () => ({}),
+  ...(await original<typeof import("@/lib/app-settings")>()), fetchAppSettings: async () => ({ vat: { rate: 2.6 }, calculation_defaults: { internal_handling_cost_per_unit: 2.5 } }),
 }));
 vi.mock("@/lib/catch-images", async (original) => ({
   ...(await original<typeof import("@/lib/catch-images")>()),
@@ -89,7 +89,7 @@ describe("saved draft → WhatsApp preparation", () => {
       initialValues={{ ...EMPTY_CATCH_FORM, product_name: "Fisch" }} onSaved={onSaved} />));
     fireEvent.click(screen.getByRole("button", { name: "Speichern und WhatsApp-Post vorbereiten" }));
     await waitFor(() => expect(onSaved).toHaveBeenCalledWith("catch-1", "ready", true));
-    expect(mocks.sync.mock.calls[0]?.[2].map((image: { storage_path: string }) => image.storage_path)).toEqual([draftCatch.image_path, "second.jpg"]);
+    expect(mocks.sync.mock.calls[0]?.[2].map((image: { storagePath: string }) => image.storagePath)).toEqual([draftCatch.image_path, "second.jpg"]);
     expect(mocks.save.mock.calls[0]?.[0].status).toBe("ready");
   });
   it.each(["viewer", "closed", "cancelled"])("%s cannot edit/save", async (state) => {
