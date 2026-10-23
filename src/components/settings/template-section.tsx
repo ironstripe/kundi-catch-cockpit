@@ -182,8 +182,7 @@ export function TemplateSection() {
             </div>
           ))}
           <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-            Formatierung wie in WhatsApp: <code>*fett*</code>, <code>~durchgestrichen~</code>,{" "}
-            <code>_kursiv_</code>, Emojis direkt einfügen. Kein HTML.
+            Formatierung wie in WhatsApp: <code>*fett*</code>, <code>~durchgestrichen~</code>, Emojis direkt einfügen. Kein HTML.
           </p>
 
           <div className="grid gap-4 sm:grid-cols-2">
