@@ -181,7 +181,24 @@ export function CatchForm({
     !values.delivery_included && (Number(values.delivery_cost.replace(",", ".")) || 0) > 0;
 
   const dirty =
-    JSON.stringify(values) !== JSON.stringify(baseline) || imagePath !== initialImagePath;
+    JSON.stringify(values) !== JSON.stringify(baseline) || imagesDirty(images, initialImages);
+
+  // Frisch hochgeladene, nie gespeicherte Objekte beim Verlassen aufräumen
+  // (Verwerfen, Abbrechen, Navigation). Nach Erfolg ist die Menge geleert.
+  useEffect(
+    () => () => {
+      const pending = [...uploadedRef.current];
+      if (pending.length === 0) return;
+      void import("@/integrations/supabase/client").then(({ supabase }) =>
+        removeStorageObjects(
+          supabase as unknown as CatchImageSyncClient,
+          CATCH_IMAGE_BUCKET,
+          pending,
+        ),
+      );
+    },
+    [],
+  );
 
   // Schutz bleibt bis zum bestätigten Erfolg aktiv (auch während des Speicherns).
   const guard = useUnsavedChangesGuard(dirty);
