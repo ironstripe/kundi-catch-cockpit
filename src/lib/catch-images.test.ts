@@ -9,6 +9,7 @@ import {
   removeImage,
   syncCatchImages,
   toFormImages,
+  uploadsSafeToRemove,
   type CatchImageRecord,
   type CatchImageSyncClient,
 } from "@/lib/catch-images";
@@ -150,7 +151,7 @@ describe("syncCatchImages", () => {
   it("fügt ein zweites Bild hinzu, ohne das erste zu ersetzen", async () => {
     const { client, state } = fakeClient({ existing: [legacyRow] });
     const desired = addImages(toFormImages([legacyRow]), ["neu.jpg"]);
-    const result = await syncCatchImages(client, "c1", desired);
+    const result = await syncCatchImages(client, "c1", desired, ["a1"]);
     expect(result).toEqual({ inserted: 1, removed: 0, updated: 0 });
     expect(state.rows.map((row) => row.storage_path)).toEqual(["altes-bild.jpg", "neu.jpg"]);
     expect(state.rows.find((row) => row.storage_path === "altes-bild.jpg")?.is_primary).toBe(true);
@@ -164,7 +165,7 @@ describe("syncCatchImages", () => {
     ];
     const { client, state } = fakeClient({ existing: rows });
     const desired = makePrimary(toFormImages(rows), "a2");
-    const result = await syncCatchImages(client, "c1", desired);
+    const result = await syncCatchImages(client, "c1", desired, ["a1", "a2"]);
     expect(result.updated).toBe(2);
     expect(state.rows.find((row) => row.id === "a2")).toMatchObject({
       is_primary: true,
@@ -183,7 +184,7 @@ describe("syncCatchImages", () => {
     ];
     const { client, state } = fakeClient({ existing: rows });
     const desired = removeImage(toFormImages(rows), "a2");
-    const result = await syncCatchImages(client, "c1", desired);
+    const result = await syncCatchImages(client, "c1", desired, ["a1", "a2"]);
     expect(result.removed).toBe(1);
     expect(state.rows.map((row) => row.id)).toEqual(["a1"]);
     expect(state.removed).toEqual(["zwei.jpg"]);
@@ -196,7 +197,7 @@ describe("syncCatchImages", () => {
     ];
     const { client, state } = fakeClient({ existing: rows, deleteFails: true });
     await expect(
-      syncCatchImages(client, "c1", removeImage(toFormImages(rows), "a2")),
+      syncCatchImages(client, "c1", removeImage(toFormImages(rows), "a2"), ["a1", "a2"]),
     ).rejects.toThrow(/nicht entfernt/);
     expect(state.removed).toEqual([]);
   });
@@ -207,7 +208,9 @@ describe("syncCatchImages", () => {
     // den Speicherpfad wieder.
     const { client, state } = fakeClient({ existing: [legacyRow], insertFails: true });
     const desired = addImages(toFormImages([legacyRow]), ["neu.jpg"]);
-    await expect(syncCatchImages(client, "c1", desired)).rejects.toThrow(/nicht gespeichert/);
+    await expect(syncCatchImages(client, "c1", desired, ["a1"])).rejects.toThrow(
+      /nicht gespeichert/,
+    );
 
     const retry = fakeClient({
       existing: [
@@ -215,7 +218,7 @@ describe("syncCatchImages", () => {
         { id: "r9", storage_path: "neu.jpg", is_primary: false, sort_order: 1 },
       ],
     });
-    const result = await syncCatchImages(retry.client, "c1", desired);
+    const result = await syncCatchImages(retry.client, "c1", desired, ["a1"]);
     expect(result.inserted).toBe(0);
     expect(retry.state.rows.filter((row) => row.storage_path === "neu.jpg")).toHaveLength(1);
   });
@@ -227,8 +230,74 @@ describe("syncCatchImages", () => {
     ];
     const { client, state } = fakeClient({ existing: rows });
     // Formular kennt beide Bilder — nichts wird gelöscht.
-    await syncCatchImages(client, "c1", toFormImages(rows));
+    await syncCatchImages(client, "c1", toFormImages(rows), ["a1", "a2"]);
     expect(state.rows).toHaveLength(2);
     expect(state.removed).toEqual([]);
+  });
+
+  it("lässt Bestandsbilder und Speicherobjekte bei Insert-Fehler unangetastet", async () => {
+    // Entfernen + Hinzufügen in einem Speichervorgang: Schlägt das Einfügen
+    // fehl, darf das Entfernen nicht vorher ausgeführt worden sein.
+    const rows: CatchImageRecord[] = [
+      { id: "a1", storage_path: "eins.jpg", is_primary: true, sort_order: 0 },
+      { id: "a2", storage_path: "zwei.jpg", is_primary: false, sort_order: 1 },
+    ];
+    const { client, state } = fakeClient({ existing: rows, insertFails: true });
+    const desired = addImages(removeImage(toFormImages(rows), "a2"), ["neu.jpg"]);
+    await expect(syncCatchImages(client, "c1", desired, ["a1", "a2"])).rejects.toThrow(
+      /nicht gespeichert/,
+    );
+    expect(state.rows.map((row) => row.id)).toEqual(["a1", "a2"]);
+    expect(state.removed).toEqual([]);
+  });
+
+  it("erhält nebenläufig hinzugefügte Datensätze, die das Formular nicht kennt", async () => {
+    const concurrent: CatchImageRecord = {
+      id: "c9",
+      storage_path: "parallel.jpg",
+      is_primary: false,
+      sort_order: 1,
+    };
+    const { client, state } = fakeClient({ existing: [legacyRow, concurrent] });
+    // Baseline kennt nur a1; c9 wurde nach dem Laden hinzugefügt.
+    const result = await syncCatchImages(client, "c1", toFormImages([legacyRow]), ["a1"]);
+    expect(result.removed).toBe(0);
+    expect(state.rows.map((row) => row.id)).toEqual(["a1", "c9"]);
+    expect(state.removed).toEqual([]);
+  });
+});
+
+describe("uploadsSafeToRemove", () => {
+  it("behält Pfade, die inzwischen von catch_images referenziert werden", () => {
+    expect(uploadsSafeToRemove(["frisch-a.jpg", "frisch-b.jpg"], ["frisch-a.jpg"])).toEqual([
+      "frisch-b.jpg",
+    ]);
+  });
+
+  it("löscht nichts, wenn alle Sitzungs-Uploads bereits gespeichert sind", () => {
+    expect(uploadsSafeToRemove(["frisch.jpg"], ["frisch.jpg", "alt.jpg"])).toEqual([]);
+  });
+
+  it("Teilerfolg dann Verwerfen: gespeicherte Sitzungs-Uploads bleiben erhalten", async () => {
+    // Ein Bild wurde bereits gespeichert (Teilerfolg), danach schlug ein
+    // weiteres Einfügen fehl; der Nutzer verwirft. Beim Aufräumen dürfen
+    // nur nicht-referenzierte Pfade gelöscht werden.
+    const partial = fakeClient({ existing: [legacyRow], insertFails: true });
+    const desired = addImages(toFormImages([legacyRow]), ["schon-da.jpg"]);
+    await expect(syncCatchImages(partial.client, "c1", desired, ["a1"])).rejects.toThrow();
+
+    // Simuliert den Teilerfolg: Datensatz existiert trotz Fehler.
+    const persisted: CatchImageRecord = {
+      id: "r9",
+      storage_path: "schon-da.jpg",
+      is_primary: false,
+      sort_order: 1,
+    };
+    const pending = ["schon-da.jpg", "nie-gespeichert.jpg"];
+    const safe = uploadsSafeToRemove(
+      pending,
+      [legacyRow, persisted].map((row) => row.storage_path),
+    );
+    expect(safe).toEqual(["nie-gespeichert.jpg"]);
   });
 });

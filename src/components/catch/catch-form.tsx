@@ -57,6 +57,7 @@ import {
   removeStorageObjects,
   syncCatchImages,
   toFormImages,
+  uploadsSafeToRemove,
   type CatchImageRecord,
   type CatchImageSyncClient,
   type FormCatchImage,
@@ -150,6 +151,12 @@ export function CatchForm({
   // Merkt sich die Id nach einem Teilerfolg (z. B. Bild-Synchronisierung
   // fehlgeschlagen): ein erneuter Versuch aktualisiert statt neu anzulegen.
   const catchIdRef = useRef<string | undefined>(catchId);
+  // Nach dem Unmount fertig hochgeladene Objekte sofort aufräumen,
+  // statt als Waisen liegen zu lassen.
+  const unmountedRef = useRef(false);
+  // Beim Laden bekannte Bild-Datensätze: nur bewusste Entfernungen dieser
+  // Datensätze werden gespeichert — nebenläufig Hinzugefügtes bleibt.
+  const baselineIds = useMemo(() => initialImages.map((row) => row.id), [initialImages]);
 
   const settings = useQuery({ queryKey: ["app-settings"], queryFn: fetchAppSettings });
   const defaultVatRate = settings.data?.vat.rate ?? DEFAULT_VAT_RATE;
@@ -185,20 +192,52 @@ export function CatchForm({
 
   // Frisch hochgeladene, nie gespeicherte Objekte beim Verlassen aufräumen
   // (Verwerfen, Abbrechen, Navigation). Nach Erfolg ist die Menge geleert.
+  // Sicher nach Teilerfolg: Pfade, die inzwischen von catch_images des
+  // gemerkten Catches referenziert werden, werden nie gelöscht; schlägt die
+  // Prüfung fehl, bleiben die Objekte bewahrt.
   useEffect(
     () => () => {
+      unmountedRef.current = true;
       const pending = [...uploadedRef.current];
       if (pending.length === 0) return;
-      void import("@/integrations/supabase/client").then(({ supabase }) =>
-        removeStorageObjects(
-          supabase as unknown as CatchImageSyncClient,
-          CATCH_IMAGE_BUCKET,
-          pending,
-        ),
-      );
+      void import("@/integrations/supabase/client").then(async ({ supabase }) => {
+        const client = supabase as unknown as CatchImageSyncClient;
+        let safe = pending;
+        const id = catchIdRef.current;
+        if (id) {
+          try {
+            const { data, error } = await client
+              .from("catch_images")
+              .select("id, storage_path, is_primary, sort_order")
+              .eq("catch_id", id);
+            if (error) return;
+            safe = uploadsSafeToRemove(
+              pending,
+              (data ?? []).map((row) => row.storage_path),
+            );
+          } catch {
+            return;
+          }
+        }
+        await removeStorageObjects(client, CATCH_IMAGE_BUCKET, safe);
+      });
     },
     [],
   );
+
+  /** Meldet frisch hochgeladene Pfade für das Aufräumen beim Verwerfen. */
+  function handleUploaded(storagePath: string) {
+    if (unmountedRef.current) {
+      // Upload kam nach dem Verlassen fertig an: sofort best effort aufräumen.
+      void import("@/integrations/supabase/client").then(({ supabase }) =>
+        removeStorageObjects(supabase as unknown as CatchImageSyncClient, CATCH_IMAGE_BUCKET, [
+          storagePath,
+        ]),
+      );
+      return;
+    }
+    uploadedRef.current.add(storagePath);
+  }
 
   // Schutz bleibt bis zum bestätigten Erfolg aktiv (auch während des Speicherns).
   const guard = useUnsavedChangesGuard(dirty);
@@ -275,7 +314,7 @@ export function CatchForm({
 
       const { supabase } = await import("@/integrations/supabase/client");
       const client = supabase as unknown as CatchImageSyncClient;
-      await syncCatchImages(client, id, images);
+      await syncCatchImages(client, id, images, baselineIds);
       // Frisch hochgeladene, im Formular wieder entfernte Objekte aufräumen.
       const abandoned = abandonedUploads(uploadedRef.current, images);
       await removeStorageObjects(client, CATCH_IMAGE_BUCKET, abandoned);
@@ -853,7 +892,7 @@ export function CatchForm({
               <CatchImagesField
                 images={images}
                 onChange={setImages}
-                onUploaded={(storagePath) => uploadedRef.current.add(storagePath)}
+                onUploaded={handleUploaded}
                 onUploadingChange={setUploading}
                 invalid={Boolean(issueFor("product_image"))}
               />

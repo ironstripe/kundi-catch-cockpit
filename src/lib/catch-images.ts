@@ -88,6 +88,17 @@ export function abandonedUploads(uploaded: Iterable<string>, images: FormCatchIm
   return [...uploaded].filter((path) => !kept.has(path));
 }
 
+/**
+ * Sitzungs-Uploads, die beim Verlassen gefahrlos gelöscht werden dürfen:
+ * nur Objekte, die von keinem catch_images-Datensatz referenziert werden.
+ * Nach einem Teilerfolg kann ein frischer Upload bereits gespeichert sein —
+ * dieses Objekt darf nicht entfernt werden.
+ */
+export function uploadsSafeToRemove(pending: string[], referencedPaths: string[]): string[] {
+  const referenced = new Set(referencedPaths);
+  return pending.filter((path) => !referenced.has(path));
+}
+
 /** Minimale Client-Schnittstelle — erlaubt Tests ohne echte Datenbank. */
 export interface CatchImageSyncClient {
   storage: {
@@ -133,19 +144,26 @@ export interface SyncResult {
 }
 
 /**
- * Bringt die gespeicherten Bilddatensätze auf den Formularstand:
- * Reihenfolge und Hauptbild aktualisieren, Entferntes löschen (Datensatz
- * zuerst, Speicherobjekt danach), Neues einfügen.
+ * Bringt die gespeicherten Bilddatensätze auf den Formularstand.
+ *
+ * Reihenfolge bewusst nicht-destruktiv: erst Reihenfolge/Hauptbild
+ * aktualisieren, dann Neues einfügen, erst zuletzt Entferntes löschen
+ * (Datensatz zuerst, Speicherobjekt danach). Schlägt ein Schritt fehl,
+ * bleiben die bisherigen Datensätze und Speicherobjekte unangetastet.
+ *
+ * Entfernt wird nur, was in `baselineIds` (beim Laden bekannte Datensätze)
+ * stand und im Formular bewusst fehlt — nebenläufig hinzugefügte, dem
+ * Editor unbekannte Datensätze bleiben erhalten.
  *
  * Idempotent: Wurde nach einem Teilerfolg erneut gespeichert, werden frisch
  * hochgeladene Bilder über ihren Speicherpfad erkannt und nicht doppelt
- * angelegt. Entfernt wird nur, was im Formular bewusst fehlt — nie
- * ungeladene Bestandsbilder.
+ * angelegt.
  */
 export async function syncCatchImages(
   client: CatchImageSyncClient,
   catchId: string,
   desired: FormCatchImage[],
+  baselineIds: string[],
 ): Promise<SyncResult> {
   const { data, error } = await client
     .from("catch_images")
@@ -169,27 +187,12 @@ export async function syncCatchImages(
   const keptIds = new Set(
     resolved.map((entry) => entry.persisted?.id).filter((id): id is string => Boolean(id)),
   );
-  const toRemove = existing.filter((row) => !keptIds.has(row.id));
+  // Nur bewusst entfernte Bestandsbilder; unbekannte (nebenläufig
+  // hinzugefügte) Datensätze werden nie angefasst.
+  const baseline = new Set(baselineIds);
+  const toRemove = existing.filter((row) => baseline.has(row.id) && !keptIds.has(row.id));
 
-  if (toRemove.length > 0) {
-    const removed = await client
-      .from("catch_images")
-      .delete()
-      .in(
-        "id",
-        toRemove.map((row) => row.id),
-      );
-    if (removed.error) {
-      throw new Error(`Bilder konnten nicht entfernt werden: ${removed.error.message}`);
-    }
-    // Speicherobjekte erst nach erfolgreichem Löschen des Datensatzes aufräumen.
-    await removeStorageObjects(
-      client,
-      CATCH_IMAGE_BUCKET,
-      toRemove.map((row) => row.storage_path),
-    );
-  }
-
+  // 1) Nicht-destruktiv: Reihenfolge und Hauptbild bestehender Bilder.
   let updated = 0;
   for (const entry of resolved) {
     if (!entry.persisted) continue;
@@ -209,6 +212,7 @@ export async function syncCatchImages(
     updated += 1;
   }
 
+  // 2) Nicht-destruktiv: neue Bilder einfügen.
   const fresh = resolved.filter((entry) => !entry.persisted);
   if (fresh.length > 0) {
     const inserted = await client.from("catch_images").insert(
@@ -222,6 +226,26 @@ export async function syncCatchImages(
     if (inserted.error) {
       throw new Error(`Neue Bilder konnten nicht gespeichert werden: ${inserted.error.message}`);
     }
+  }
+
+  // 3) Erst zuletzt destruktiv: bewusst entfernte Datensätze löschen,
+  //    Speicherobjekte erst nach erfolgreichem Löschen des Datensatzes.
+  if (toRemove.length > 0) {
+    const removed = await client
+      .from("catch_images")
+      .delete()
+      .in(
+        "id",
+        toRemove.map((row) => row.id),
+      );
+    if (removed.error) {
+      throw new Error(`Bilder konnten nicht entfernt werden: ${removed.error.message}`);
+    }
+    await removeStorageObjects(
+      client,
+      CATCH_IMAGE_BUCKET,
+      toRemove.map((row) => row.storage_path),
+    );
   }
 
   return { inserted: fresh.length, removed: toRemove.length, updated };
