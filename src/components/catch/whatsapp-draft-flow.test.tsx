@@ -208,7 +208,7 @@ describe("saved WhatsApp template in the real preparation workspace", () => {
     expect(area.value).toContain("Frisch eingetroffen.");
     fireEvent.click(screen.getByRole("button", { name: "Text kopieren" }));
     await waitFor(() => expect(mocks.copy).toHaveBeenCalledWith(area.value));
-    fireEvent.click(screen.getByRole("button", { name: /Aus Catch-Daten neu generieren/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Text sichern" }));
     await waitFor(() => expect(mocks.saveText).toHaveBeenCalledTimes(1));
     const saved = mocks.saveText.mock.calls[0]![0];
     expect(saved.generatedText.startsWith("🐟 *Teilt mit allen!*")).toBe(true);
