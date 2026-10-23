@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Archive,
@@ -52,7 +52,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useRoles } from "@/hooks/use-role";
 import { formatDateTime } from "@/lib/format";
 import { fetchCase } from "@/lib/offer-cases";
-import { CATCH_IMAGE_EXISTS_MARKER } from "@/lib/offer-image-transfer";
 import {
   assignEmailToCase,
   convertCaseToCatch,
