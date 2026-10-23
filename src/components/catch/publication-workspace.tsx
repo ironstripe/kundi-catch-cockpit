@@ -37,6 +37,7 @@ import { useSyncedDraft } from "@/hooks/use-synced-draft";
 import { supabase } from "@/integrations/supabase/client";
 import type { CatchDetail } from "@/lib/catches";
 import { pickupSummary } from "@/lib/pickup-display";
+import { fetchAppSettings } from "@/lib/app-settings";
 import { formatDateTime } from "@/lib/format";
 import {
   catchToPostSource,
@@ -83,8 +84,17 @@ export function PublicationWorkspace({
   onDirtyChange,
 }: PublicationWorkspaceProps) {
   const source = useMemo(() => catchToPostSource(item), [item]);
-  const generated = useMemo(() => generatePostText(source), [source]);
-  const signature = useMemo(() => postSourceSignature(source), [source]);
+  // Gespeicherte Vorlage (Einstellungen › WhatsApp-Vorlage) — nie still mit Code-Standard generieren.
+  const settings = useQuery({ queryKey: ["app-settings"], queryFn: fetchAppSettings });
+  const template = settings.data?.template ?? null;
+  const generated = useMemo(
+    () => (template ? generatePostText(source, template) : ""),
+    [source, template],
+  );
+  const signature = useMemo(
+    () => (template ? postSourceSignature(source, template) : ""),
+    [source, template],
+  );
   const missing = missingPostDetails(source);
 
   const [confirm, setConfirm] = useState<null | "regenerate" | "reset" | "publish">(null);
@@ -98,7 +108,8 @@ export function PublicationWorkspace({
   // Basis = gespeicherter Text bzw. (noch nicht gespeicherter) generierter Text.
   // Nur echte Nutzeränderungen gelten als «bearbeitet» und werden bei Refetch nicht überschrieben.
   const baseText = item.post_final_text ?? generated;
-  const text = useSyncedDraft(item.id, baseText);
+  // Solange die Vorlage lädt, eigene Identität: danach harter Wechsel auf den echten Text.
+  const text = useSyncedDraft(template ? item.id : `${item.id}:loading`, baseText);
   const finalText = text.value;
   const setFinalText = text.setValue;
   const userEdited = text.dirty;
@@ -123,6 +134,7 @@ export function PublicationWorkspace({
   const hasManualEdits = storedGenerated !== null && finalText.trim() !== storedGenerated.trim();
   const unsaved = finalText !== (item.post_final_text ?? "");
   const outdated =
+    template !== null &&
     item.post_source_signature !== null &&
     item.post_source_signature !== signature &&
     item.post_outdated_decision !== "keep";
@@ -284,6 +296,19 @@ export function PublicationWorkspace({
         ? `Nutzer ${item.published_by.slice(0, 8)}`
         : "—";
 
+  if (settings.isError) {
+    return (
+      <div role="alert" className="rounded-md border border-destructive/40 p-3 text-sm">
+        <p>Die WhatsApp-Vorlage konnte nicht geladen werden.</p>
+        <Button size="sm" variant="outline" className="mt-2" onClick={() => void settings.refetch()}>
+          <RefreshCw />
+          Erneut laden
+        </Button>
+      </div>
+    );
+  }
+  if (!template) return <Skeleton className="h-64 w-full" aria-label="Vorlage wird geladen" />;
+
   return (
     <>
       {missing.length > 0 ? (
@@ -306,7 +331,7 @@ export function PublicationWorkspace({
               <p className="flex items-center gap-2 font-medium">
                 <AlertTriangle className="size-4" />
                 {templateUpdated
-                  ? "Die Food-Catch-Vorlage wurde aktualisiert. Der bestehende Post kann neu generiert werden."
+                  ? "Vorlage geändert: Die WhatsApp-Vorlage wurde angepasst. Der bestehende Text bleibt, bis du ihn neu generierst."
                   : "Die Catch-Daten wurden geändert. Der WhatsApp-Post ist möglicherweise nicht mehr aktuell."}
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
