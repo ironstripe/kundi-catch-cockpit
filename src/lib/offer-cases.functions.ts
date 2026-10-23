@@ -593,7 +593,10 @@ async function loadCaseImage(supabaseAdmin: AdminClient, caseId: string, attachm
 /** Bild aus einem bereits übernommenen Dossier in dessen Catch übertragen. */
 export const transferCaseImageToCatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { caseId: string; attachmentId: string; replace?: boolean }) => input)
+  .inputValidator(
+    (input: { caseId: string; attachmentId: string; replace?: boolean; append?: boolean }) =>
+      input,
+  )
   .handler(async ({ data, context }): Promise<CaseActionResult & { catchId: string }> => {
     await assertEditor(context.supabase as unknown as Supa, context.userId);
     const { row, supabaseAdmin } = await loadCase(data.caseId);
@@ -614,6 +617,7 @@ export const transferCaseImageToCatch = createServerFn({ method: "POST" })
       sourceBucket: SUPPLIER_OFFER_BUCKET,
       targetBucket: "catch-images",
       replace: Boolean(data.replace),
+      append: Boolean(data.append),
     });
     await supabaseAdmin.from("audit_events").insert({
       entity_type: "catch",
