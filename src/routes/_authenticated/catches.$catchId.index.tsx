@@ -12,6 +12,7 @@ import { ReconciliationWorkspace } from "@/components/catch/reconciliation-works
 import { PublicationWorkspace } from "@/components/catch/publication-workspace";
 import { PublishedPostCard } from "@/components/catch/published-post-card";
 import { InstagramWorkspace } from "@/components/catch/instagram-workspace";
+import { CatchImageGallery } from "@/components/catch/catch-image-gallery";
 import { ProductLink } from "@/components/catch/product-link";
 import { pickupSummary } from "@/lib/pickup-display";
 import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-badge";
@@ -55,7 +56,6 @@ function CatchDetailPage() {
   const { catchId } = Route.useParams();
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["catch", catchId], queryFn: () => fetchCatch(catchId) });
-  const image = useSignedImage(query.data?.image_path);
   const { canEdit } = useRoles();
   const loaded = Boolean(query.data);
   // Ein gemeinsamer Guard für WhatsApp- und Instagram-Text (keine konkurrierenden Dialoge).
@@ -245,22 +245,13 @@ function CatchDetailPage() {
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-section-title">Produktbild</CardTitle>
+              <CardTitle className="text-section-title">Produktbilder</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="aspect-[4/3] w-full overflow-hidden rounded-md border bg-muted/30">
-                {image.data ? (
-                  <img
-                    src={image.data}
-                    alt={`Produktbild von ${item.product_name}`}
-                    className="size-full object-cover"
-                  />
-                ) : (
-                  <div className="flex size-full items-center justify-center text-xs text-muted-foreground placeholder-hatch">
-                    Kein Bild hinterlegt
-                  </div>
-                )}
-              </div>
+              <CatchImageGallery
+                images={item.images}
+                alt={`Produktbild von ${item.product_name}`}
+              />
             </CardContent>
           </Card>
 
