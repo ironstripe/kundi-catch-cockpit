@@ -63,6 +63,7 @@ import {
   type FormCatchImage,
 } from "@/lib/catch-images";
 import { useSessionUploads } from "@/hooks/use-session-uploads";
+import { useRoles } from "@/hooks/use-role";
 import {
   CATCH_IMAGE_BUCKET,
   fetchLocations,
@@ -122,6 +123,8 @@ export function CatchForm({
   onSaved,
 }: CatchFormProps) {
   const navigate = useNavigate();
+  const { canEdit } = useRoles();
+  const readOnly = !canEdit || currentStatus === "closed" || currentStatus === "cancelled";
 
   const baseline = useMemo(
     () => ({
@@ -202,13 +205,13 @@ export function CatchForm({
    * Prüfungen). Ein Entwurf wird dadurch nie «Bereit».
    */
   function saveOrdinary() {
-    if (saving || uploading) return;
+    if (readOnly || saving || uploading) return;
     return persist(ordinaryIntent);
   }
   const formScope = useEditShortcuts({
     onCommit: saveOrdinary,
     onCancel: handleLeave,
-    busy: saving || uploading,
+    busy: readOnly || saving || uploading,
   });
 
   function set<K extends keyof CatchFormValues>(key: K, value: CatchFormValues[K]) {
@@ -232,7 +235,7 @@ export function CatchForm({
     confirmedCritical = false,
     preparePost = false,
   ) {
-    if (saving || uploading) return;
+    if (readOnly || saving || uploading) return;
     const found =
       preparePost || status === "draft"
         ? validateDraft(values)
@@ -342,7 +345,7 @@ export function CatchForm({
       ) : null}
 
       {/* Während des Speicherns eingefroren: nichts nach dem Absenden Getipptes geht verloren. */}
-      <fieldset disabled={saving} aria-busy={saving} className="m-0 min-w-0 border-0 p-0">
+      <fieldset disabled={readOnly || saving} aria-busy={saving} className="m-0 min-w-0 border-0 p-0">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3" {...formScope}>
           <div className="min-w-0 space-y-4 lg:col-span-2">
             <FormSection title="Produkt" description="Was wird als Catch angeboten?">
