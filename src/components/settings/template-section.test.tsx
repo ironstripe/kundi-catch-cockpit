@@ -46,7 +46,8 @@ function renderSection() {
   );
 }
 
-const title = () => screen.findByLabelText("Titel mit Teilen-Aufruf") as Promise<HTMLTextAreaElement>;
+const title = () =>
+  screen.findByLabelText("Titel mit Teilen-Aufruf") as Promise<HTMLTextAreaElement>;
 
 describe("Einstellungen › WhatsApp-Vorlage", () => {
   it("zeigt den Standardtitel, speichert Änderungen und lädt sie neu", async () => {

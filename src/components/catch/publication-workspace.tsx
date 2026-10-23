@@ -300,7 +300,12 @@ export function PublicationWorkspace({
     return (
       <div role="alert" className="rounded-md border border-destructive/40 p-3 text-sm">
         <p>Die WhatsApp-Vorlage konnte nicht geladen werden.</p>
-        <Button size="sm" variant="outline" className="mt-2" onClick={() => void settings.refetch()}>
+        <Button
+          size="sm"
+          variant="outline"
+          className="mt-2"
+          onClick={() => void settings.refetch()}
+        >
           <RefreshCw />
           Erneut laden
         </Button>

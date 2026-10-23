@@ -47,7 +47,7 @@ const BLOCK_LABELS: Record<TemplateBlock, string> = {
 };
 
 /** Beispiel-Catch für die Vorschau — keine echten Datensätze. */
-export const TEMPLATE_SAMPLE: PostSource = {
+const TEMPLATE_SAMPLE: PostSource = {
   product_name: "Felchenfilets mit Haut",
   description: "Felchen aus dem Bodensee, filetiert und schonend tiefgekühlt.",
   packaging: "Vakuumiert à ca. 500 g",
@@ -182,7 +182,8 @@ export function TemplateSection() {
             </div>
           ))}
           <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-            Formatierung wie in WhatsApp: <code>*fett*</code>, <code>~durchgestrichen~</code>, Emojis direkt einfügen. Kein HTML.
+            Formatierung wie in WhatsApp: <code>*fett*</code>, <code>~durchgestrichen~</code>,
+            Emojis direkt einfügen. Kein HTML.
           </p>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -337,10 +338,7 @@ export function TemplateSection() {
               >
                 Verwerfen
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => update({ ...DEFAULT_TEMPLATE_SETTINGS })}
-              >
+              <Button variant="outline" onClick={() => update({ ...DEFAULT_TEMPLATE_SETTINGS })}>
                 Standard wiederherstellen
               </Button>
             </div>

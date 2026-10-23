@@ -41,15 +41,7 @@ export type TemplateDetailField = "description" | "packaging";
  * «price», «stock», «pickup» und «shop» kommen immer aus den Catch-Daten.
  */
 export type TemplateBlock =
-  | "intro"
-  | "claim"
-  | "story"
-  | "product"
-  | "price"
-  | "stock"
-  | "pickup"
-  | "shop"
-  | "footer";
+  "intro" | "claim" | "story" | "product" | "price" | "stock" | "pickup" | "shop" | "footer";
 
 export const TEMPLATE_BLOCKS: TemplateBlock[] = [
   "intro",
@@ -122,23 +114,23 @@ export function normalizeTemplate(value: unknown): TemplateSettings {
     typeof raw[key] === "string" ? (raw[key] as string) : (d[key] as string);
   const bool = (key: "show_expiry" | "show_available_until" | "show_discount") =>
     typeof raw[key] === "boolean" ? (raw[key] as boolean) : d[key];
-  const blocks = Array.isArray(raw.block_order)
-    ? (raw.block_order as unknown[]).filter(
+  const blocks = Array.isArray(raw["block_order"])
+    ? (raw["block_order"] as unknown[]).filter(
         (b, i, all): b is TemplateBlock =>
           TEMPLATE_BLOCKS.includes(b as TemplateBlock) && all.indexOf(b) === i,
       )
     : [];
   for (const block of TEMPLATE_BLOCKS) if (!blocks.includes(block)) blocks.push(block);
-  const hidden = Array.isArray(raw.hidden_blocks)
-    ? (raw.hidden_blocks as unknown[]).filter(
+  const hidden = Array.isArray(raw["hidden_blocks"])
+    ? (raw["hidden_blocks"] as unknown[]).filter(
         (b, i, all): b is TemplateBlock =>
           TEMPLATE_BLOCKS.includes(b as TemplateBlock) &&
           !REQUIRED_TEMPLATE_BLOCKS.includes(b as TemplateBlock) &&
           all.indexOf(b) === i,
       )
     : [];
-  const details = Array.isArray(raw.detail_order)
-    ? (raw.detail_order as unknown[]).filter(
+  const details = Array.isArray(raw["detail_order"])
+    ? (raw["detail_order"] as unknown[]).filter(
         (f, i, all): f is TemplateDetailField =>
           (f === "description" || f === "packaging") && all.indexOf(f) === i,
       )
