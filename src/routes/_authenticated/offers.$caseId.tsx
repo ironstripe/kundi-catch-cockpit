@@ -245,9 +245,7 @@ function OfferCaseDetail({ caseId }: { caseId: string }) {
         await queryClient.invalidateQueries({ queryKey: ["catches"] });
       }
       if (failed.length === 0) {
-        toast.success(
-          `${succeeded} Bild${succeeded === 1 ? "" : "er"} in den Catch übernommen.`,
-        );
+        toast.success(`${succeeded} Bild${succeeded === 1 ? "" : "er"} in den Catch übernommen.`);
       } else if (succeeded === 0) {
         toast.error("Bilder konnten nicht übernommen werden. Bitte erneut versuchen.");
       } else {

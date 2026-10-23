@@ -57,8 +57,19 @@ function fakeClient(opts: {
   return { client, state };
 }
 
-const attachment = { storage_path: "o/a.jpg", file_name: "Crevetten 2.jpg", mime_type: "image/jpeg" };
-const base = { catchId: "c1", attachment, sourceBucket: "s", targetBucket: "t", replace: false, id: () => "x" };
+const attachment = {
+  storage_path: "o/a.jpg",
+  file_name: "Crevetten 2.jpg",
+  mime_type: "image/jpeg",
+};
+const base = {
+  catchId: "c1",
+  attachment,
+  sourceBucket: "s",
+  targetBucket: "t",
+  replace: false,
+  id: () => "x",
+};
 
 describe("transferImageToCatch", () => {
   it("überträgt das gewählte Bild und legt den Datensatz an", async () => {
@@ -115,7 +126,10 @@ describe("transferImageToCatch", () => {
   it("lehnt Nicht-Bilder ab", async () => {
     const { client } = fakeClient({});
     await expect(
-      transferImageToCatch(client, { ...base, attachment: { ...attachment, mime_type: "application/pdf" } }),
+      transferImageToCatch(client, {
+        ...base,
+        attachment: { ...attachment, mime_type: "application/pdf" },
+      }),
     ).rejects.toThrow(/kein Bild/);
   });
 });

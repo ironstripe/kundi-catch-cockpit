@@ -13,11 +13,13 @@ import {
   type CatchImageSyncClient,
 } from "@/lib/catch-images";
 
-function fakeClient(opts: {
-  existing?: CatchImageRecord[];
-  insertFails?: boolean;
-  deleteFails?: boolean;
-} = {}) {
+function fakeClient(
+  opts: {
+    existing?: CatchImageRecord[];
+    insertFails?: boolean;
+    deleteFails?: boolean;
+  } = {},
+) {
   const state = {
     rows: [...(opts.existing ?? [])],
     removed: [] as string[],
@@ -193,9 +195,9 @@ describe("syncCatchImages", () => {
       { id: "a2", storage_path: "zwei.jpg", is_primary: false, sort_order: 1 },
     ];
     const { client, state } = fakeClient({ existing: rows, deleteFails: true });
-    await expect(syncCatchImages(client, "c1", removeImage(toFormImages(rows), "a2"))).rejects.toThrow(
-      /nicht entfernt/,
-    );
+    await expect(
+      syncCatchImages(client, "c1", removeImage(toFormImages(rows), "a2")),
+    ).rejects.toThrow(/nicht entfernt/);
     expect(state.removed).toEqual([]);
   });
 
@@ -208,7 +210,10 @@ describe("syncCatchImages", () => {
     await expect(syncCatchImages(client, "c1", desired)).rejects.toThrow(/nicht gespeichert/);
 
     const retry = fakeClient({
-      existing: [...state.rows, { id: "r9", storage_path: "neu.jpg", is_primary: false, sort_order: 1 }],
+      existing: [
+        ...state.rows,
+        { id: "r9", storage_path: "neu.jpg", is_primary: false, sort_order: 1 },
+      ],
     });
     const result = await syncCatchImages(retry.client, "c1", desired);
     expect(result.inserted).toBe(0);

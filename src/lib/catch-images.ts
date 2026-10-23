@@ -83,10 +83,7 @@ export function imagesDirty(images: FormCatchImage[], initialRows: CatchImageRec
 }
 
 /** Frisch hochgeladene Speicherobjekte, die es nicht ins Formular geschafft haben. */
-export function abandonedUploads(
-  uploaded: Iterable<string>,
-  images: FormCatchImage[],
-): string[] {
+export function abandonedUploads(uploaded: Iterable<string>, images: FormCatchImage[]): string[] {
   const kept = new Set(images.map((image) => image.storagePath));
   return [...uploaded].filter((path) => !kept.has(path));
 }
@@ -205,7 +202,9 @@ export async function syncCatchImages(
       .update({ is_primary: isPrimary, sort_order: entry.index })
       .eq("id", entry.persisted.id);
     if (result.error) {
-      throw new Error(`Reihenfolge der Bilder konnte nicht gespeichert werden: ${result.error.message}`);
+      throw new Error(
+        `Reihenfolge der Bilder konnte nicht gespeichert werden: ${result.error.message}`,
+      );
     }
     updated += 1;
   }

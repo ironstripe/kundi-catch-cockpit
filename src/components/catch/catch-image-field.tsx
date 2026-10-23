@@ -1,19 +1,17 @@
-import {
-  ArrowDown,
-  ArrowUp,
-  Crown,
-  Image as ImageIcon,
-  Loader2,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, Crown, Image as ImageIcon, Loader2, Plus, Trash2 } from "lucide-react";
 import { useRef, useState, type Dispatch, type SetStateAction } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useSignedImage } from "@/hooks/use-signed-image";
 import { supabase } from "@/integrations/supabase/client";
-import { addImages, makePrimary, moveImage, removeImage, type FormCatchImage } from "@/lib/catch-images";
+import {
+  addImages,
+  makePrimary,
+  moveImage,
+  removeImage,
+  type FormCatchImage,
+} from "@/lib/catch-images";
 import { CATCH_IMAGE_BUCKET } from "@/lib/catches";
 import { cn } from "@/lib/utils";
 

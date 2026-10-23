@@ -28,10 +28,15 @@ export interface ImageTransferClient {
   };
   from(table: "catch_images"): {
     select(columns: string): {
-      eq(column: string, value: string): PromiseLike<StorageResult<{ id: string; storage_path: string }[]>>;
+      eq(
+        column: string,
+        value: string,
+      ): PromiseLike<StorageResult<{ id: string; storage_path: string }[]>>;
     };
     insert(row: Record<string, unknown>): PromiseLike<{ error: { message: string } | null }>;
-    delete(): { in(column: string, values: string[]): PromiseLike<{ error: { message: string } | null }> };
+    delete(): {
+      in(column: string, values: string[]): PromiseLike<{ error: { message: string } | null }>;
+    };
   };
 }
 
@@ -65,8 +70,12 @@ export async function transferImageToCatch(
     throw new Error("Der gewählte Anhang ist kein Bild.");
   }
 
-  const existing = await client.from("catch_images").select("id, storage_path").eq("catch_id", args.catchId);
-  if (existing.error) throw new Error(`Bilder des Catches konnten nicht gelesen werden: ${existing.error.message}`);
+  const existing = await client
+    .from("catch_images")
+    .select("id, storage_path")
+    .eq("catch_id", args.catchId);
+  if (existing.error)
+    throw new Error(`Bilder des Catches konnten nicht gelesen werden: ${existing.error.message}`);
   const current = existing.data ?? [];
   const append = Boolean(args.append);
   if (current.length && !append && !args.replace) {
@@ -75,7 +84,9 @@ export async function transferImageToCatch(
     );
   }
 
-  const download = await client.storage.from(args.sourceBucket).download(args.attachment.storage_path);
+  const download = await client.storage
+    .from(args.sourceBucket)
+    .download(args.attachment.storage_path);
   if (download.error || !download.data) {
     throw new Error(
       `Das Bild «${args.attachment.file_name}» konnte nicht aus dem Dossier geladen werden${
@@ -96,7 +107,13 @@ export async function transferImageToCatch(
   }
 
   if (current.length && !append) {
-    const removed = await client.from("catch_images").delete().in("id", current.map((row) => row.id));
+    const removed = await client
+      .from("catch_images")
+      .delete()
+      .in(
+        "id",
+        current.map((row) => row.id),
+      );
     if (removed.error) {
       await client.storage.from(args.targetBucket).remove([target]);
       throw new Error(`Das bisherige Bild konnte nicht ersetzt werden: ${removed.error.message}`);
