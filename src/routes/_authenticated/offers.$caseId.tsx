@@ -103,6 +103,7 @@ function OfferCaseDetailPage() {
 const EMPTY_VALUES: OfferFormValues = {};
 
 function OfferCaseDetail({ caseId }: { caseId: string }) {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { canEdit } = useRoles();
 
@@ -348,19 +349,25 @@ function OfferCaseDetail({ caseId }: { caseId: string }) {
             choice={imageChoice}
             onChoose={setImageChoice}
             disabled={!canEdit || (locked && !dossier.converted_catch_id)}
+            mode={locked && dossier.converted_catch_id ? "multi" : "single"}
+            selectedIds={appendIds}
+            onToggle={toggleAppend}
             footer={
               locked && dossier.converted_catch_id && canEdit ? (
                 <div className="flex flex-wrap items-center gap-2 border-t pt-3">
                   <Button
                     size="sm"
-                    disabled={!chosenImage || busy !== null}
-                    onClick={() => void transferImage(false)}
+                    disabled={appendIds.length === 0 || busy !== null}
+                    onClick={() => void appendSelected()}
                   >
                     <ImageUp className="mr-2 size-4" aria-hidden />
-                    Gewähltes Bild in den Catch übernehmen
+                    {appendIds.length > 0
+                      ? `${appendIds.length} Bild${appendIds.length === 1 ? "" : "er"} dem Catch anfügen`
+                      : "Bilder dem Catch anfügen"}
                   </Button>
                   <span className="text-xs text-muted-foreground">
-                    Ein vorhandenes Catch-Bild wird nur nach Bestätigung ersetzt.
+                    Bestehende Catch-Bilder bleiben unverändert. Die Originalanhänge bleiben im
+                    Dossier.
                   </span>
                 </div>
               ) : null
