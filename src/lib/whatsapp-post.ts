@@ -1,11 +1,16 @@
 /**
  * Deterministische Erzeugung des WhatsApp-Posts aus Catch-Daten.
  *
- * Kein KI-Dienst: fixes Template, optionale Zeilen fallen sauber weg.
- * Nur die beiden freigegebenen Markentexte werden verwendet.
+ * Kein KI-Dienst: gespeicherte Vorlage (Einstellungen › WhatsApp-Vorlage),
+ * Catch-Fakten immer automatisch; leere/ausgeblendete Abschnitte entfallen.
  */
 
-import { DEFAULT_TEMPLATE_SETTINGS, type TemplateSettings } from "@/lib/app-settings";
+import {
+  DEFAULT_TEMPLATE_SETTINGS,
+  normalizeTemplate,
+  type TemplateBlock,
+  type TemplateSettings,
+} from "@/lib/app-settings";
 import { QUANTITY_UNIT_LABELS } from "@/lib/catch-domain";
 import { APP_LOCALE, APP_TIMEZONE, formatDate } from "@/lib/format";
 
@@ -153,80 +158,125 @@ export function generatePostText(
   source: PostSource,
   template: TemplateSettings = DEFAULT_TEMPLATE_SETTINGS,
 ): string {
+  const t = normalizeTemplate(template);
   const blocks: string[] = [];
+  const header = clean(t.header);
+  if (header) blocks.push(header);
 
-  blocks.push(
-    "🐟 *FOOD CATCH* - Bitte teilt, diesen Beitrag, damit wir möglichst viel retten können😍👌",
-  );
-  blocks.push(`*${BRAND_CLAIM}*`);
-
-  const story = clean(source.handicap_story);
-  if (story) blocks.push(story);
-
-  const productLines: string[] = [`*${source.product_name.trim()}*`];
-  const description = clean(source.description);
-  const packaging = clean(source.packaging);
-  for (const field of template.detail_order) {
-    if (field === "description" && description) productLines.push(description);
-    if (
-      field === "packaging" &&
-      packaging &&
-      !(description && normalise(description).includes(normalise(packaging)))
-    ) {
-      productLines.push(packaging);
-    }
-  }
-  blocks.push(productLines.join("\n"));
-
-  const catchPrice = source.catch_price;
-  if (catchPrice !== null && catchPrice > 0) {
-    const regular = source.regular_price;
-    const hasComparison = regular !== null && Number.isFinite(regular) && regular > catchPrice;
-    if (hasComparison) {
-      const discount = ((regular - catchPrice) / regular) * 100;
-      const priceLine = `~${postPrice(regular, source.quantity_unit)}~ → *${postPrice(catchPrice, source.quantity_unit)}* 🔥`;
-      blocks.push(
-        template.show_discount && discount > 0
+  const build: Record<TemplateBlock, () => string | null> = {
+    intro: () => clean(t.intro),
+    claim: () => clean(t.claim),
+    story: () => clean(source.handicap_story),
+    product: () => {
+      const productLines: string[] = [`*${source.product_name.trim()}*`];
+      const description = clean(source.description);
+      const packaging = clean(source.packaging);
+      for (const field of t.detail_order) {
+        if (field === "description" && description) productLines.push(description);
+        if (
+          field === "packaging" &&
+          packaging &&
+          !(description && normalise(description).includes(normalise(packaging)))
+        ) {
+          productLines.push(packaging);
+        }
+      }
+      return productLines.join("\n");
+    },
+    price: () => {
+      const catchPrice = source.catch_price;
+      if (catchPrice === null || !(catchPrice > 0)) return null;
+      const regular = source.regular_price;
+      const hasComparison = regular !== null && Number.isFinite(regular) && regular > catchPrice;
+      if (hasComparison) {
+        const discount = ((regular - catchPrice) / regular) * 100;
+        const priceLine = `~${postPrice(regular, source.quantity_unit)}~ → *${postPrice(catchPrice, source.quantity_unit)}* 🔥`;
+        return t.show_discount && discount > 0
           ? `${priceLine}\n${postPercent(discount)} günstiger\n${VAT_NOTE}`
-          : `${priceLine}\n${VAT_NOTE}`,
-      );
-    } else {
-      blocks.push(`*FOOD CATCH ${postPrice(catchPrice, source.quantity_unit)}* 🔥\n${VAT_NOTE}`);
-    }
+          : `${priceLine}\n${VAT_NOTE}`;
+      }
+      return `*FOOD CATCH ${postPrice(catchPrice, source.quantity_unit)}* 🔥\n${VAT_NOTE}`;
+    },
+    stock: () => {
+      const stockLines: string[] = [];
+      if (t.show_expiry && source.expiry_date)
+        stockLines.push(`MHD: ${formatDate(source.expiry_date)}`);
+      stockLines.push("*Nur solange Vorrat.*");
+      return stockLines.join("\n");
+    },
+    pickup: () => {
+      const actionLines: string[] = [];
+      const pickup = pickupBlock(source.locations, t.pickup_label.trim());
+      if (pickup) actionLines.push(pickup);
+      if (source.available_from) {
+        actionLines.push(
+          `${t.available_from_label.trim()} ${postDateTime(source.available_from, "ab")}`,
+        );
+      }
+      if (t.show_available_until && source.available_until) {
+        actionLines.push(`📅 Verfügbar bis: ${postDateTime(source.available_until, "bis")}`);
+      }
+      return actionLines.length > 0 ? actionLines.join("\n") : null;
+    },
+    shop: () => {
+      const shopUrl = clean(source.online_shop_url);
+      return shopUrl ? `🛒 Im Onlineshop bestellen:\n${shopUrl}` : null;
+    },
+    footer: () => clean(t.footer),
+  };
+
+  for (const block of t.block_order) {
+    if (t.hidden_blocks.includes(block)) continue;
+    const content = build[block]();
+    if (content) blocks.push(content);
   }
-
-  const stockLines: string[] = [];
-  if (template.show_expiry && source.expiry_date)
-    stockLines.push(`MHD: ${formatDate(source.expiry_date)}`);
-  stockLines.push("*Nur solange Vorrat.*");
-  blocks.push(stockLines.join("\n"));
-
-  const actionLines: string[] = [];
-  const pickup = pickupBlock(source.locations, template.pickup_label);
-  if (pickup) actionLines.push(pickup);
-  if (source.available_from) {
-    actionLines.push(
-      `${template.available_from_label} ${postDateTime(source.available_from, "ab")}`,
-    );
-  }
-  if (template.show_available_until && source.available_until) {
-    actionLines.push(`📅 Verfügbar bis: ${postDateTime(source.available_until, "bis")}`);
-  }
-  if (actionLines.length > 0) blocks.push(actionLines.join("\n"));
-
-  const shopUrl = clean(source.online_shop_url);
-  if (shopUrl) blocks.push(`🛒 Im Onlineshop bestellen:\n${shopUrl}`);
-
-  blocks.push(`*${BRAND_PURPOSE}*`);
 
   return blocks.join("\n\n");
+}
+
+/** Nur die Vorlagenwerte, die den Text beeinflussen (ohne Zusatzschlüssel). */
+export function templateFingerprint(template: TemplateSettings): string {
+  const t = normalizeTemplate(template);
+  return JSON.stringify([
+    t.header,
+    t.intro,
+    t.claim,
+    t.footer,
+    t.pickup_label,
+    t.available_from_label,
+    t.detail_order,
+    t.show_expiry,
+    t.show_available_until,
+    t.show_discount,
+    t.block_order,
+    t.hidden_blocks,
+  ]);
+}
+
+function hashString(value: string): string {
+  let hash = 5381;
+  for (let i = 0; i < value.length; i++) hash = ((hash * 33) ^ value.charCodeAt(i)) >>> 0;
+  return hash.toString(36);
+}
+
+/**
+ * Vorlagenkennung in der Signatur: Standardvorlage = Versionsnummer (kompatibel
+ * mit bestehenden Signaturen), angepasste Vorlage = "Version:Inhaltshash".
+ */
+export function templateSignatureTag(template: TemplateSettings): number | string {
+  const fingerprint = templateFingerprint(template);
+  if (fingerprint === templateFingerprint(DEFAULT_TEMPLATE_SETTINGS)) return POST_TEMPLATE_VERSION;
+  return `${POST_TEMPLATE_VERSION}:${hashString(fingerprint)}`;
 }
 
 /**
  * Signatur der postrelevanten Catch-Daten.
  * Ändert sie sich nach der Generierung, gilt der Post als möglicherweise veraltet.
  */
-export function postSourceSignature(source: PostSource): string {
+export function postSourceSignature(
+  source: PostSource,
+  template: TemplateSettings = DEFAULT_TEMPLATE_SETTINGS,
+): string {
   return JSON.stringify([
     source.product_name.trim(),
     clean(source.description),
@@ -247,7 +297,7 @@ export function postSourceSignature(source: PostSource): string {
     clean(source.handicap_story),
     source.image_path,
     clean(source.online_shop_url),
-    POST_TEMPLATE_VERSION,
+    templateSignatureTag(template),
   ]);
 }
 
@@ -258,7 +308,9 @@ export function signatureTemplateVersion(signature: string | null): number | nul
     const parsed: unknown = JSON.parse(signature);
     if (!Array.isArray(parsed)) return null;
     const last = parsed[parsed.length - 1];
-    return typeof last === "number" ? last : null;
+    if (typeof last === "number") return last;
+    if (typeof last === "string" && /^\d+:/.test(last)) return Number(last.split(":")[0]);
+    return null;
   } catch {
     return null;
   }

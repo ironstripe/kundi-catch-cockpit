@@ -36,6 +36,31 @@ export const SETTING_AUDIT_IDS: Record<string, string> = {
 /** Reihenfolge der optionalen Produktdetailzeilen im Post. */
 export type TemplateDetailField = "description" | "packaging";
 
+/**
+ * Abschnitte des Posts unterhalb des Titels. Inhalte von «story», «product»,
+ * «price», «stock», «pickup» und «shop» kommen immer aus den Catch-Daten.
+ */
+export type TemplateBlock =
+  "intro" | "claim" | "story" | "product" | "price" | "stock" | "pickup" | "shop" | "footer";
+
+export const TEMPLATE_BLOCKS: TemplateBlock[] = [
+  "intro",
+  "claim",
+  "story",
+  "product",
+  "price",
+  "stock",
+  "pickup",
+  "shop",
+  "footer",
+];
+
+/** Diese Abschnitte tragen die Kerninformation und lassen sich nicht ausblenden. */
+export const REQUIRED_TEMPLATE_BLOCKS: TemplateBlock[] = ["product", "price", "pickup"];
+
+export const DEFAULT_POST_HEADER =
+  "🐟 *FOOD CATCH* - Bitte teilt, diesen Beitrag, damit wir möglichst viel retten können😍👌";
+
 export interface TemplateSettings {
   detail_order: TemplateDetailField[];
   show_expiry: boolean;
@@ -43,6 +68,14 @@ export interface TemplateSettings {
   show_discount: boolean;
   pickup_label: string;
   available_from_label: string;
+  /** Titel inkl. Teilen-Aufruf (WhatsApp-Formatierung erlaubt). */
+  header: string;
+  /** Optionaler Einleitungstext; leer = entfällt. */
+  intro: string;
+  claim: string;
+  footer: string;
+  block_order: TemplateBlock[];
+  hidden_blocks: TemplateBlock[];
 }
 
 export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
@@ -52,7 +85,102 @@ export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   show_discount: true,
   pickup_label: "📍 Abholung:",
   available_from_label: "📅 Ab:",
+  header: DEFAULT_POST_HEADER,
+  intro: "",
+  claim: "*Guter Fisch. Kleines Handicap. Grosser Fang.*",
+  footer: "*Gut essen. Food Waste vermeiden.*",
+  block_order: [...TEMPLATE_BLOCKS],
+  hidden_blocks: [],
 };
+
+export const TEMPLATE_TEXT_LIMITS = {
+  header: 300,
+  intro: 1000,
+  claim: 300,
+  footer: 1000,
+  pickup_label: 60,
+  available_from_label: 60,
+} as const;
+
+/**
+ * Gespeicherte (ggf. ältere) Vorlage auf vollständige, gültige Werte bringen.
+ * Fehlende Felder → Standard; unbekannte Abschnitte entfallen, fehlende werden angehängt.
+ * Unbekannte Zusatzschlüssel bleiben erhalten.
+ */
+export function normalizeTemplate(value: unknown): TemplateSettings {
+  const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
+  const d = DEFAULT_TEMPLATE_SETTINGS;
+  const str = (key: keyof typeof TEMPLATE_TEXT_LIMITS | "header" | "intro" | "claim" | "footer") =>
+    typeof raw[key] === "string" ? (raw[key] as string) : (d[key] as string);
+  const bool = (key: "show_expiry" | "show_available_until" | "show_discount") =>
+    typeof raw[key] === "boolean" ? (raw[key] as boolean) : d[key];
+  const blocks = Array.isArray(raw["block_order"])
+    ? (raw["block_order"] as unknown[]).filter(
+        (b, i, all): b is TemplateBlock =>
+          TEMPLATE_BLOCKS.includes(b as TemplateBlock) && all.indexOf(b) === i,
+      )
+    : [];
+  for (const block of TEMPLATE_BLOCKS) if (!blocks.includes(block)) blocks.push(block);
+  const hidden = Array.isArray(raw["hidden_blocks"])
+    ? (raw["hidden_blocks"] as unknown[]).filter(
+        (b, i, all): b is TemplateBlock =>
+          TEMPLATE_BLOCKS.includes(b as TemplateBlock) &&
+          !REQUIRED_TEMPLATE_BLOCKS.includes(b as TemplateBlock) &&
+          all.indexOf(b) === i,
+      )
+    : [];
+  const details = Array.isArray(raw["detail_order"])
+    ? (raw["detail_order"] as unknown[]).filter(
+        (f, i, all): f is TemplateDetailField =>
+          (f === "description" || f === "packaging") && all.indexOf(f) === i,
+      )
+    : [];
+  for (const field of d.detail_order) if (!details.includes(field)) details.push(field);
+  return {
+    ...raw,
+    detail_order: details,
+    show_expiry: bool("show_expiry"),
+    show_available_until: bool("show_available_until"),
+    show_discount: bool("show_discount"),
+    pickup_label: str("pickup_label"),
+    available_from_label: str("available_from_label"),
+    header: str("header"),
+    intro: str("intro"),
+    claim: str("claim"),
+    footer: str("footer"),
+    block_order: blocks,
+    hidden_blocks: hidden,
+  };
+}
+
+const TEMPLATE_FIELD_LABELS: Record<keyof typeof TEMPLATE_TEXT_LIMITS, string> = {
+  header: "Titel",
+  intro: "Einleitung",
+  claim: "Claim",
+  footer: "Abschluss",
+  pickup_label: "Überschrift Abholung",
+  available_from_label: "Bezeichnung Verfügbar ab",
+};
+
+/** Deutsche Fehlermeldung oder null. */
+export function validateTemplate(values: TemplateSettings): string | null {
+  for (const [key, limit] of Object.entries(TEMPLATE_TEXT_LIMITS) as [
+    keyof typeof TEMPLATE_TEXT_LIMITS,
+    number,
+  ][]) {
+    const value = values[key];
+    if (typeof value !== "string") return `${TEMPLATE_FIELD_LABELS[key]} ist ungültig.`;
+    if (value.length > limit)
+      return `${TEMPLATE_FIELD_LABELS[key]} darf höchstens ${limit} Zeichen haben.`;
+    if (/<\/?[a-z][^>]*>/i.test(value))
+      return `${TEMPLATE_FIELD_LABELS[key]}: HTML wird nicht unterstützt — bitte nur WhatsApp-Formatierung verwenden.`;
+  }
+  if (values.header.trim() === "") return "Bitte einen Titel erfassen.";
+  if (values.pickup_label.trim() === "") return "Bitte eine Überschrift für die Abholung erfassen.";
+  if (values.available_from_label.trim() === "")
+    return "Bitte eine Bezeichnung für «Verfügbar ab» erfassen.";
+  return null;
+}
 
 export interface BrandSettings {
   path: string | null;
@@ -199,7 +327,7 @@ export async function fetchAppSettings(): Promise<AppSettings> {
     calculation_defaults_version: defaultsRow?.version ?? 1,
     vat: merge(DEFAULT_VAT_SETTINGS, vatRow?.value),
     vat_version: vatRow?.version ?? 1,
-    template: merge(DEFAULT_TEMPLATE_SETTINGS, templateRow?.value),
+    template: normalizeTemplate(templateRow?.value),
     template_version: templateRow?.version ?? 1,
     brand: merge(DEFAULT_BRAND_SETTINGS, brandRow?.value),
     brand_version: brandRow?.version ?? 1,
