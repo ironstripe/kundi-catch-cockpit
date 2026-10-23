@@ -575,29 +575,6 @@ function OfferCaseDetail({ caseId }: { caseId: string }) {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={confirmReplace} onOpenChange={setConfirmReplace}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Bestehendes Catch-Bild ersetzen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Der Catch hat bereits ein Bild. Es wird durch «{chosenImage?.file_name}» ersetzt. Eine
-              bestandene Musterprüfung und laufende Soundings werden dadurch zurückgesetzt.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setConfirmReplace(false);
-                void transferImage(true);
-              }}
-            >
-              Bild ersetzen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       <AlertDialog open={confirmConvert} onOpenChange={setConfirmConvert}>
         <AlertDialogContent>
           <AlertDialogHeader>
