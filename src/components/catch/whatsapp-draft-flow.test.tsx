@@ -93,6 +93,17 @@ function wrap(content: React.ReactNode) {
   );
 }
 describe("saved draft → WhatsApp preparation", () => {
+  it("validation reveals a hidden required field without saving", async () => {
+    render(wrap(<CatchForm mode="edit" catchId="catch-1" currentStatus="ready" initialImages={[]} initialValues={{ ...EMPTY_CATCH_FORM, product_name: "Fisch" }} onSaved={vi.fn()} />));
+    const supplier = document.getElementById("supplier_id");
+    const section = supplier?.closest("details");
+    if (!section) throw new Error("Supplier disclosure missing");
+    section.open = false;
+    fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
+    await waitFor(() => expect(section.open).toBe(true));
+    expect(document.activeElement).toBe(supplier);
+    expect(mocks.save).not.toHaveBeenCalled();
+  });
   it.each(["pending", "failed", "passed"] as const)(
     "%s sample and no Sounding: save/open/copy without status transition",
     async (sample) => {
