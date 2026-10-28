@@ -179,7 +179,7 @@ function CatchDetailPage() {
           <div id="interner-aufwand" className="scroll-mt-20">
             <CalculationCard
               result={calculation}
-            input={catchToCalculationInput(item)}
+              input={catchToCalculationInput(item)}
               comparison={
                 <QuantityPriceComparison
                   key={item.id}
