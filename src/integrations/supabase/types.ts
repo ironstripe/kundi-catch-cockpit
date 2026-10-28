@@ -1120,6 +1120,10 @@ export type Database = {
         Args: { _catch_id: string; _reason: string }
         Returns: undefined
       }
+      sync_catch_images: {
+        Args: { _baseline_ids: string[]; _catch_id: string; _images: Json }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "editor" | "viewer"
