@@ -228,9 +228,12 @@ describe("saved WhatsApp template in the real preparation workspace", () => {
     const item = { ...draftCatch, post_final_text: "Gespeichert" };
     render(
       wrap(
-        <MountedDisclosure id="publikation" title="WhatsApp" defaultOpen>
-          <PublicationWorkspace item={item} onChanged={vi.fn()} onDirtyChange={dirty} />
-        </MountedDisclosure>,
+        <>
+          <a href="#publikation">Post öffnen</a>
+          <MountedDisclosure id="publikation" title="WhatsApp" defaultOpen>
+            <PublicationWorkspace item={item} onChanged={vi.fn()} onDirtyChange={dirty} />
+          </MountedDisclosure>
+        </>,
       ),
     );
     const area = (await screen.findByLabelText("WhatsApp-Post-Text")) as HTMLTextAreaElement;
@@ -244,6 +247,13 @@ describe("saved WhatsApp template in the real preparation workspace", () => {
     window.location.hash = "publikation";
     window.dispatchEvent(new Event("hashchange"));
     expect(section.open).toBe(true);
+    section.open = false;
+    fireEvent.click(screen.getByRole("link", { name: "Post öffnen" }));
+    expect(window.location.hash).toBe("#publikation");
+    expect(section.open).toBe(true);
+    expect(screen.getByLabelText("WhatsApp-Post-Text")).toBe(area);
+    expect(area.value).toBe("Lokale Änderung");
+    expect(dirty).toHaveBeenLastCalledWith(true);
     fireEvent.click(screen.getByRole("button", { name: "Text sichern" }));
     await waitFor(() => expect(mocks.saveText).toHaveBeenCalledTimes(1));
     expect(area.value).toBe("Lokale Änderung");

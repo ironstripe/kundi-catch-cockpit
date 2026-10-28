@@ -61,12 +61,13 @@ export function CatchRow({ item }: { item: CatchListItem }) {
         }
       />
       <div className="text-sm lg:text-right">
+        <p className="text-xs text-muted-foreground">Netto</p>
         <p>
-          <span className="text-xs text-muted-foreground">DB I </span>
+          <span className="text-xs text-muted-foreground">DB I max. </span>
           {v ? formatCurrency(v.db_i) : "—"}
         </p>
         <p>
-          <span className="text-xs text-muted-foreground">DB II </span>
+          <span className="text-xs text-muted-foreground">DB II max. </span>
           {v?.db_ii === null || v?.db_ii === undefined ? "—" : formatCurrency(v.db_ii)}
         </p>
         <details
