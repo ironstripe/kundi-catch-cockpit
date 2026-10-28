@@ -10,6 +10,7 @@ import { draftCatch } from "@/test/catch-fixture";
 import { normalizeTemplate } from "@/lib/app-settings";
 import { catchToPostSource } from "@/lib/publication";
 import { postSourceSignature } from "@/lib/whatsapp-post";
+import { MountedDisclosure } from "@/components/layout/mounted-disclosure";
 
 const mocks = vi.hoisted(() => ({
   save: vi.fn(),
@@ -92,6 +93,28 @@ function wrap(content: React.ReactNode) {
   );
 }
 describe("saved draft → WhatsApp preparation", () => {
+  it("validation reveals a hidden required field without saving", async () => {
+    render(
+      wrap(
+        <CatchForm
+          mode="edit"
+          catchId="catch-1"
+          currentStatus="ready"
+          initialImages={draftCatch.images}
+          initialValues={{ ...EMPTY_CATCH_FORM, product_name: "Fisch" }}
+          onSaved={vi.fn()}
+        />,
+      ),
+    );
+    const supplier = document.getElementById("supplier_id");
+    const section = supplier?.closest("details");
+    if (!section) throw new Error("Supplier disclosure missing");
+    section.open = false;
+    fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
+    await waitFor(() => expect(section.open).toBe(true));
+    expect(document.activeElement).toBe(supplier);
+    expect(mocks.save).not.toHaveBeenCalled();
+  });
   it.each(["pending", "failed", "passed"] as const)(
     "%s sample and no Sounding: save/open/copy without status transition",
     async (sample) => {
@@ -199,6 +222,36 @@ describe("saved draft → WhatsApp preparation", () => {
 });
 
 describe("saved WhatsApp template in the real preparation workspace", () => {
+  it("collapse, refetch and hash reopening preserve dirty text and failed-save retry", async () => {
+    const dirty = vi.fn();
+    mocks.saveText.mockRejectedValueOnce(new Error("Offline"));
+    const item = { ...draftCatch, post_final_text: "Gespeichert" };
+    render(
+      wrap(
+        <MountedDisclosure id="publikation" title="WhatsApp" defaultOpen>
+          <PublicationWorkspace item={item} onChanged={vi.fn()} onDirtyChange={dirty} />
+        </MountedDisclosure>,
+      ),
+    );
+    const area = (await screen.findByLabelText("WhatsApp-Post-Text")) as HTMLTextAreaElement;
+    fireEvent.change(area, { target: { value: "Lokale Änderung" } });
+    await waitFor(() => expect(dirty).toHaveBeenLastCalledWith(true));
+    const section = document.getElementById("publikation") as HTMLDetailsElement;
+    section.open = false;
+    fireEvent(section, new Event("toggle"));
+    expect(area.isConnected).toBe(true);
+    expect(area.value).toBe("Lokale Änderung");
+    window.location.hash = "publikation";
+    window.dispatchEvent(new Event("hashchange"));
+    expect(section.open).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Text sichern" }));
+    await waitFor(() => expect(mocks.saveText).toHaveBeenCalledTimes(1));
+    expect(area.value).toBe("Lokale Änderung");
+    expect(dirty).toHaveBeenLastCalledWith(true);
+    fireEvent.click(screen.getByRole("button", { name: "Text sichern" }));
+    await waitFor(() => expect(mocks.saveText).toHaveBeenCalledTimes(2));
+    window.location.hash = "";
+  });
   const source = catchToPostSource(draftCatch);
   it("generates, saves and copies with the saved header, not the code default", async () => {
     mocks.template = { header: "🐟 *Teilt mit allen!*", intro: "Frisch eingetroffen." };

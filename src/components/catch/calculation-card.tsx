@@ -1,13 +1,13 @@
-import { HelpCircle } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { DECISION_CLASSES, DECISION_ICONS } from "@/components/catch/decision-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import type { CalculationResult } from "@/lib/catch-calculation";
+import { InfoHelp } from "@/components/ui/info-help";
+import { MountedDisclosure } from "@/components/layout/mounted-disclosure";
+import type { CalculationResult, CalculationInput } from "@/lib/catch-calculation";
 import { formatCurrency, formatPercentValue, formatQuantity } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { vatBasisLabel } from "@/lib/vat";
+import { vatBasisLabel, netCost, resolveVatRate, DEFAULT_PURCHASE_VAT_RATE } from "@/lib/vat";
 
 const HELP: Record<string, string> = {
   "Angebotspreis inkl. MWST":
@@ -25,7 +25,7 @@ const HELP: Record<string, string> = {
     "Pauschale für direkt zurechenbare Logistik, Bereitstellung, Etikettierung und Verpackung — pro vorbereitete Einheit.",
   "Interner Aufwand total":
     "Interner Aufwand pro Einheit multipliziert mit der gesamten vorbereiteten Menge, unabhängig vom Abverkauf.",
-  Rohmarge: "Die Rohmarge ist der Anteil des maximalen Deckungsbeitrags am maximalen Umsatz.",
+  "DB-I-Marge": "Die Rohmarge ist der Anteil des maximalen Deckungsbeitrags am maximalen Umsatz.",
   "Break-even-Abverkauf":
     "Der Break-even-Abverkauf zeigt, welcher Anteil der Einkaufsmenge verkauft werden muss, damit der gesamte Wareneinsatz gedeckt ist.",
   Preisvorteil:
@@ -34,6 +34,8 @@ const HELP: Record<string, string> = {
 
 interface CalculationCardProps {
   result: CalculationResult;
+  input?: CalculationInput;
+  comparison?: ReactNode;
   /** Kompakte Variante für die Formularspalte. */
   compact?: boolean;
   description?: string;
@@ -42,41 +44,59 @@ interface CalculationCardProps {
 
 export function CalculationCard({
   result,
+  input,
+  comparison,
   compact = false,
   description,
   footer,
 }: CalculationCardProps) {
   const v = result.values;
-  const unit = v?.quantity_unit ?? "kg";
+  const unit = v?.quantity_unit ?? input?.quantity_unit ?? "kg";
+  const ek =
+    v?.net_purchase_price_per_unit ??
+    (input?.purchase_price == null
+      ? null
+      : netCost(
+          input.purchase_price,
+          Boolean(input.purchase_price_includes_vat),
+          resolveVatRate(input.purchase_vat_rate, DEFAULT_PURCHASE_VAT_RATE),
+        ));
+  const vp = v?.gross_sales_price_per_unit ?? input?.catch_price ?? null;
+  const quantity = v?.purchase_quantity ?? input?.purchase_quantity ?? null;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-section-title">Vorkalkulation</CardTitle>
         <CardDescription className="text-xs">
-          {description ?? "Entscheidungshilfe aus den erfassten Eingabewerten — nicht editierbar."}
+          Vorkalkulation / maximal bei vollständigem Abverkauf
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div
-          className={cn("rounded-md border p-3", DECISION_CLASSES[result.level])}
+      <CardContent className={cn("space-y-3", compact && "text-sm")}>
+        <p
+          className={cn(
+            "flex items-center gap-2 text-sm font-medium",
+            DECISION_CLASSES[result.level],
+          )}
           role="status"
-          aria-live="polite"
         >
-          <p className="flex items-center gap-2 text-sm font-semibold">
-            {DECISION_ICONS[result.level]}
-            {result.label}
-          </p>
-          <p className="mt-1 text-xs text-foreground/80">{result.summary}</p>
-          {result.criteria.length > 0 ? (
-            <ul className="mt-2 space-y-0.5 text-[11px] text-foreground/70">
-              {result.criteria.map((criterion) => (
-                <li key={criterion}>· {criterion}</li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-
+          {DECISION_ICONS[result.level]} {result.label}
+          <InfoHelp label="Beurteilung">
+            {result.summary} {result.criteria.join(" · ")}
+          </InfoHelp>
+        </p>
+        {description ? <span className="sr-only">{description}</span> : null}
+        <dl className="grid grid-cols-2 gap-3 border-b pb-3">
+          <Primary label="EK netto" value={ek === null ? "—" : `${formatCurrency(ek)} / ${unit}`} />
+          <Primary
+            label="VP inkl. MWST"
+            value={vp === null ? "—" : `${formatCurrency(vp)} / ${unit}`}
+          />
+        </dl>
+        <p className="text-xs text-muted-foreground">
+          Einkaufsmenge: {quantity === null || quantity <= 0 ? "—" : formatQuantity(quantity, unit)}
+        </p>
+        {comparison}
         {!result.complete ? (
           <div className="space-y-1.5 text-xs text-muted-foreground">
             <p className="font-medium text-foreground">Fehlende Angaben</p>
@@ -88,39 +108,10 @@ export function CalculationCard({
           </div>
         ) : v ? (
           <>
-            <dl className="space-y-1 rounded-md border bg-muted/20 p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Kundensicht
-              </p>
-              <Secondary
-                label="Angebotspreis inkl. MWST"
-                value={`${formatCurrency(v.gross_sales_price_per_unit)} / ${unit}`}
-              />
-              <Secondary
-                label="Maximaler Bruttoumsatz"
-                value={formatCurrency(v.maximum_gross_revenue)}
-              />
-              <Secondary
-                label="Preisvorteil"
-                value={
-                  v.discount_percentage === null
-                    ? "Kein Vergleichspreis hinterlegt"
-                    : formatPercentValue(v.discount_percentage)
-                }
-                negative={(v.discount_percentage ?? 1) < 0}
-                muted={v.discount_percentage === null}
-              />
-            </dl>
-
             <dl className={cn("grid gap-2", compact ? "grid-cols-2" : "grid-cols-2")}>
-              <Primary label="Nettoinvestition" value={formatCurrency(v.net_investment)} />
-              <Primary
-                label="Maximaler Nettoumsatz"
-                value={formatCurrency(v.maximum_net_revenue)}
-              />
               <Primary label="DB I" value={formatCurrency(v.db_i)} negative={v.db_i <= 0} />
               <Primary
-                label="Rohmarge"
+                label="DB-I-Marge"
                 value={
                   v.gross_margin_percentage === null
                     ? "—"
@@ -148,92 +139,105 @@ export function CalculationCard({
               />
             </dl>
 
-            <dl className="space-y-1 border-t pt-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Interner Catch-Aufwand
-              </p>
-              <Secondary
-                label="Interner Aufwand pro Einheit"
-                value={
-                  v.internal_handling_cost_per_unit === null
-                    ? "Interner Aufwand nicht erfasst"
-                    : `${formatCurrency(v.internal_handling_cost_per_unit)} / ${unit}`
-                }
-                muted={v.internal_handling_cost_per_unit === null}
-              />
-              <Secondary
-                label="Interner Aufwand total"
-                value={
-                  v.internal_handling_cost_total === null
-                    ? "—"
-                    : `${formatCurrency(v.internal_handling_cost_total)}${
-                        v.internal_handling_cost_share_percentage === null
-                          ? ""
-                          : ` (${formatPercentValue(v.internal_handling_cost_share_percentage)} des Nettoumsatzes)`
-                      }`
-                }
-              />
-            </dl>
+            <MountedDisclosure title="Rechenweg und Details">
+              <dl className="space-y-1 border-t pt-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Interner Catch-Aufwand
+                </p>
+                <Secondary
+                  label="Interner Aufwand pro Einheit"
+                  value={
+                    v.internal_handling_cost_per_unit === null
+                      ? "Interner Aufwand nicht erfasst"
+                      : `${formatCurrency(v.internal_handling_cost_per_unit)} / ${unit}`
+                  }
+                  muted={v.internal_handling_cost_per_unit === null}
+                />
+                <Secondary
+                  label="Interner Aufwand total"
+                  value={
+                    v.internal_handling_cost_total === null
+                      ? "—"
+                      : `${formatCurrency(v.internal_handling_cost_total)}${
+                          v.internal_handling_cost_share_percentage === null
+                            ? ""
+                            : ` (${formatPercentValue(v.internal_handling_cost_share_percentage)} des Nettoumsatzes)`
+                        }`
+                  }
+                />
+              </dl>
 
-            <p className="text-xs text-muted-foreground">
-              DB I ist der Deckungsbeitrag nach Waren- und Lieferkosten. DB II berücksichtigt
-              zusätzlich den direkt zurechenbaren internen Catch-Aufwand, jedoch keine allgemeinen
-              Betriebs- oder Gemeinkosten. Der Aufwand fällt für jede vorbereitete Einheit an, auch
-              wenn sie nicht verkauft wird.
-            </p>
+              <dl className="space-y-1 border-t pt-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Interne Rechnung (netto)
+                </p>
+                <Secondary
+                  label={`Nettopreis (MWST ${formatPercentValue(v.vat_rate)})`}
+                  value={`${formatCurrency(v.net_sales_price_per_unit)} / ${unit}`}
+                />
+                <Secondary
+                  label="Enthaltene MWST"
+                  value={`${formatCurrency(v.maximum_sales_vat)} (${formatCurrency(v.vat_per_unit)} / ${unit})`}
+                />
+                <Secondary
+                  label="Nettoeinkaufspreis"
+                  value={`${formatCurrency(v.net_purchase_price_per_unit)} / ${unit} (${vatBasisLabel(v.purchase_price_includes_vat)} erfasst)`}
+                />
+                <Secondary
+                  label="Nettolieferkosten"
+                  value={`${formatCurrency(v.net_delivery_cost)} (${vatBasisLabel(v.delivery_cost_includes_vat)} erfasst)`}
+                />
+                <Secondary
+                  label="Effektiver EK pro Einheit"
+                  value={`${formatCurrency(v.effective_cost_per_unit)} / ${unit}`}
+                />
+                <Secondary
+                  label="DB pro Einheit"
+                  value={`${formatCurrency(v.contribution_margin_per_unit)} / ${unit}`}
+                  negative={v.contribution_margin_per_unit <= 0}
+                />
+                <Secondary
+                  label="Break-even-Menge"
+                  value={
+                    v.break_even_quantity === null
+                      ? "—"
+                      : formatQuantity(v.break_even_quantity, unit)
+                  }
+                />
+                <Secondary
+                  label="Break-even-Abverkauf"
+                  value={
+                    v.break_even_sell_through === null
+                      ? "—"
+                      : formatPercentValue(v.break_even_sell_through)
+                  }
+                />
+              </dl>
 
-            <dl className="space-y-1 border-t pt-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Interne Rechnung (netto)
-              </p>
-              <Secondary
-                label={`Nettopreis (MWST ${formatPercentValue(v.vat_rate)})`}
-                value={`${formatCurrency(v.net_sales_price_per_unit)} / ${unit}`}
-              />
-              <Secondary
-                label="Enthaltene MWST"
-                value={`${formatCurrency(v.maximum_sales_vat)} (${formatCurrency(v.vat_per_unit)} / ${unit})`}
-              />
-              <Secondary
-                label="Nettoeinkaufspreis"
-                value={`${formatCurrency(v.net_purchase_price_per_unit)} / ${unit} (${vatBasisLabel(v.purchase_price_includes_vat)} erfasst)`}
-              />
-              <Secondary
-                label="Nettolieferkosten"
-                value={`${formatCurrency(v.net_delivery_cost)} (${vatBasisLabel(v.delivery_cost_includes_vat)} erfasst)`}
-              />
-              <Secondary
-                label="Effektiver EK pro Einheit"
-                value={`${formatCurrency(v.effective_cost_per_unit)} / ${unit}`}
-              />
-              <Secondary
-                label="DB pro Einheit"
-                value={`${formatCurrency(v.contribution_margin_per_unit)} / ${unit}`}
-                negative={v.contribution_margin_per_unit <= 0}
-              />
-              <Secondary
-                label="Break-even-Menge"
-                value={
-                  v.break_even_quantity === null ? "—" : formatQuantity(v.break_even_quantity, unit)
-                }
-              />
-              <Secondary
-                label="Break-even-Abverkauf"
-                value={
-                  v.break_even_sell_through === null
-                    ? "—"
-                    : formatPercentValue(v.break_even_sell_through)
-                }
-              />
-            </dl>
-
-            {result.explanations.length > 0 ? (
-              <ul className="space-y-1 border-t pt-3 text-xs text-muted-foreground">
-                {result.explanations.map((text) => (
-                  <li key={text}>{text}</li>
-                ))}
-              </ul>
-            ) : null}
+              <dl className="space-y-1">
+                <Secondary label="Nettoinvestition" value={formatCurrency(v.net_investment)} />
+                <Secondary
+                  label="Maximaler Nettoumsatz"
+                  value={formatCurrency(v.maximum_net_revenue)}
+                />
+                <Secondary
+                  label="Maximaler Bruttoumsatz"
+                  value={formatCurrency(v.maximum_gross_revenue)}
+                />
+                <Secondary
+                  label="Normalpreis inkl. MWST"
+                  value={
+                    v.regular_price === null ? "—" : `${formatCurrency(v.regular_price)} / ${unit}`
+                  }
+                />
+                <Secondary
+                  label="Preisvorteil"
+                  value={
+                    v.discount_percentage === null ? "—" : formatPercentValue(v.discount_percentage)
+                  }
+                />
+              </dl>
+            </MountedDisclosure>
           </>
         ) : null}
 
@@ -245,29 +249,13 @@ export function CalculationCard({
 
 function Help({ label }: { label: string }) {
   const text = HELP[label];
-  if (!text) return null;
-  return (
-    <TooltipProvider delayDuration={150}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            aria-label={`Erklärung zu ${label}`}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <HelpCircle className="size-3" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-64 leading-snug">{text}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
+  return text ? <InfoHelp label={label}>{text}</InfoHelp> : null;
 }
 
 function Primary({ label, value, negative }: { label: string; value: string; negative?: boolean }) {
   return (
-    <div className="rounded-md border bg-muted/20 p-2">
-      <dt className="flex items-center gap-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+    <div className="min-w-0">
+      <dt className="flex items-center gap-1 text-xs text-muted-foreground">
         {label}
         <Help label={label} />
       </dt>

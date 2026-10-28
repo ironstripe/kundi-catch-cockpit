@@ -24,7 +24,7 @@ Reference: `docs/KUNDI-UI-STANDARD.md` (Family Standard v1, KundiMKT `da4d83e`, 
 
 - `--catch-deep` / `--catch-teal`: Food Catch identity accent (logo), unchanged hue.
 - `--status-*` (Entwurf/Bereit/Publiziert/Abgeschlossen/Abgebrochen) and `--temp-*` (Frisch/TK): distinct hues kept; lightness lowered slightly for readability on warm surfaces. `published` aligned to family `--success`.
-- "Bestanden" badge in Musterprüfung keeps explicit black text (user request).
+- Quality now uses a compact «Qualität geprüft · Ja/Nein» checkbox; legacy passed/pending/failed records remain truthful, historical notes stay reachable.
 - Logo, German UI with Swiss ss, routes, workflows, calculations, VAT, lifecycle unchanged.
 
 ## Verification (pass 1)
@@ -68,8 +68,10 @@ Page guards (one per page):
 | Instagram text | freeform | "Text speichern" (text only) | same | same |
 | Settings › interner Aufwand | single field | "Änderungen speichern" | same | restores the stored value |
 | Settings › "Auf CHF 2.50 zurücksetzen" | atomic | persists immediately (version check, audit) | – | – |
-| Other settings (thresholds, VAT, template, brand, categories, suppliers, locations, Sounding, Instagram, users) | explicit form/dialog CTAs, unchanged | existing buttons | **not added** | **not added** |
-| Sample check, internal-handling apply, assign/merge/archive, image transfer, conversion, publish, reconciliation close/cancel, Sounding feedback | atomic with confirmation | unchanged | never | – |
+| Other settings (thresholds, VAT, template, brand, categories, suppliers, locations, Instagram, users) | explicit form/dialog CTAs, unchanged | existing buttons | **not added** | **not added** |
+| Quality checkbox | atomic, no confirmation | deliberate checkbox writes passed/pending only; no note edit or status transition | never | – |
+| Internal-handling apply, assign/merge/archive, image transfer, conversion, publish, reconciliation close/cancel | explicit atomic intents | unchanged | never | – |
+| Sounding | inactive, historical reads only | no normal workflow/settings entry; mutation helpers reject | never | – |
 
 Refetch and identity:
 - The dossier page is keyed by `caseId`, and the WhatsApp/Instagram workspaces by `item.id`. Switching to another object resets local state, so no values carry over from one object to another.
@@ -81,7 +83,7 @@ Conversion: the misleading hint is gone. The final CTA is "Catch-Entwurf erstell
 History (§8): the whole row navigates. The product name is the only link and the only tab stop for the row. The row has hover and focus-within states and a chevron. "Post ansehen" stays a separate destination, and clicks on it do not trigger the row.
 
 Verification:
-- 249 vitest tests pass (18 files, 2026-10-23), including 12 new draft preparation/publication regressions. Existing rendered StrictMode second-photo, save/reload, safe discard, late upload, image retry, normalised acknowledgement, dirty unmount, collection persistence and dossier append tests remain green.
+- Daily-use 2026-10-28: 286 tests pass in 24 files, including 30 focused price/quality/disclosure/draft tests. Existing transactional image DB tests, StrictMode second-photo, safe cleanup, templates, calculation and reconciliation regressions remain green.
 - Multi-image product photos (2026-10-23): the Catch form manages the full `catch_images` collection — append-only uploads, main-image choice, reordering, individual removal; persistence and cleanup happen only on confirmed save (discard preserves saved images), and a partially created Catch is retried via its remembered id. Detail, review, and publication show all images in order; "Alle Bilder herunterladen" fetches every image for manual WhatsApp attachment (text clipboard never implies images). Converted dossiers can append selected photos without touching existing Catch images.
 - CatchForm fields are frozen (`fieldset disabled`) during the ordinary save; the leave guard stays active.
 - Consumer tests render the real `CaseTitleEditor`: focus, commit once, rejected/failed save, Esc while pending.
@@ -91,3 +93,14 @@ Verification:
 - The actual new migration runs in isolated PostgreSQL tests: draft→published with no quantity/reviews, truthful sample state/audit, optional quality on ready, positive quantity for ready/close, cancelled immutability and admin/reason checks for reopening. Production RLS is unchanged (verified by read-only inspection); these isolated tests are not authenticated production E2E.
 - Touched-file lint: 0 errors, 0 warnings. Automatic preview build reports build OK; no manual production build or typecheck was run (managed by the platform).
 - No authenticated browser session was available, so real Catch and supplier-image E2E flows and signed-in widths are **not** verified.
+
+## Daily-use simplification (2026-10-28)
+- Dashboard: short running summary, aligned compact Catch rows with product-name and separate Post links; all aggregate metrics remain in a same-page disclosure. Completed access is unchanged.
+- Detail/form: full product name, EK net / VP gross / purchased quantity, local mass comparison and DB I/II net with margins. Detailed calculation and secondary facts are disclosures on the existing pages.
+- Native details content stays mounted, including closed WhatsApp/Instagram editors. Hashes reveal their ancestors (#publikation, #nachkalkulation, #interner-aufwand); validation reveals and focuses hidden fields.
+- Info help uses installed Popover: hover/focus/tap and Escape, ≥44px mobile targets. Missing-customer-data, outdated-post and Instagram failure notices remain outside the collapsed workspace and link to actionable content.
+- Comparison starts empty, uses known net pack weights only, gross retail prices on kg/100g basis; Stk/Portion require explicit known weight. It never updates Normalpreis, commercial inputs or calculations and resets on Catch identity change.
+- Quality: checked iff passed; legacy failed/pending stay unchecked until deliberate action. Uncheck writes pending, never a fabricated failed result. Notes are omitted from the write and historical notes/time are retained. Existing identity-invalidation triggers remain untouched and may archive/reset the old note on genuine product-identity edits as before.
+- Sounding is inactive in the app: no start/workflow/settings entry, all three mutation helpers reject before DB access, historic review route reads every round and feedback without controls. Tables/RLS/triggers/history remain unchanged; this is app-path deactivation, not a new database permission policy.
+- No migration, dependency change, production data writes, deployment or sending. Image RPC/migrations, financial formulas, template signatures and ordinary save intents are unchanged.
+- Touched lint: zero errors, one Fast Refresh warning for the component/helper co-export. Automatic platform type/build: build OK. Separate manual production build/typecheck were not run (platform-managed). Browser reached only sign-in at 390/768/1024/1440, without overflow or console errors; core signed-in visual/E2E checks unavailable.

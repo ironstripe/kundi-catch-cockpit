@@ -442,61 +442,38 @@ export async function recordSampleCheck(
   if (error) throw error;
 }
 
-/** Startet eine neue Sounding-Runde mit den gewählten Prüfenden. */
-export async function startSounding(
-  catchId: string,
-  snapshot: SoundingSnapshot,
-  reviewerIds: string[],
-): Promise<string> {
-  if (reviewerIds.length === 0) {
-    throw new Error("Bitte mindestens eine prüfende Person auswählen.");
-  }
+/** A deliberate binary quality mark only; the DB handles actor/time/audit. */
+export async function recordQualityCheck(catchId: string, checked: boolean): Promise<void> {
   const { data, error } = await supabase
-    .from("catch_review_rounds")
-    .insert({ catch_id: catchId, snapshot: snapshot as never })
+    .from("catches")
+    .update({ sample_check_status: checked ? "passed" : "pending" })
+    .eq("id", catchId)
+    .in("status", ["draft", "ready", "published"])
     .select("id")
     .single();
   if (error) throw error;
-
-  const { error: recipientError } = await supabase
-    .from("catch_review_recipients")
-    .insert(reviewerIds.map((userId) => ({ review_round_id: data.id, user_id: userId })));
-  if (recipientError) throw recipientError;
-
-  return data.id;
+  if (!data) throw new Error("Qualitätsmarkierung konnte nicht gespeichert werden.");
 }
 
-export async function completeSounding(roundId: string): Promise<void> {
-  const { error } = await supabase
-    .from("catch_review_rounds")
-    .update({ status: "completed" })
-    .eq("id", roundId);
-  if (error) throw error;
+/** Sounding is inactive; historical reads and snapshots remain available. */
+export async function startSounding(
+  _catchId: string,
+  _snapshot: SoundingSnapshot,
+  _reviewerIds: string[],
+): Promise<string> {
+  throw new Error("Sounding ist inaktiv. Historische Aufzeichnungen bleiben lesbar.");
 }
 
-/** Eigene Rückmeldung erfassen oder aktualisieren. */
+export async function completeSounding(_roundId: string): Promise<void> {
+  throw new Error("Sounding ist inaktiv. Historische Aufzeichnungen bleiben lesbar.");
+}
+
 export async function submitReviewResponse(
-  roundId: string,
-  userId: string,
-  decision: ReviewDecision,
-  comment: string,
-  existingId?: string,
+  _roundId: string,
+  _userId: string,
+  _decision: ReviewDecision,
+  _comment: string,
+  _existingId?: string,
 ): Promise<void> {
-  const problem = validateResponse(decision, comment);
-  if (problem) throw new Error(problem);
-  const payload = { decision, comment: comment.trim() || null };
-
-  if (existingId) {
-    const { error } = await supabase
-      .from("catch_review_responses")
-      .update(payload)
-      .eq("id", existingId);
-    if (error) throw error;
-    return;
-  }
-
-  const { error } = await supabase
-    .from("catch_review_responses")
-    .insert({ review_round_id: roundId, user_id: userId, ...payload });
-  if (error) throw error;
+  throw new Error("Sounding ist inaktiv. Historische Aufzeichnungen bleiben lesbar.");
 }
