@@ -4,11 +4,9 @@
  * Mobil optimiert, weil die Seite meist aus Teams geöffnet wird.
  */
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Loader2, Send } from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { ArrowLeft } from "lucide-react";
 
 import { CalculationCard } from "@/components/catch/calculation-card";
 import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-badge";
@@ -18,40 +16,31 @@ import { Button } from "@/components/ui/button";
 import { ProductLink } from "@/components/catch/product-link";
 import { pickupSummary } from "@/lib/pickup-display";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { useRoles } from "@/hooks/use-role";
 import { CatchImageGallery } from "@/components/catch/catch-image-gallery";
 import { calculateCatch } from "@/lib/catch-calculation";
 import { catchToCalculationInput, fetchCatch } from "@/lib/catches";
 import { formatDateTime, formatQuantity } from "@/lib/format";
 import {
-  REVIEW_DECISIONS,
   REVIEW_DECISION_LABELS,
   REVIEW_ROUND_STATUS_LABELS,
   SAMPLE_CHECK_LABELS,
-  currentRound,
   fetchReviewRounds,
-  responseCommentRequired,
-  submitReviewResponse,
-  validateResponse,
-  type ReviewDecision,
 } from "@/lib/sounding";
 
 export const Route = createFileRoute("/_authenticated/catches/$catchId/review")({
   head: () => ({
     meta: [
-      { title: "Sounding-Review — Food Catch Cockpit" },
+      { title: "Sounding-Historie — Food Catch Cockpit" },
       {
         name: "description",
         content:
-          "Interne Beurteilung eines Food Catch: Produkt, Musterprüfung und Kalkulation prüfen und strukturierte Rückmeldung erfassen.",
+          "Historische Qualitätsaufzeichnungen und Sounding-Rückmeldungen eines Food Catch, nur lesbar.",
       },
-      { property: "og:title", content: "Sounding-Review — Food Catch Cockpit" },
+      { property: "og:title", content: "Sounding-Historie — Food Catch Cockpit" },
       {
         property: "og:description",
-        content: "Interne Beurteilung eines Food Catch mit strukturierter Rückmeldung.",
+        content: "Historische Sounding-Runden und Rückmeldungen, nur lesbar.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -62,39 +51,10 @@ export const Route = createFileRoute("/_authenticated/catches/$catchId/review")(
 
 function ReviewPage() {
   const { catchId } = Route.useParams();
-  const { profile } = useRoles();
   const catchQuery = useQuery({ queryKey: ["catch", catchId], queryFn: () => fetchCatch(catchId) });
   const roundsQuery = useQuery({
     queryKey: ["review-rounds", catchId],
     queryFn: () => fetchReviewRounds(catchId),
-  });
-
-  const [decision, setDecision] = useState<ReviewDecision | null>(null);
-  const [comment, setComment] = useState("");
-
-  const round = roundsQuery.data ? currentRound(roundsQuery.data) : null;
-  const own = round?.responses.find((response) => response.user_id === profile?.id) ?? null;
-
-  useEffect(() => {
-    if (own) {
-      setDecision(own.decision);
-      setComment(own.comment ?? "");
-    }
-  }, [own?.id, own?.decision, own?.comment, own]);
-
-  const submit = useMutation({
-    mutationFn: async () => {
-      if (!round || !decision || !profile) throw new Error("Rückmeldung nicht möglich.");
-      await submitReviewResponse(round.id, profile.id, decision, comment, own?.id);
-    },
-    onSuccess: async () => {
-      toast.success("Rückmeldung gespeichert");
-      await roundsQuery.refetch();
-    },
-    onError: (error: unknown) =>
-      toast.error("Rückmeldung fehlgeschlagen", {
-        description: error instanceof Error ? error.message : "Unbekannter Fehler.",
-      }),
   });
 
   if (catchQuery.isLoading || roundsQuery.isLoading) return <Skeleton className="h-64 w-full" />;
@@ -122,12 +82,7 @@ function ReviewPage() {
   }
 
   const calculation = calculateCatch(catchToCalculationInput(item));
-  const isRecipient = Boolean(
-    round?.recipients.some((recipient) => recipient.user_id === profile?.id),
-  );
-  const roundOpen = round?.status === "requested" || round?.status === "feedback_received";
-  const problem = decision ? validateResponse(decision, comment) : null;
-
+  const round = roundsQuery.data?.[0] ?? null;
   return (
     <>
       <PageHeader
@@ -212,75 +167,21 @@ function ReviewPage() {
         </div>
 
         <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-section-title">Deine Rückmeldung</CardTitle>
-              <CardDescription className="text-xs">
-                Die Diskussion kann in Teams laufen; verbindlich ist die Rückmeldung hier.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {!round ? (
-                <p className="text-sm text-muted-foreground">
-                  Für diesen Catch läuft aktuell kein Sounding.
-                </p>
-              ) : !isRecipient ? (
-                <p className="text-sm text-muted-foreground">
-                  Du bist für dieses Sounding nicht als prüfende Person ausgewählt und siehst die
-                  Angaben nur lesend.
-                </p>
-              ) : !roundOpen ? (
-                <p className="text-sm text-muted-foreground">
-                  Diese Sounding-Runde ist nicht mehr offen.
-                </p>
-              ) : (
-                <>
-                  <div className="space-y-2">
-                    {REVIEW_DECISIONS.map((option) => (
-                      <Button
-                        key={option}
-                        type="button"
-                        variant={decision === option ? "default" : "outline"}
-                        className="w-full justify-start"
-                        onClick={() => setDecision(option)}
-                      >
-                        {REVIEW_DECISION_LABELS[option]}
-                      </Button>
-                    ))}
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="comment" className="text-xs">
-                      Kommentar
-                      {decision && responseCommentRequired(decision)
-                        ? " (erforderlich)"
-                        : " (optional)"}
-                    </Label>
-                    <Textarea
-                      id="comment"
-                      rows={4}
-                      maxLength={600}
-                      value={comment}
-                      onChange={(event) => setComment(event.target.value)}
-                    />
-                    {problem ? (
-                      <p role="alert" className="text-xs font-medium text-destructive">
-                        {problem}
-                      </p>
-                    ) : null}
-                  </div>
-                  <Button
-                    className="w-full"
-                    disabled={!decision || Boolean(problem) || submit.isPending}
-                    onClick={() => submit.mutate()}
-                  >
-                    {submit.isPending ? <Loader2 className="animate-spin" /> : <Send />}
-                    {own ? "Rückmeldung aktualisieren" : "Rückmeldung senden"}
-                  </Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
+          <p className="text-sm text-muted-foreground">Sounding ist inaktiv. Historische Runden und Rückmeldungen sind nur lesbar.</p>
+          {roundsQuery.error ? <p role="alert">Historische Runden konnten nicht geladen werden.</p> : null}
+          {(roundsQuery.data ?? []).map((historyRound) => (
+            <details key={historyRound.id} className="border-b py-3">
+              <summary className="min-h-11 cursor-pointer text-sm font-semibold">Runde {historyRound.round_number} · {REVIEW_ROUND_STATUS_LABELS[historyRound.status]}</summary>
+              <div className="space-y-2 pt-2 text-sm">
+                <p>{formatDateTime(historyRound.requested_at)}</p>
+                {historyRound.snapshot ? <>
+                  <Row label="Produkt damals" value={historyRound.snapshot.product_name} />
+                  <Row label="Prüfnotiz damals" value={historyRound.snapshot.sample_check_note} />
+                </> : null}
+                {historyRound.responses.map((response) => <div key={response.id} className="border-t py-2"><p>{response.user_name ?? "Unbekannt"} · {REVIEW_DECISION_LABELS[response.decision]}</p><p className="whitespace-pre-line">{response.comment}</p></div>)}
+              </div>
+            </details>
+          ))}
           <Card>
             <CardHeader>
               <CardTitle className="text-section-title">Erfasste Rückmeldungen</CardTitle>
