@@ -103,7 +103,11 @@ export function uploadsSafeToRemove(pending: string[], referencedPaths: string[]
 export interface CatchImageSyncClient {
   rpc(
     fn: "sync_catch_images",
-    args: { _catch_id: string; _images: { id: string | null; storage_path: string }[]; _baseline_ids: string[] },
+    args: {
+      _catch_id: string;
+      _images: { id: string | null; storage_path: string }[];
+      _baseline_ids: string[];
+    },
   ): PromiseLike<{
     data: { inserted: number; updated: number; removed: number; removed_paths: string[] } | null;
     error: { message: string } | null;
