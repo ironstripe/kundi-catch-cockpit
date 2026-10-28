@@ -1,9 +1,9 @@
-import { HelpCircle } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { DECISION_CLASSES, DECISION_ICONS } from "@/components/catch/decision-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { InfoHelp } from "@/components/ui/info-help";
+import { MountedDisclosure } from "@/components/layout/mounted-disclosure";
 import type { CalculationResult } from "@/lib/catch-calculation";
 import { formatCurrency, formatPercentValue, formatQuantity } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -25,7 +25,7 @@ const HELP: Record<string, string> = {
     "Pauschale für direkt zurechenbare Logistik, Bereitstellung, Etikettierung und Verpackung — pro vorbereitete Einheit.",
   "Interner Aufwand total":
     "Interner Aufwand pro Einheit multipliziert mit der gesamten vorbereiteten Menge, unabhängig vom Abverkauf.",
-  Rohmarge: "Die Rohmarge ist der Anteil des maximalen Deckungsbeitrags am maximalen Umsatz.",
+  "DB-I-Marge": "Die Rohmarge ist der Anteil des maximalen Deckungsbeitrags am maximalen Umsatz.",
   "Break-even-Abverkauf":
     "Der Break-even-Abverkauf zeigt, welcher Anteil der Einkaufsmenge verkauft werden muss, damit der gesamte Wareneinsatz gedeckt ist.",
   Preisvorteil:
@@ -54,29 +54,15 @@ export function CalculationCard({
       <CardHeader>
         <CardTitle className="text-section-title">Vorkalkulation</CardTitle>
         <CardDescription className="text-xs">
-          {description ?? "Entscheidungshilfe aus den erfassten Eingabewerten — nicht editierbar."}
+          Vorkalkulation / maximal bei vollständigem Abverkauf
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div
-          className={cn("rounded-md border p-3", DECISION_CLASSES[result.level])}
-          role="status"
-          aria-live="polite"
-        >
-          <p className="flex items-center gap-2 text-sm font-semibold">
-            {DECISION_ICONS[result.level]}
-            {result.label}
-          </p>
-          <p className="mt-1 text-xs text-foreground/80">{result.summary}</p>
-          {result.criteria.length > 0 ? (
-            <ul className="mt-2 space-y-0.5 text-[11px] text-foreground/70">
-              {result.criteria.map((criterion) => (
-                <li key={criterion}>· {criterion}</li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-
+      <CardContent className={cn("space-y-3", compact && "text-sm")}>
+        <p className={cn("flex items-center gap-2 text-sm font-medium", DECISION_CLASSES[result.level])} role="status">
+          {DECISION_ICONS[result.level]} {result.label}
+          <InfoHelp label="Beurteilung">{result.summary} {result.criteria.join(" · ")}</InfoHelp>
+        </p>
+        {description ? <span className="sr-only">{description}</span> : null}
         {!result.complete ? (
           <div className="space-y-1.5 text-xs text-muted-foreground">
             <p className="font-medium text-foreground">Fehlende Angaben</p>
@@ -88,39 +74,15 @@ export function CalculationCard({
           </div>
         ) : v ? (
           <>
-            <dl className="space-y-1 rounded-md border bg-muted/20 p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Kundensicht
-              </p>
-              <Secondary
-                label="Angebotspreis inkl. MWST"
-                value={`${formatCurrency(v.gross_sales_price_per_unit)} / ${unit}`}
-              />
-              <Secondary
-                label="Maximaler Bruttoumsatz"
-                value={formatCurrency(v.maximum_gross_revenue)}
-              />
-              <Secondary
-                label="Preisvorteil"
-                value={
-                  v.discount_percentage === null
-                    ? "Kein Vergleichspreis hinterlegt"
-                    : formatPercentValue(v.discount_percentage)
-                }
-                negative={(v.discount_percentage ?? 1) < 0}
-                muted={v.discount_percentage === null}
-              />
+            <dl className="grid grid-cols-2 gap-3 border-b pb-3">
+              <Primary label="EK netto" value={`${formatCurrency(v.net_purchase_price_per_unit)} / ${unit}`} />
+              <Primary label="VP inkl. MWST" value={`${formatCurrency(v.gross_sales_price_per_unit)} / ${unit}`} />
             </dl>
-
+            <p className="text-xs text-muted-foreground">Einkaufsmenge: {formatQuantity(v.purchase_quantity, unit)}</p>
             <dl className={cn("grid gap-2", compact ? "grid-cols-2" : "grid-cols-2")}>
-              <Primary label="Nettoinvestition" value={formatCurrency(v.net_investment)} />
-              <Primary
-                label="Maximaler Nettoumsatz"
-                value={formatCurrency(v.maximum_net_revenue)}
-              />
               <Primary label="DB I" value={formatCurrency(v.db_i)} negative={v.db_i <= 0} />
               <Primary
-                label="Rohmarge"
+                label="DB-I-Marge"
                 value={
                   v.gross_margin_percentage === null
                     ? "—"
@@ -148,6 +110,7 @@ export function CalculationCard({
               />
             </dl>
 
+            <MountedDisclosure title="Rechenweg und Details">
             <dl className="space-y-1 border-t pt-3">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Interner Catch-Aufwand
@@ -174,13 +137,6 @@ export function CalculationCard({
                 }
               />
             </dl>
-
-            <p className="text-xs text-muted-foreground">
-              DB I ist der Deckungsbeitrag nach Waren- und Lieferkosten. DB II berücksichtigt
-              zusätzlich den direkt zurechenbaren internen Catch-Aufwand, jedoch keine allgemeinen
-              Betriebs- oder Gemeinkosten. Der Aufwand fällt für jede vorbereitete Einheit an, auch
-              wenn sie nicht verkauft wird.
-            </p>
 
             <dl className="space-y-1 border-t pt-3">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -227,13 +183,14 @@ export function CalculationCard({
               />
             </dl>
 
-            {result.explanations.length > 0 ? (
-              <ul className="space-y-1 border-t pt-3 text-xs text-muted-foreground">
-                {result.explanations.map((text) => (
-                  <li key={text}>{text}</li>
-                ))}
-              </ul>
-            ) : null}
+            <dl className="space-y-1">
+              <Secondary label="Nettoinvestition" value={formatCurrency(v.net_investment)} />
+              <Secondary label="Maximaler Nettoumsatz" value={formatCurrency(v.maximum_net_revenue)} />
+              <Secondary label="Maximaler Bruttoumsatz" value={formatCurrency(v.maximum_gross_revenue)} />
+              <Secondary label="Normalpreis inkl. MWST" value={v.regular_price === null ? "—" : `${formatCurrency(v.regular_price)} / ${unit}`} />
+              <Secondary label="Preisvorteil" value={v.discount_percentage === null ? "—" : formatPercentValue(v.discount_percentage)} />
+            </dl>
+            </MountedDisclosure>
           </>
         ) : null}
 
@@ -245,29 +202,13 @@ export function CalculationCard({
 
 function Help({ label }: { label: string }) {
   const text = HELP[label];
-  if (!text) return null;
-  return (
-    <TooltipProvider delayDuration={150}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            aria-label={`Erklärung zu ${label}`}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <HelpCircle className="size-3" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-64 leading-snug">{text}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
+  return text ? <InfoHelp label={label}>{text}</InfoHelp> : null;
 }
 
 function Primary({ label, value, negative }: { label: string; value: string; negative?: boolean }) {
   return (
-    <div className="rounded-md border bg-muted/20 p-2">
-      <dt className="flex items-center gap-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+    <div className="min-w-0">
+      <dt className="flex items-center gap-1 text-xs text-muted-foreground">
         {label}
         <Help label={label} />
       </dt>
