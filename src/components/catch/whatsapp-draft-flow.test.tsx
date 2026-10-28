@@ -100,7 +100,7 @@ describe("saved draft → WhatsApp preparation", () => {
           mode="edit"
           catchId="catch-1"
           currentStatus="ready"
-          initialImages={[]}
+          initialImages={draftCatch.images}
           initialValues={{ ...EMPTY_CATCH_FORM, product_name: "Fisch" }}
           onSaved={vi.fn()}
         />,
