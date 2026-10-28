@@ -6,7 +6,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { CalculationCard } from "@/components/catch/calculation-card";
 import { InternalHandlingActions } from "@/components/catch/internal-handling-actions";
 import { SampleCheckCard } from "@/components/catch/sample-check-card";
-import { SoundingWorkspace } from "@/components/catch/sounding-workspace";
+import { MountedDisclosure, revealSection } from "@/components/layout/mounted-disclosure";
+import { QuantityPriceComparison } from "@/components/catch/quantity-price-comparison";
 import { CompletedSummary } from "@/components/catch/completed-summary";
 import { ReconciliationWorkspace } from "@/components/catch/reconciliation-workspace";
 import { PublicationWorkspace } from "@/components/catch/publication-workspace";
@@ -16,7 +17,7 @@ import { CatchImageGallery } from "@/components/catch/catch-image-gallery";
 import { ProductLink } from "@/components/catch/product-link";
 import { pickupSummary } from "@/lib/pickup-display";
 import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-badge";
-import { PageHeader, PageSection } from "@/components/layout/page-header";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -67,12 +68,12 @@ function CatchDetailPage() {
   /** Springt nach dem Laden zuverlässig zum WhatsApp-Abschnitt. */
   useEffect(() => {
     if (!loaded) return;
-    if (typeof window === "undefined" || window.location.hash !== "#publikation") return;
+    if (typeof window === "undefined" || !window.location.hash) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const timer = window.setTimeout(() => {
-      document
-        .getElementById("publikation")
-        ?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+      const target = document.getElementById(window.location.hash.slice(1));
+      revealSection(target);
+      target?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
     }, 60);
     return () => window.clearTimeout(timer);
   }, [loaded, catchId]);
@@ -117,18 +118,19 @@ function CatchDetailPage() {
 
   return (
     <>
+      <Button variant="ghost" size="sm" asChild className="self-start">
+        <Link to="/">
+          <ArrowLeft />
+          Dashboard
+        </Link>
+      </Button>
       <PageHeader
+        className="sm:flex-col"
         title={item.product_name}
-        description={`${item.catch_number ?? "ohne Nummer"} · erstellt am ${formatDateTime(item.created_at)}`}
+        description={`${item.catch_number ?? "ohne Nummer"}`}
         actions={
           <>
-            <Button variant="outline" asChild>
-              <Link to="/">
-                <ArrowLeft />
-                Zurück zum Dashboard
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
+            <Button variant="ghost" size="sm" asChild>
               <Link to="/catches/$catchId/edit" params={{ catchId }}>
                 <Pencil />
                 Bearbeiten
@@ -157,25 +159,32 @@ function CatchDetailPage() {
       <div className="flex flex-wrap items-center gap-2">
         <CatchStatusBadge status={item.status} />
         <TemperatureBadge temperature={item.temperature} />
-        <span className="font-mono text-xs text-muted-foreground">{item.catch_number}</span>
+        <SampleCheckCard item={item} onChanged={invalidate} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <CalculationCard
-            result={calculation}
-            description={`Berechnete Werte aus den gespeicherten Eingaben · Stand ${formatDateTime(item.updated_at)}`}
-            footer={
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/catches/$catchId/edit" params={{ catchId }}>
-                    <Pencil />
-                    Catch bearbeiten
-                  </Link>
-                </Button>
-                <InternalHandlingActions item={item} onChanged={invalidate} />
-              </div>
-            }
+          <div id="interner-aufwand" className="scroll-mt-20">
+            <CalculationCard
+              result={calculation}
+              description={`Berechnete Werte aus den gespeicherten Eingaben · Stand ${formatDateTime(item.updated_at)}`}
+              footer={
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/catches/$catchId/edit" params={{ catchId }}>
+                      <Pencil />
+                      Catch bearbeiten
+                    </Link>
+                  </Button>
+                  <InternalHandlingActions item={item} onChanged={invalidate} />
+                </div>
+              }
+            />
+          </div>
+          <QuantityPriceComparison
+            key={item.id}
+            grossPrice={item.catch_price}
+            quantityUnit={item.quantity_unit}
           />
 
           <Section title="Produkt">
@@ -252,62 +261,44 @@ function CatchDetailPage() {
         </div>
 
         <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-section-title">Produktbilder</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CatchImageGallery
-                images={item.images}
-                alt={`Produktbild von ${item.product_name}`}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-section-title">Interne Notiz</CardTitle>
-              <CardDescription className="text-xs">Nur intern sichtbar.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="whitespace-pre-line text-sm text-muted-foreground">
-                {item.internal_note || "Keine interne Notiz erfasst."}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-section-title">Zeitstempel</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-1.5">
-              <Row label="Erstellt" value={formatDateTime(item.created_at)} />
-              <Row label="Zuletzt geändert" value={formatDateTime(item.updated_at)} />
-            </CardContent>
-          </Card>
+          <Section title="Produktbilder" summary={`${item.images.length} Fotos`}>
+            <CatchImageGallery images={item.images} alt={`Produktbild von ${item.product_name}`} />
+          </Section>
+          <Section title="Interne Notiz und Zeitstempel">
+            <p className="whitespace-pre-line text-sm">
+              {item.internal_note || "Keine interne Notiz erfasst."}
+            </p>
+            <Row label="Erstellt" value={formatDateTime(item.created_at)} />
+            <Row label="Zuletzt geändert" value={formatDateTime(item.updated_at)} />
+            <Row label="Historische Prüfnotiz" value={item.sample_check_note} />
+            <Row
+              label="Geprüft am"
+              value={item.sample_checked_at ? formatDateTime(item.sample_checked_at) : null}
+            />
+            <Link
+              to="/catches/$catchId/review"
+              params={{ catchId }}
+              className="inline-block min-h-11 text-sm underline"
+            >
+              Historische Qualitätsaufzeichnungen
+            </Link>
+          </Section>
         </div>
       </div>
 
-      <PageSection
-        id="musterpruefung"
-        title="Musterprüfung"
-        description="Optionale Qualitätsaufzeichnung — unabhängig von der WhatsApp-Vorbereitung."
-      >
-        <SampleCheckCard item={item} onChanged={invalidate} />
-      </PageSection>
-
-      <PageSection
-        id="sounding"
-        title="Internes Sounding"
-        description="Prüfende auswählen, Nachricht in Teams senden und Rückmeldungen im Cockpit erfassen."
-      >
-        <SoundingWorkspace item={item} calculation={calculation} onChanged={invalidate} />
-      </PageSection>
-
-      <PageSection
+      {item.post_source_signature ? (
+        <p className="text-xs text-muted-foreground">
+          Gespeicherter WhatsApp-Text: Aktualität und allfällige Warnungen in{" "}
+          <a href="#publikation" className="underline">
+            WhatsApp-Post prüfen
+          </a>
+          .
+        </p>
+      ) : null}
+      <MountedDisclosure
         id="publikation"
         title="WhatsApp-Post"
-        description="Post vorbereiten, Bild und Text kopieren und den Catch manuell als publiziert markieren."
+        summary={WHATSAPP_STATUS_LABELS[whatsappStatus(item)]}
       >
         <p className="text-xs text-muted-foreground">
           WhatsApp-Status:{" "}
@@ -335,55 +326,52 @@ function CatchDetailPage() {
             </CardContent>
           </Card>
         )}
-      </PageSection>
+      </MountedDisclosure>
 
       {item.status === "closed" || item.status === "cancelled" ? (
-        <PageSection
-          id="ergebnis"
-          title="Ergebnis"
-          description="Fixierte Nachkalkulation dieses Catches."
-        >
+        <MountedDisclosure id="ergebnis" title="Ergebnis" summary="Fixiertes Ergebnis">
           <CompletedSummary item={item} onChanged={invalidate} />
-        </PageSection>
+        </MountedDisclosure>
       ) : null}
 
       {item.status === "published" ? (
-        <PageSection
+        <MountedDisclosure
           id="nachkalkulation"
           title="Nachkalkulation"
-          description="Effektive Restmenge erfassen, Ergebnis prüfen und den Catch abschliessen."
+          summary="Restmenge erfassen / manuell abschliessen"
         >
           <ReconciliationWorkspace item={item} onChanged={invalidate} />
-        </PageSection>
+        </MountedDisclosure>
       ) : null}
 
       {item.status === "closed" || item.status === "cancelled" ? null : (
-        <PageSection
-          id="instagram"
-          title="Instagram"
-          description="Optionaler Zweitkanal — erst nach der bestätigten WhatsApp-Publikation."
-        >
+        <MountedDisclosure id="instagram" title="Instagram" summary={item.instagram_status}>
           <InstagramWorkspace
             key={item.id}
             item={item}
             onChanged={invalidate}
             onDirtyChange={setInstagramDirty}
           />
-        </PageSection>
+        </MountedDisclosure>
       )}
       <UnsavedChangesDialog guard={guard} />
     </>
   );
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({
+  title,
+  summary,
+  children,
+}: {
+  title: string;
+  summary?: string;
+  children: ReactNode;
+}) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-section-title">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-1.5">{children}</CardContent>
-    </Card>
+    <MountedDisclosure title={title} summary={summary}>
+      {children}
+    </MountedDisclosure>
   );
 }
 

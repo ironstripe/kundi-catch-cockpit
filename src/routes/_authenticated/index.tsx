@@ -127,9 +127,15 @@ function DashboardPage() {
       />
 
       <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-        <span><strong>{runningCatches.length}</strong> aktive Catches</span>
-        <span>Einkaufsmenge: <strong>{quantityText}</strong></span>
-        <span>Maximaler DB I: <strong>{formatCurrency(totals.contribution_margin)}</strong></span>
+        <span>
+          <strong>{runningCatches.length}</strong> aktive Catches
+        </span>
+        <span>
+          Einkaufsmenge: <strong>{quantityText}</strong>
+        </span>
+        <span>
+          Maximaler DB I: <strong>{formatCurrency(totals.contribution_margin)}</strong>
+        </span>
       </div>
 
       <PageSection title="Laufende Catches" description="Status Entwurf, Bereit und Publiziert.">
@@ -157,7 +163,13 @@ function DashboardPage() {
 
       <MountedDisclosure title="Gesamtkennzahlen" summary="Planung und abgeschlossene Catches">
         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {kpis.map((kpi) => <div key={kpi.label}><dt className="text-xs text-muted-foreground">{kpi.label}</dt><dd className="text-base font-semibold">{kpi.value}</dd><p className="text-xs text-muted-foreground">{kpi.hint}</p></div>)}
+          {kpis.map((kpi) => (
+            <div key={kpi.label}>
+              <dt className="text-xs text-muted-foreground">{kpi.label}</dt>
+              <dd className="text-base font-semibold">{kpi.value}</dd>
+              <p className="text-xs text-muted-foreground">{kpi.hint}</p>
+            </div>
+          ))}
         </dl>
       </MountedDisclosure>
 

@@ -167,18 +167,35 @@ function ReviewPage() {
         </div>
 
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">Sounding ist inaktiv. Historische Runden und Rückmeldungen sind nur lesbar.</p>
-          {roundsQuery.error ? <p role="alert">Historische Runden konnten nicht geladen werden.</p> : null}
+          <p className="text-sm text-muted-foreground">
+            Sounding ist inaktiv. Historische Runden und Rückmeldungen sind nur lesbar.
+          </p>
+          {roundsQuery.error ? (
+            <p role="alert">Historische Runden konnten nicht geladen werden.</p>
+          ) : null}
           {(roundsQuery.data ?? []).map((historyRound) => (
             <details key={historyRound.id} className="border-b py-3">
-              <summary className="min-h-11 cursor-pointer text-sm font-semibold">Runde {historyRound.round_number} · {REVIEW_ROUND_STATUS_LABELS[historyRound.status]}</summary>
+              <summary className="min-h-11 cursor-pointer text-sm font-semibold">
+                Runde {historyRound.round_number} ·{" "}
+                {REVIEW_ROUND_STATUS_LABELS[historyRound.status]}
+              </summary>
               <div className="space-y-2 pt-2 text-sm">
                 <p>{formatDateTime(historyRound.requested_at)}</p>
-                {historyRound.snapshot ? <>
-                  <Row label="Produkt damals" value={historyRound.snapshot.product_name} />
-                  <Row label="Prüfnotiz damals" value={historyRound.snapshot.sample_check_note} />
-                </> : null}
-                {historyRound.responses.map((response) => <div key={response.id} className="border-t py-2"><p>{response.user_name ?? "Unbekannt"} · {REVIEW_DECISION_LABELS[response.decision]}</p><p className="whitespace-pre-line">{response.comment}</p></div>)}
+                {historyRound.snapshot ? (
+                  <>
+                    <Row label="Produkt damals" value={historyRound.snapshot.product_name} />
+                    <Row label="Prüfnotiz damals" value={historyRound.snapshot.sample_check_note} />
+                  </>
+                ) : null}
+                {historyRound.responses.map((response) => (
+                  <div key={response.id} className="border-t py-2">
+                    <p>
+                      {response.user_name ?? "Unbekannt"} ·{" "}
+                      {REVIEW_DECISION_LABELS[response.decision]}
+                    </p>
+                    <p className="whitespace-pre-line">{response.comment}</p>
+                  </div>
+                ))}
               </div>
             </details>
           ))}

@@ -39,14 +39,16 @@ export function compareQuantityPrice({
   const competitorPrice = parseNumberInput(packPrice);
   const factor = basis === "100g" ? 0.1 : 1;
   const ourPerKg = positive(grossPrice) && positive(ourWeight) ? grossPrice / ourWeight : null;
-  const competitorPerKg = positive(competitorPrice) && positive(competitorWeight)
-    ? competitorPrice / competitorWeight
-    : null;
+  const competitorPerKg =
+    positive(competitorPrice) && positive(competitorWeight)
+      ? competitorPrice / competitorWeight
+      : null;
   const ours = ourPerKg === null ? null : ourPerKg * factor;
   const competitor = competitorPerKg === null ? null : competitorPerKg * factor;
-  const difference = positive(ourPerKg) && positive(competitorPerKg)
-    ? ((ourPerKg - competitorPerKg) / competitorPerKg) * 100
-    : null;
+  const difference =
+    positive(ourPerKg) && positive(competitorPerKg)
+      ? ((ourPerKg - competitorPerKg) / competitorPerKg) * 100
+      : null;
   return {
     ours: ours !== null && Number.isFinite(ours) ? ours : null,
     competitor: competitor !== null && Number.isFinite(competitor) ? competitor : null,

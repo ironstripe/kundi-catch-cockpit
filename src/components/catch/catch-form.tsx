@@ -12,6 +12,11 @@ import {
 } from "@/hooks/use-edit-session";
 import { toast } from "sonner";
 
+import { MountedDisclosure, revealSection } from "@/components/layout/mounted-disclosure";
+import { InfoHelp } from "@/components/ui/info-help";
+import { QuantityPriceComparison } from "@/components/catch/quantity-price-comparison";
+import { parseNumberInput } from "@/lib/catch-calculation";
+
 import { CalculationCard } from "@/components/catch/calculation-card";
 import { CatchImagesField } from "@/components/catch/catch-image-field";
 import {
@@ -25,9 +30,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -162,6 +165,7 @@ export function CatchForm({
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const timer = window.setTimeout(() => {
       const element = document.getElementById("interner-aufwand");
+      revealSection(element);
       element?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
       document.getElementById("internal_handling_cost_per_unit")?.focus();
     }, 80);
@@ -226,6 +230,7 @@ export function CatchForm({
     const first = list[0];
     if (!first) return;
     const element = document.getElementById(first.field);
+    revealSection(element);
     element?.scrollIntoView({ behavior: "smooth", block: "center" });
     (element as HTMLElement | null)?.focus?.();
   }
@@ -364,19 +369,48 @@ export function CatchForm({
                 />
               </Field>
 
-              <Field
-                label="Artikelnummer"
-                hint="optional; Teil der Produktidentität für die Musterprüfung"
-              >
-                <Input
-                  id="article_number"
-                  value={values.article_number}
-                  maxLength={60}
-                  onChange={(event) => set("article_number", event.target.value)}
-                  placeholder="z. B. ART-4711"
-                />
-              </Field>
+              <MountedDisclosure title="Weitere Produktangaben">
+                <Field label="Artikelnummer" hint="optional">
+                  <Input
+                    id="article_number"
+                    value={values.article_number}
+                    maxLength={60}
+                    onChange={(event) => set("article_number", event.target.value)}
+                    placeholder="z. B. ART-4711"
+                  />
+                </Field>
 
+                <Field label="Beschreibung">
+                  <Textarea
+                    id="description"
+                    rows={3}
+                    maxLength={1000}
+                    value={values.description}
+                    onChange={(event) => set("description", event.target.value)}
+                    placeholder="Kurzbeschreibung für die Kundschaft"
+                  />
+                </Field>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label="Verpackung">
+                    <Input
+                      id="packaging"
+                      maxLength={120}
+                      value={values.packaging}
+                      onChange={(event) => set("packaging", event.target.value)}
+                      placeholder="z. B. Vakuumbeutel à 500 g"
+                    />
+                  </Field>
+                  <Field label="Mindesthaltbarkeitsdatum">
+                    <Input
+                      id="expiry_date"
+                      type="date"
+                      value={values.expiry_date}
+                      onChange={(event) => set("expiry_date", event.target.value)}
+                    />
+                  </Field>
+                </div>
+              </MountedDisclosure>
               <Field label="Produktart" required>
                 <ToggleGroup
                   id="temperature"
@@ -394,37 +428,6 @@ export function CatchForm({
                   </ToggleGroupItem>
                 </ToggleGroup>
               </Field>
-
-              <Field label="Beschreibung">
-                <Textarea
-                  id="description"
-                  rows={3}
-                  maxLength={1000}
-                  value={values.description}
-                  onChange={(event) => set("description", event.target.value)}
-                  placeholder="Kurzbeschreibung für die Kundschaft"
-                />
-              </Field>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Verpackung">
-                  <Input
-                    id="packaging"
-                    maxLength={120}
-                    value={values.packaging}
-                    onChange={(event) => set("packaging", event.target.value)}
-                    placeholder="z. B. Vakuumbeutel à 500 g"
-                  />
-                </Field>
-                <Field label="Mindesthaltbarkeitsdatum">
-                  <Input
-                    id="expiry_date"
-                    type="date"
-                    value={values.expiry_date}
-                    onChange={(event) => set("expiry_date", event.target.value)}
-                  />
-                </Field>
-              </div>
             </FormSection>
 
             <FormSection
@@ -498,160 +501,162 @@ export function CatchForm({
                 </Field>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field
-                  label="Steuerbasis Einkaufspreis"
-                  hint="So, wie der Lieferant den Preis nennt."
-                >
-                  <ToggleGroup
-                    type="single"
-                    variant="outline"
-                    value={values.purchase_price_includes_vat ? "gross" : "net"}
-                    onValueChange={(next) => {
-                      if (next) set("purchase_price_includes_vat", next === "gross");
-                    }}
-                    className="justify-start"
-                  >
-                    <ToggleGroupItem
-                      value="net"
-                      aria-label="Einkaufspreis exklusive Mehrwertsteuer"
-                    >
-                      exkl. MWST
-                    </ToggleGroupItem>
-                    <ToggleGroupItem
-                      value="gross"
-                      aria-label="Einkaufspreis inklusive Mehrwertsteuer"
-                    >
-                      inkl. MWST
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </Field>
-                {values.purchase_price_includes_vat ? (
-                  <Field
-                    label="MWST-Satz Einkauf"
-                    error={issueFor("purchase_vat_rate")}
-                    hint={`Prozent, leer = ${DEFAULT_PURCHASE_VAT_RATE} %`}
-                  >
-                    <Input
-                      id="purchase_vat_rate"
-                      type="number"
-                      min="0"
-                      max="99.9"
-                      step="0.1"
-                      inputMode="decimal"
-                      value={values.purchase_vat_rate}
-                      aria-invalid={Boolean(issueFor("purchase_vat_rate"))}
-                      onChange={(event) => set("purchase_vat_rate", event.target.value)}
-                    />
-                  </Field>
-                ) : null}
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field
-                  label={`Lieferkosten ${values.delivery_included ? "" : vatBasisLabel(values.delivery_cost_includes_vat)}`.trim()}
-                  error={issueFor("delivery_cost")}
-                  hint="CHF"
-                >
-                  <Input
-                    id="delivery_cost"
-                    type="number"
-                    min="0"
-                    step="0.05"
-                    inputMode="decimal"
-                    disabled={values.delivery_included}
-                    value={values.delivery_included ? "" : values.delivery_cost}
-                    onChange={(event) => set("delivery_cost", event.target.value)}
-                  />
-                </Field>
-                <div className="flex items-end pb-2">
-                  <label className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      id="delivery_included"
-                      checked={values.delivery_included}
-                      onCheckedChange={(checked) => set("delivery_included", checked === true)}
-                    />
-                    Lieferung im Einkaufspreis enthalten
-                  </label>
-                </div>
-              </div>
-
-              {hasDeliveryCost ? (
+              <MountedDisclosure title="Steuerbasis und Lieferung">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Field label="Steuerbasis Lieferkosten">
+                  <Field
+                    label="Steuerbasis Einkaufspreis"
+                    hint="So, wie der Lieferant den Preis nennt."
+                  >
                     <ToggleGroup
                       type="single"
                       variant="outline"
-                      value={values.delivery_cost_includes_vat ? "gross" : "net"}
+                      value={values.purchase_price_includes_vat ? "gross" : "net"}
                       onValueChange={(next) => {
-                        if (next) set("delivery_cost_includes_vat", next === "gross");
+                        if (next) set("purchase_price_includes_vat", next === "gross");
                       }}
                       className="justify-start"
                     >
                       <ToggleGroupItem
                         value="net"
-                        aria-label="Lieferkosten exklusive Mehrwertsteuer"
+                        aria-label="Einkaufspreis exklusive Mehrwertsteuer"
                       >
                         exkl. MWST
                       </ToggleGroupItem>
                       <ToggleGroupItem
                         value="gross"
-                        aria-label="Lieferkosten inklusive Mehrwertsteuer"
+                        aria-label="Einkaufspreis inklusive Mehrwertsteuer"
                       >
                         inkl. MWST
                       </ToggleGroupItem>
                     </ToggleGroup>
                   </Field>
-                  {values.delivery_cost_includes_vat ? (
+                  {values.purchase_price_includes_vat ? (
                     <Field
-                      label="MWST-Satz Lieferkosten"
-                      error={issueFor("delivery_vat_rate")}
-                      hint={`Prozent, leer = ${DEFAULT_DELIVERY_VAT_RATE} % (Normalsatz)`}
+                      label="MWST-Satz Einkauf"
+                      error={issueFor("purchase_vat_rate")}
+                      hint={`Prozent, leer = ${DEFAULT_PURCHASE_VAT_RATE} %`}
                     >
                       <Input
-                        id="delivery_vat_rate"
+                        id="purchase_vat_rate"
                         type="number"
                         min="0"
                         max="99.9"
                         step="0.1"
                         inputMode="decimal"
-                        value={values.delivery_vat_rate}
-                        aria-invalid={Boolean(issueFor("delivery_vat_rate"))}
-                        onChange={(event) => set("delivery_vat_rate", event.target.value)}
+                        value={values.purchase_vat_rate}
+                        aria-invalid={Boolean(issueFor("purchase_vat_rate"))}
+                        onChange={(event) => set("purchase_vat_rate", event.target.value)}
                       />
                     </Field>
                   ) : null}
                 </div>
-              ) : null}
 
-              <div
-                id="vat_basis_confirmed"
-                tabIndex={-1}
-                className={cn(
-                  "rounded-md border p-3",
-                  issueFor("vat_basis_confirmed") && "border-destructive",
-                )}
-              >
-                <label className="flex items-start gap-2 text-sm">
-                  <Checkbox
-                    checked={values.vat_basis_confirmed}
-                    onCheckedChange={(checked) => set("vat_basis_confirmed", checked === true)}
-                  />
-                  <span>
-                    Steuerbasis geprüft: Einkaufspreis{" "}
-                    {vatBasisLabel(values.purchase_price_includes_vat)}
-                    {hasDeliveryCost
-                      ? `, Lieferkosten ${vatBasisLabel(values.delivery_cost_includes_vat)}`
-                      : ""}
-                    .
-                    {issueFor("vat_basis_confirmed") ? (
-                      <span className="block text-destructive">
-                        {issueFor("vat_basis_confirmed")}
-                      </span>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field
+                    label={`Lieferkosten ${values.delivery_included ? "" : vatBasisLabel(values.delivery_cost_includes_vat)}`.trim()}
+                    error={issueFor("delivery_cost")}
+                    hint="CHF"
+                  >
+                    <Input
+                      id="delivery_cost"
+                      type="number"
+                      min="0"
+                      step="0.05"
+                      inputMode="decimal"
+                      disabled={values.delivery_included}
+                      value={values.delivery_included ? "" : values.delivery_cost}
+                      onChange={(event) => set("delivery_cost", event.target.value)}
+                    />
+                  </Field>
+                  <div className="flex items-end pb-2">
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        id="delivery_included"
+                        checked={values.delivery_included}
+                        onCheckedChange={(checked) => set("delivery_included", checked === true)}
+                      />
+                      Lieferung im Einkaufspreis enthalten
+                    </label>
+                  </div>
+                </div>
+
+                {hasDeliveryCost ? (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Field label="Steuerbasis Lieferkosten">
+                      <ToggleGroup
+                        type="single"
+                        variant="outline"
+                        value={values.delivery_cost_includes_vat ? "gross" : "net"}
+                        onValueChange={(next) => {
+                          if (next) set("delivery_cost_includes_vat", next === "gross");
+                        }}
+                        className="justify-start"
+                      >
+                        <ToggleGroupItem
+                          value="net"
+                          aria-label="Lieferkosten exklusive Mehrwertsteuer"
+                        >
+                          exkl. MWST
+                        </ToggleGroupItem>
+                        <ToggleGroupItem
+                          value="gross"
+                          aria-label="Lieferkosten inklusive Mehrwertsteuer"
+                        >
+                          inkl. MWST
+                        </ToggleGroupItem>
+                      </ToggleGroup>
+                    </Field>
+                    {values.delivery_cost_includes_vat ? (
+                      <Field
+                        label="MWST-Satz Lieferkosten"
+                        error={issueFor("delivery_vat_rate")}
+                        hint={`Prozent, leer = ${DEFAULT_DELIVERY_VAT_RATE} % (Normalsatz)`}
+                      >
+                        <Input
+                          id="delivery_vat_rate"
+                          type="number"
+                          min="0"
+                          max="99.9"
+                          step="0.1"
+                          inputMode="decimal"
+                          value={values.delivery_vat_rate}
+                          aria-invalid={Boolean(issueFor("delivery_vat_rate"))}
+                          onChange={(event) => set("delivery_vat_rate", event.target.value)}
+                        />
+                      </Field>
                     ) : null}
-                  </span>
-                </label>
-              </div>
+                  </div>
+                ) : null}
+
+                <div
+                  id="vat_basis_confirmed"
+                  tabIndex={-1}
+                  className={cn(
+                    "rounded-md border p-3",
+                    issueFor("vat_basis_confirmed") && "border-destructive",
+                  )}
+                >
+                  <label className="flex items-start gap-2 text-sm">
+                    <Checkbox
+                      checked={values.vat_basis_confirmed}
+                      onCheckedChange={(checked) => set("vat_basis_confirmed", checked === true)}
+                    />
+                    <span>
+                      Steuerbasis geprüft: Einkaufspreis{" "}
+                      {vatBasisLabel(values.purchase_price_includes_vat)}
+                      {hasDeliveryCost
+                        ? `, Lieferkosten ${vatBasisLabel(values.delivery_cost_includes_vat)}`
+                        : ""}
+                      .
+                      {issueFor("vat_basis_confirmed") ? (
+                        <span className="block text-destructive">
+                          {issueFor("vat_basis_confirmed")}
+                        </span>
+                      ) : null}
+                    </span>
+                  </label>
+                </div>
+              </MountedDisclosure>
             </FormSection>
 
             <FormSection
@@ -709,6 +714,11 @@ export function CatchForm({
                   />
                 </Field>
               </div>
+              <QuantityPriceComparison
+                key={catchId ?? "new"}
+                grossPrice={parseNumberInput(values.catch_price)}
+                quantityUnit={values.quantity_unit}
+              />
             </FormSection>
 
             <FormSection
@@ -791,10 +801,10 @@ export function CatchForm({
                   aria-describedby="online_shop_url_hint"
                   onChange={(event) => set("online_shop_url", event.target.value)}
                 />
-                <p id="online_shop_url_hint" className="text-xs text-muted-foreground">
-                  Optionaler Direktlink zum Produkt. Wird im WhatsApp-Post angezeigt, wenn eine
-                  gültige URL hinterlegt ist.
-                </p>
+                <InfoHelp label="Produktlink">
+                  Optionaler Direktlink im WhatsApp-Post, wenn eine gültige https-Adresse erfasst
+                  ist.
+                </InfoHelp>
               </Field>
             </FormSection>
 
@@ -902,28 +912,11 @@ export function CatchForm({
                     onChange={(event) => set("internal_handling_cost_per_unit", event.target.value)}
                   />
                 </Field>
-                <p className="text-xs text-muted-foreground">
-                  Vorbelegt aus den Einstellungen und für diesen Catch überschreibbar. Der
-                  gespeicherte Wert gilt für alle vorbereiteten Einheiten, auch wenn nicht alle
-                  verkauft werden.
-                </p>
-                <Collapsible>
-                  <CollapsibleTrigger className="text-xs font-medium underline underline-offset-4">
-                    Was ist enthalten?
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-2 space-y-2 rounded-md border bg-muted/20 p-3 text-xs text-muted-foreground">
-                    <p>
-                      <span className="font-medium text-foreground">Enthalten:</span> Wareneingang,
-                      interner Transport, Vorbereitung, Umpacken, Etikettierung, catchbezogene
-                      Administration sowie direktes Verpackungs- und Etikettenmaterial.
-                    </p>
-                    <p>
-                      <span className="font-medium text-foreground">Nicht enthalten:</span> Miete,
-                      Energie, allgemeine Administration, normale Ladenarbeit, allgemeines
-                      Marketing, Frequenz- und Cross-Selling-Effekte sowie übrige Gemeinkosten.
-                    </p>
-                  </CollapsibleContent>
-                </Collapsible>
+                <InfoHelp label="Interner Aufwand">
+                  Gespeicherter Aufwand pro vorbereitete Einheit, unabhängig vom Abverkauf.
+                  Enthalten: Wareneingang, Transport, Vorbereitung, Verpackung und Etikettierung.
+                  Keine allgemeinen Gemeinkosten.
+                </InfoHelp>
               </FormSection>
             </div>
 
@@ -959,10 +952,6 @@ export function CatchForm({
               </Button>
               <p className="text-[11px] text-muted-foreground">
                 {dirty ? "Ungespeicherte Änderungen vorhanden." : "Alle Änderungen gespeichert."}
-              </p>
-              <p className="hidden text-[11px] text-muted-foreground lg:block">
-                Ctrl/⌘ + Enter: {ordinarySaveLabel(mode, currentStatus)}. Esc: Verlassen mit
-                Rückfrage.
               </p>
             </div>
           </div>
@@ -1000,14 +989,16 @@ function FormSection({
   description: string;
   children: React.ReactNode;
 }) {
+  const primary = ["Produkt", "Beschaffung", "Verkaufspreis", "Interner Aufwand / DB II"].includes(
+    title,
+  );
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-section-title">{title}</CardTitle>
-        <CardDescription className="text-xs">{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">{children}</CardContent>
-    </Card>
+    <MountedDisclosure title={title} defaultOpen={primary}>
+      <div className="flex justify-end">
+        <InfoHelp label={title}>{description}</InfoHelp>
+      </div>
+      <div className="space-y-4">{children}</div>
+    </MountedDisclosure>
   );
 }
 
