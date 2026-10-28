@@ -61,5 +61,6 @@ it("a deliberate click pins hover help until outside click or Escape", async () 
   await new Promise((resolve) => setTimeout(resolve, 200));
   expect(screen.getByRole("dialog")).toBe(content);
   fireEvent.pointerDown(screen.getByLabelText("Outside"), { pointerType: "mouse", button: 0 });
+  fireEvent.click(screen.getByLabelText("Outside"));
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 });
