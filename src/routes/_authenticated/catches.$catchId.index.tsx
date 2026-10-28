@@ -111,7 +111,12 @@ function CatchDetailPage() {
   const calculation = calculateCatch(catchToCalculationInput(item));
   const postSource = catchToPostSource(item);
   const missingCustomerDetails = missingPostDetails(postSource);
-  const postOutdated = Boolean(settings.data && item.post_source_signature && item.post_outdated_decision !== "keep" && item.post_source_signature !== postSourceSignature(postSource, settings.data.template));
+  const postOutdated = Boolean(
+    settings.data &&
+    item.post_source_signature &&
+    item.post_outdated_decision !== "keep" &&
+    item.post_source_signature !== postSourceSignature(postSource, settings.data.template),
+  );
 
   const invalidate = async () => {
     await queryClient.invalidateQueries({ queryKey: ["catch", catchId] });
@@ -174,7 +179,13 @@ function CatchDetailPage() {
           <div id="interner-aufwand" className="scroll-mt-20">
             <CalculationCard
               result={calculation}
-            comparison={<QuantityPriceComparison key={item.id} grossPrice={item.catch_price} quantityUnit={item.quantity_unit} />}
+              comparison={
+                <QuantityPriceComparison
+                  key={item.id}
+                  grossPrice={item.catch_price}
+                  quantityUnit={item.quantity_unit}
+                />
+              }
               description={`Berechnete Werte aus den gespeicherten Eingaben · Stand ${formatDateTime(item.updated_at)}`}
               footer={
                 <div className="flex flex-wrap gap-2">
@@ -189,7 +200,13 @@ function CatchDetailPage() {
               }
             />
           </div>
-          {!calculation.complete ? <QuantityPriceComparison key={item.id} grossPrice={item.catch_price} quantityUnit={item.quantity_unit} /> : null}
+          {!calculation.complete ? (
+            <QuantityPriceComparison
+              key={item.id}
+              grossPrice={item.catch_price}
+              quantityUnit={item.quantity_unit}
+            />
+          ) : null}
 
           <Section title="Produkt">
             <Row label="Produktname" value={item.product_name} />
@@ -290,9 +307,29 @@ function CatchDetailPage() {
         </div>
       </div>
 
-      {missingCustomerDetails.length > 0 ? <p className="text-xs text-muted-foreground">Noch nicht erfasst: {missingCustomerDetails.join(", ")}. Vorbereitung bleibt möglich.</p> : null}
-      {postOutdated || settings.isError ? <p role="alert" className="text-sm text-warning-foreground">{settings.isError ? "WhatsApp-Vorlage konnte nicht geladen werden." : "WhatsApp-Post möglicherweise veraltet."} <a href="#publikation" className="underline">Post prüfen / erneut laden</a></p> : null}
-      {item.instagram_error ? <p role="alert" className="text-sm text-destructive">{item.instagram_error} <a href="#instagram" className="underline">Instagram prüfen</a></p> : null}
+      {missingCustomerDetails.length > 0 ? (
+        <p className="text-xs text-muted-foreground">
+          Noch nicht erfasst: {missingCustomerDetails.join(", ")}. Vorbereitung bleibt möglich.
+        </p>
+      ) : null}
+      {postOutdated || settings.isError ? (
+        <p role="alert" className="text-sm text-warning-foreground">
+          {settings.isError
+            ? "WhatsApp-Vorlage konnte nicht geladen werden."
+            : "WhatsApp-Post möglicherweise veraltet."}{" "}
+          <a href="#publikation" className="underline">
+            Post prüfen / erneut laden
+          </a>
+        </p>
+      ) : null}
+      {item.instagram_error ? (
+        <p role="alert" className="text-sm text-destructive">
+          {item.instagram_error}{" "}
+          <a href="#instagram" className="underline">
+            Instagram prüfen
+          </a>
+        </p>
+      ) : null}
       <MountedDisclosure
         id="publikation"
         title="WhatsApp-Post"

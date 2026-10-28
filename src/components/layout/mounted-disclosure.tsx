@@ -41,11 +41,7 @@ export function MountedDisclosure({
     return () => window.removeEventListener("hashchange", revealHash);
   }, []);
   return (
-    <details
-      ref={ref}
-      id={id}
-      className="scroll-mt-20 border-b py-3"
-    >
+    <details ref={ref} id={id} className="scroll-mt-20 border-b py-3">
       <summary className="min-h-11 cursor-pointer content-center rounded-sm text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-9">
         {title}
         {summary ? <span className="ml-3 font-normal text-muted-foreground">{summary}</span> : null}

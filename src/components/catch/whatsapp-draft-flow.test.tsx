@@ -204,8 +204,14 @@ describe("saved WhatsApp template in the real preparation workspace", () => {
     const dirty = vi.fn();
     mocks.saveText.mockRejectedValueOnce(new Error("Offline"));
     const item = { ...draftCatch, post_final_text: "Gespeichert" };
-    render(wrap(<MountedDisclosure id="publikation" title="WhatsApp" defaultOpen><PublicationWorkspace item={item} onChanged={vi.fn()} onDirtyChange={dirty} /></MountedDisclosure>));
-    const area = await screen.findByLabelText("WhatsApp-Post-Text") as HTMLTextAreaElement;
+    render(
+      wrap(
+        <MountedDisclosure id="publikation" title="WhatsApp" defaultOpen>
+          <PublicationWorkspace item={item} onChanged={vi.fn()} onDirtyChange={dirty} />
+        </MountedDisclosure>,
+      ),
+    );
+    const area = (await screen.findByLabelText("WhatsApp-Post-Text")) as HTMLTextAreaElement;
     fireEvent.change(area, { target: { value: "Lokale Änderung" } });
     await waitFor(() => expect(dirty).toHaveBeenLastCalledWith(true));
     const section = document.getElementById("publikation") as HTMLDetailsElement;
