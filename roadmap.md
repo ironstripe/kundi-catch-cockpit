@@ -1,10 +1,10 @@
 # Food Catch Cockpit — Roadmap
 
 ## Final daily-use review (2026-10-28)
-- [ ] Visible planned-maximum/net DB labels
-- [ ] Same-hash anchor reopening preserves mounted edits
-- [ ] Hover help closes; intentional click and keyboard remain reliable
-- [ ] Suite, touched lint and available platform checks; signed-in browser acceptance unavailable
+- [x] Visible planned-maximum/net DB labels
+- [x] Same-hash anchor reopening preserves mounted edits
+- [x] Hover help closes; intentional click and keyboard remain reliable
+- [x] Suite (288), touched lint (0 errors/1 warning), available automatic build OK; separate manual typecheck/production build prohibited, signed-in browser acceptance unavailable
 
 ## Daily-use UX (2026-10-28)
 - [x] Compact Dashboard rows and same-page metrics disclosure
