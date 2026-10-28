@@ -4,10 +4,10 @@ import { DECISION_CLASSES, DECISION_ICONS } from "@/components/catch/decision-ba
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { InfoHelp } from "@/components/ui/info-help";
 import { MountedDisclosure } from "@/components/layout/mounted-disclosure";
-import type { CalculationResult } from "@/lib/catch-calculation";
+import type { CalculationResult, CalculationInput } from "@/lib/catch-calculation";
 import { formatCurrency, formatPercentValue, formatQuantity } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { vatBasisLabel } from "@/lib/vat";
+import { vatBasisLabel, netCost, resolveVatRate, DEFAULT_PURCHASE_VAT_RATE } from "@/lib/vat";
 
 const HELP: Record<string, string> = {
   "Angebotspreis inkl. MWST":
@@ -34,6 +34,7 @@ const HELP: Record<string, string> = {
 
 interface CalculationCardProps {
   result: CalculationResult;
+  input?: CalculationInput;
   comparison?: ReactNode;
   /** Kompakte Variante für die Formularspalte. */
   compact?: boolean;
@@ -43,13 +44,17 @@ interface CalculationCardProps {
 
 export function CalculationCard({
   result,
+  input,
   comparison,
   compact = false,
   description,
   footer,
 }: CalculationCardProps) {
   const v = result.values;
-  const unit = v?.quantity_unit ?? "kg";
+  const unit = v?.quantity_unit ?? input?.quantity_unit ?? "kg";
+  const ek = v?.net_purchase_price_per_unit ?? (input?.purchase_price == null ? null : netCost(input.purchase_price, Boolean(input.purchase_price_includes_vat), resolveVatRate(input.purchase_vat_rate, DEFAULT_PURCHASE_VAT_RATE)));
+  const vp = v?.gross_sales_price_per_unit ?? input?.catch_price ?? null;
+  const quantity = v?.purchase_quantity ?? input?.purchase_quantity ?? null;
 
   return (
     <Card>
@@ -73,6 +78,12 @@ export function CalculationCard({
           </InfoHelp>
         </p>
         {description ? <span className="sr-only">{description}</span> : null}
+        <dl className="grid grid-cols-2 gap-3 border-b pb-3">
+          <Primary label="EK netto" value={ek === null ? "—" : `${formatCurrency(ek)} / ${unit}`} />
+          <Primary label="VP inkl. MWST" value={vp === null ? "—" : `${formatCurrency(vp)} / ${unit}`} />
+        </dl>
+        <p className="text-xs text-muted-foreground">Einkaufsmenge: {quantity === null || quantity <= 0 ? "—" : formatQuantity(quantity, unit)}</p>
+        {comparison}
         {!result.complete ? (
           <div className="space-y-1.5 text-xs text-muted-foreground">
             <p className="font-medium text-foreground">Fehlende Angaben</p>
@@ -84,20 +95,6 @@ export function CalculationCard({
           </div>
         ) : v ? (
           <>
-            <dl className="grid grid-cols-2 gap-3 border-b pb-3">
-              <Primary
-                label="EK netto"
-                value={`${formatCurrency(v.net_purchase_price_per_unit)} / ${unit}`}
-              />
-              <Primary
-                label="VP inkl. MWST"
-                value={`${formatCurrency(v.gross_sales_price_per_unit)} / ${unit}`}
-              />
-            </dl>
-            <p className="text-xs text-muted-foreground">
-              Einkaufsmenge: {formatQuantity(v.purchase_quantity, unit)}
-            </p>
-            {comparison}
             <dl className={cn("grid gap-2", compact ? "grid-cols-2" : "grid-cols-2")}>
               <Primary label="DB I" value={formatCurrency(v.db_i)} negative={v.db_i <= 0} />
               <Primary

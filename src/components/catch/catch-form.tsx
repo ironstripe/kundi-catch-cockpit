@@ -922,6 +922,7 @@ export function CatchForm({
 
             <CalculationCard
               result={calculation}
+              input={formValuesToCalculationInput(values, defaultVatRate)}
               compact
               description="Aktualisiert sich sofort bei Änderungen an Menge und Preisen."
             />

@@ -179,6 +179,7 @@ function CatchDetailPage() {
           <div id="interner-aufwand" className="scroll-mt-20">
             <CalculationCard
               result={calculation}
+            input={catchToCalculationInput(item)}
               comparison={
                 <QuantityPriceComparison
                   key={item.id}
@@ -200,13 +201,6 @@ function CatchDetailPage() {
               }
             />
           </div>
-          {!calculation.complete ? (
-            <QuantityPriceComparison
-              key={item.id}
-              grossPrice={item.catch_price}
-              quantityUnit={item.quantity_unit}
-            />
-          ) : null}
 
           <Section title="Produkt">
             <Row label="Produktname" value={item.product_name} />
