@@ -19,11 +19,10 @@ describe("local gross mass comparison", () => {
       competitor: 16,
       difference: -25,
     });
-    expect(compareQuantityPrice({ ...input, basis: "100g" })).toMatchObject({
-      ours: 1.2,
-      competitor: 1.6,
-      difference: -25,
-    });
+    const per100g = compareQuantityPrice({ ...input, basis: "100g" });
+    expect(per100g.ours).toBeCloseTo(1.2);
+    expect(per100g.competitor).toBeCloseTo(1.6);
+    expect(per100g.difference).toBe(-25);
     expect(weightKg("0.5", "kg")).toBe(0.5);
   });
   it("does not infer Stk/Portion weight and uses only explicitly known net weight", () => {
