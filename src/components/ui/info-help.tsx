@@ -16,7 +16,10 @@ export function InfoHelp({ label, children }: { label: string; children: ReactNo
           className="shrink-0 text-muted-foreground lg:size-6"
           onMouseEnter={() => setOpen(true)}
           onFocus={() => setOpen(true)}
-          onClick={(event) => { event.preventDefault(); setOpen(true); }}
+          onClick={(event) => {
+            event.preventDefault();
+            setOpen(true);
+          }}
         >
           <Info className="size-4" />
         </Button>

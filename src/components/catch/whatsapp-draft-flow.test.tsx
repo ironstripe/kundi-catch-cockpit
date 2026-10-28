@@ -94,7 +94,18 @@ function wrap(content: React.ReactNode) {
 }
 describe("saved draft → WhatsApp preparation", () => {
   it("validation reveals a hidden required field without saving", async () => {
-    render(wrap(<CatchForm mode="edit" catchId="catch-1" currentStatus="ready" initialImages={[]} initialValues={{ ...EMPTY_CATCH_FORM, product_name: "Fisch" }} onSaved={vi.fn()} />));
+    render(
+      wrap(
+        <CatchForm
+          mode="edit"
+          catchId="catch-1"
+          currentStatus="ready"
+          initialImages={[]}
+          initialValues={{ ...EMPTY_CATCH_FORM, product_name: "Fisch" }}
+          onSaved={vi.fn()}
+        />,
+      ),
+    );
     const supplier = document.getElementById("supplier_id");
     const section = supplier?.closest("details");
     if (!section) throw new Error("Supplier disclosure missing");
