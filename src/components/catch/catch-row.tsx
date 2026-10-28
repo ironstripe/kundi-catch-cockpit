@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { calculateCatch } from "@/lib/catch-calculation";
 import { catchToCalculationInput, type CatchListItem } from "@/lib/catches";
 import { formatCurrency, formatPercentValue, formatQuantity } from "@/lib/format";
-import { netCost } from "@/lib/vat";
+import { netCost, resolveVatRate, DEFAULT_PURCHASE_VAT_RATE } from "@/lib/vat";
 
 export function CatchRow({ item }: { item: CatchListItem }) {
   const navigate = useNavigate();
@@ -13,7 +13,7 @@ export function CatchRow({ item }: { item: CatchListItem }) {
   const ek =
     item.purchase_price === null
       ? null
-      : netCost(item.purchase_price, item.purchase_price_includes_vat, item.purchase_vat_rate);
+      : netCost(item.purchase_price, item.purchase_price_includes_vat, resolveVatRate(item.purchase_vat_rate, DEFAULT_PURCHASE_VAT_RATE));
   return (
     <div
       className="grid cursor-pointer grid-cols-2 items-start gap-x-4 gap-y-2 border-b py-3 transition-colors hover:bg-accent/40 focus-within:bg-accent/40 lg:grid-cols-[minmax(0,2fr)_minmax(0,.8fr)_minmax(0,.9fr)_minmax(0,.9fr)_minmax(0,1fr)_5rem] lg:items-center"
