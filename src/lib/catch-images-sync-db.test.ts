@@ -19,7 +19,7 @@ import {
 const CATCH = "00000000-0000-0000-0000-00000000c001";
 const OTHER = "00000000-0000-0000-0000-00000000c002";
 const db = new PGlite();
-const migration = readdirSync("drizzle/migrations").find((f) => f.includes("atomic_catch_image_sync"))!;
+const migration = readdirSync("drizzle/migrations").find((f) => f.includes("sync_catch_images_rpc"))!;
 
 beforeAll(async () => {
   await db.exec(`

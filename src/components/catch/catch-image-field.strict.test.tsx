@@ -87,6 +87,34 @@ vi.mock("@/integrations/supabase/client", () => {
     supabase: {
       storage: { from: () => bucket },
       from: () => table,
+      // Vereinfachte Nachbildung der Transaktions-RPC (Semantik: siehe DB-Test).
+      rpc: async (
+        _fn: string,
+        args: { _catch_id: string; _images: { id: string | null; storage_path: string }[]; _baseline_ids: string[] },
+      ) => {
+        const mine = db.rows.filter((row) => row.catch_id === args._catch_id);
+        const resolved = args._images.map((image) =>
+          image.id
+            ? mine.find((row) => row.id === image.id)
+            : mine.find((row) => row.storage_path === image.storage_path),
+        );
+        const kept = new Set(resolved.filter(Boolean).map((row) => row!.id));
+        const gone = mine.filter((row) => args._baseline_ids.includes(row.id) && !kept.has(row.id));
+        db.rows = db.rows.filter((row) => !gone.includes(row));
+        let inserted = 0;
+        args._images.forEach((image, index) => {
+          const row = resolved[index];
+          if (row) Object.assign(row, { is_primary: index === 0, sort_order: index });
+          else {
+            db.rows.push({ id: `row-${db.nextId++}`, catch_id: args._catch_id, storage_path: image.storage_path, is_primary: index === 0, sort_order: index } as Row);
+            inserted += 1;
+          }
+        });
+        return {
+          data: { inserted, updated: 0, removed: gone.length, removed_paths: gone.map((row) => row.storage_path) },
+          error: null,
+        };
+      },
     },
   };
 });
