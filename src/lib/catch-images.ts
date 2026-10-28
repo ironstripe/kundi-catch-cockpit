@@ -101,6 +101,13 @@ export function uploadsSafeToRemove(pending: string[], referencedPaths: string[]
 
 /** Minimale Client-Schnittstelle — erlaubt Tests ohne echte Datenbank. */
 export interface CatchImageSyncClient {
+  rpc(
+    fn: "sync_catch_images",
+    args: { _catch_id: string; _images: { id: string | null; storage_path: string }[]; _baseline_ids: string[] },
+  ): PromiseLike<{
+    data: { inserted: number; updated: number; removed: number; removed_paths: string[] } | null;
+    error: { message: string } | null;
+  }>;
   storage: {
     from(bucket: string): {
       remove(paths: string[]): PromiseLike<{ error: { message: string } | null }>;
@@ -175,20 +182,17 @@ export interface SyncResult {
 }
 
 /**
- * Bringt die gespeicherten Bilddatensätze auf den Formularstand.
+ * Bringt die gespeicherten Bilddatensätze auf den Formularstand — atomar in
+ * einer Datenbanktransaktion (RPC `sync_catch_images`, pro Catch serialisiert,
+ * RLS des Aufrufers gilt). Das alte Hauptbild wird vor dem neuen
+ * zurückgestuft; bei jedem Fehler wird alles zurückgerollt.
  *
- * Reihenfolge bewusst nicht-destruktiv: erst Reihenfolge/Hauptbild
- * aktualisieren, dann Neues einfügen, erst zuletzt Entferntes löschen
- * (Datensatz zuerst, Speicherobjekt danach). Schlägt ein Schritt fehl,
- * bleiben die bisherigen Datensätze und Speicherobjekte unangetastet.
+ * Entfernt wird nur, was in `baselineIds` stand und im Formular bewusst
+ * fehlt — nebenläufig hinzugefügte Datensätze bleiben erhalten. Frisch
+ * hochgeladene Bilder werden über den Speicherpfad wiedererkannt (Retry).
  *
- * Entfernt wird nur, was in `baselineIds` (beim Laden bekannte Datensätze)
- * stand und im Formular bewusst fehlt — nebenläufig hinzugefügte, dem
- * Editor unbekannte Datensätze bleiben erhalten.
- *
- * Idempotent: Wurde nach einem Teilerfolg erneut gespeichert, werden frisch
- * hochgeladene Bilder über ihren Speicherpfad erkannt und nicht doppelt
- * angelegt.
+ * Speicherobjekte werden erst nach bestätigtem Commit gelöscht; bei Fehler
+ * oder unklarem Ausgang bleibt jedes Objekt erhalten.
  */
 export async function syncCatchImages(
   client: CatchImageSyncClient,
@@ -196,88 +200,26 @@ export async function syncCatchImages(
   desired: FormCatchImage[],
   baselineIds: string[],
 ): Promise<SyncResult> {
-  const { data, error } = await client
-    .from("catch_images")
-    .select("id, storage_path, is_primary, sort_order")
-    .eq("catch_id", catchId);
-  if (error) {
-    throw new Error(`Bilder des Catches konnten nicht gelesen werden: ${error.message}`);
-  }
-  const existing = data ?? [];
-
-  // Frisch Hochgeladenes kann nach einem Teilerfolg bereits als Datensatz
-  // existieren — über den Speicherpfad wiedererkennen statt doppelt anlegen.
-  const byPath = new Map(existing.map((row) => [row.storage_path, row]));
-  const resolved = desired.map((image, index) => {
-    const persisted = image.persistedId
-      ? (existing.find((row) => row.id === image.persistedId) ?? null)
-      : (byPath.get(image.storagePath) ?? null);
-    return { image, persisted, index };
-  });
-
-  const keptIds = new Set(
-    resolved.map((entry) => entry.persisted?.id).filter((id): id is string => Boolean(id)),
-  );
-  // Nur bewusst entfernte Bestandsbilder; unbekannte (nebenläufig
-  // hinzugefügte) Datensätze werden nie angefasst.
-  const baseline = new Set(baselineIds);
-  const toRemove = existing.filter((row) => baseline.has(row.id) && !keptIds.has(row.id));
-
-  // 1) Nicht-destruktiv: Reihenfolge und Hauptbild bestehender Bilder.
-  let updated = 0;
-  for (const entry of resolved) {
-    if (!entry.persisted) continue;
-    const isPrimary = entry.index === 0;
-    if (entry.persisted.is_primary === isPrimary && entry.persisted.sort_order === entry.index) {
-      continue;
-    }
-    const result = await client
-      .from("catch_images")
-      .update({ is_primary: isPrimary, sort_order: entry.index })
-      .eq("id", entry.persisted.id);
-    if (result.error) {
-      throw new Error(
-        `Reihenfolge der Bilder konnte nicht gespeichert werden: ${result.error.message}`,
-      );
-    }
-    updated += 1;
-  }
-
-  // 2) Nicht-destruktiv: neue Bilder einfügen.
-  const fresh = resolved.filter((entry) => !entry.persisted);
-  if (fresh.length > 0) {
-    const inserted = await client.from("catch_images").insert(
-      fresh.map((entry) => ({
-        catch_id: catchId,
-        storage_path: entry.image.storagePath,
-        is_primary: entry.index === 0,
-        sort_order: entry.index,
+  let response: Awaited<ReturnType<CatchImageSyncClient["rpc"]>>;
+  try {
+    response = await client.rpc("sync_catch_images", {
+      _catch_id: catchId,
+      _images: desired.map((image) => ({
+        id: image.persistedId,
+        storage_path: image.storagePath,
       })),
-    );
-    if (inserted.error) {
-      throw new Error(`Neue Bilder konnten nicht gespeichert werden: ${inserted.error.message}`);
-    }
+      _baseline_ids: baselineIds,
+    });
+  } catch (cause) {
+    const message = cause instanceof Error ? cause.message : String(cause);
+    throw new Error(`Bilder konnten nicht gespeichert werden: ${message}`);
   }
-
-  // 3) Erst zuletzt destruktiv: bewusst entfernte Datensätze löschen,
-  //    Speicherobjekte erst nach erfolgreichem Löschen des Datensatzes.
-  if (toRemove.length > 0) {
-    const removed = await client
-      .from("catch_images")
-      .delete()
-      .in(
-        "id",
-        toRemove.map((row) => row.id),
-      );
-    if (removed.error) {
-      throw new Error(`Bilder konnten nicht entfernt werden: ${removed.error.message}`);
-    }
-    await removeStorageObjects(
-      client,
-      CATCH_IMAGE_BUCKET,
-      toRemove.map((row) => row.storage_path),
+  if (response.error || !response.data) {
+    throw new Error(
+      `Bilder konnten nicht gespeichert werden: ${response.error?.message ?? "Keine Antwort"}`,
     );
   }
-
-  return { inserted: fresh.length, removed: toRemove.length, updated };
+  const result = response.data;
+  await removeStorageObjects(client, CATCH_IMAGE_BUCKET, result.removed_paths ?? []);
+  return { inserted: result.inserted, removed: result.removed, updated: result.updated };
 }
