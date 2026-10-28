@@ -34,6 +34,7 @@ const HELP: Record<string, string> = {
 
 interface CalculationCardProps {
   result: CalculationResult;
+  comparison?: ReactNode;
   /** Kompakte Variante für die Formularspalte. */
   compact?: boolean;
   description?: string;
@@ -42,6 +43,7 @@ interface CalculationCardProps {
 
 export function CalculationCard({
   result,
+  comparison,
   compact = false,
   description,
   footer,
@@ -95,6 +97,7 @@ export function CalculationCard({
             <p className="text-xs text-muted-foreground">
               Einkaufsmenge: {formatQuantity(v.purchase_quantity, unit)}
             </p>
+            {comparison}
             <dl className={cn("grid gap-2", compact ? "grid-cols-2" : "grid-cols-2")}>
               <Primary label="DB I" value={formatCurrency(v.db_i)} negative={v.db_i <= 0} />
               <Primary
