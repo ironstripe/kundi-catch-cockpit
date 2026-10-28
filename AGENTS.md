@@ -14,3 +14,4 @@
 - Private images render via `SignedImage`, which shows an explicit load error with retry instead of a broken image or endless spinner.
 - Preparation navigation is an explicit form-save intent independent of Catch status; use draft validation for it so optional quality workflows cannot gate WhatsApp preparation.
 - WhatsApp post text is generated only from the saved `whatsapp_template` setting (normalised via `normalizeTemplate`); the workspace waits for it and the signature carries a template content tag, so template edits flag saved posts without rewriting them.
+- Catch image rows are synchronised only through the transactional `sync_catch_images` RPC (security invoker, per-catch advisory lock, demote-before-promote); storage objects are removed only from its committed `removed_paths`, because the one-primary unique index and partial failures made client-side multi-step writes unsafe.
