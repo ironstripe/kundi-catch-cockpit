@@ -60,7 +60,11 @@ it("a deliberate click pins hover help until outside click or Escape", async () 
   fireEvent.mouseLeave(content);
   await new Promise((resolve) => setTimeout(resolve, 200));
   expect(screen.getByRole("dialog")).toBe(content);
-  fireEvent.pointerDown(screen.getByLabelText("Outside"), { pointerType: "mouse", button: 0 });
-  fireEvent.click(screen.getByLabelText("Outside"));
+  const outside = screen.getByLabelText("Outside");
+  // happy-dom clears event.target after dispatch; Radix defers this event until click.
+  const pointerDown = new MouseEvent("pointerdown", { bubbles: true, button: 0 });
+  Object.defineProperty(pointerDown, "target", { value: outside });
+  fireEvent(outside, pointerDown);
+  fireEvent.click(outside);
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 });
