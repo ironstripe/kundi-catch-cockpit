@@ -1,5 +1,11 @@
 # Food Catch Cockpit — Roadmap
 
+## Daily-use UX (2026-10-28)
+- [ ] Compact Dashboard rows and same-page metrics disclosure
+- [ ] Detail/editor pricing hierarchy, local mass comparison and mounted disclosures
+- [ ] Ja/Nein quality, inactive Sounding with historical read-only access
+- [ ] Focused regressions, suite, lint and available build/browser checks
+
 ## Schritt 1: Fundament (abgeschlossen)
 - [x] Kundivent-Designsystem als Tokenbasis (`src/styles.css`)
 - [x] Logo, Favicon, PWA-Manifest
