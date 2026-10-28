@@ -25,6 +25,7 @@ function fakeClient(
     removed: [] as string[],
   };
   const client: CatchImageSyncClient = {
+    rpc: async () => ({ data: null, error: { message: "nicht verwendet" } }),
     storage: {
       from: () => ({
         remove: async (paths) => {

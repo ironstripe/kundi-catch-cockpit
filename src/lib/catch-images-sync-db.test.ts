@@ -19,7 +19,9 @@ import {
 const CATCH = "00000000-0000-0000-0000-00000000c001";
 const OTHER = "00000000-0000-0000-0000-00000000c002";
 const db = new PGlite();
-const migration = readdirSync("drizzle/migrations").find((f) => f.includes("sync_catch_images_rpc"))!;
+const migration = readdirSync("drizzle/migrations").find((f) =>
+  f.includes("sync_catch_images_rpc"),
+)!;
 
 beforeAll(async () => {
   await db.exec(`
@@ -51,7 +53,10 @@ const client = {
       },
     }),
   },
-  rpc: async (_fn: string, args: { _catch_id: string; _images: unknown; _baseline_ids: string[] }) => {
+  rpc: async (
+    _fn: string,
+    args: { _catch_id: string; _images: unknown; _baseline_ids: string[] },
+  ) => {
     if (rpcThrows) throw new Error("Netzwerk unterbrochen");
     try {
       const res = await db.query<{ r: never }>(
@@ -92,7 +97,12 @@ beforeEach(async () => {
 describe("sync_catch_images (echter Hauptbild-Index)", () => {
   it("wechselt das Hauptbild auf ein bestehendes Bild", async () => {
     const before = await seed(["eins.jpg", "zwei.jpg"]);
-    await syncCatchImages(client, CATCH, makePrimary(toFormImages(before), before[1]!.id), ids(before));
+    await syncCatchImages(
+      client,
+      CATCH,
+      makePrimary(toFormImages(before), before[1]!.id),
+      ids(before),
+    );
     const after = await rows();
     expect(after.map((r) => [r.storage_path, r.is_primary, r.sort_order])).toEqual([
       ["zwei.jpg", true, 0],
@@ -122,7 +132,12 @@ describe("sync_catch_images (echter Hauptbild-Index)", () => {
 
   it("fügt ein Zweitbild hinzu und entfernt ein Zweitbild", async () => {
     const before = await seed(["eins.jpg"]);
-    await syncCatchImages(client, CATCH, addImages(toFormImages(before), ["zwei.jpg"]), ids(before));
+    await syncCatchImages(
+      client,
+      CATCH,
+      addImages(toFormImages(before), ["zwei.jpg"]),
+      ids(before),
+    );
     const two = await rows();
     expect(two.map((r) => [r.storage_path, r.is_primary])).toEqual([
       ["eins.jpg", true],
@@ -167,9 +182,12 @@ describe("sync_catch_images (echter Hauptbild-Index)", () => {
       "INSERT INTO catch_images (catch_id, storage_path, is_primary, sort_order) VALUES ($1,'parallel.jpg',false,1)",
       [CATCH],
     );
-    await syncCatchImages(client, CATCH, removeImage(toFormImages(before), before[0]!.id).concat(
-      addImages([], ["neu.jpg"]),
-    ), ids(before));
+    await syncCatchImages(
+      client,
+      CATCH,
+      removeImage(toFormImages(before), before[0]!.id).concat(addImages([], ["neu.jpg"])),
+      ids(before),
+    );
     const after = await rows();
     expect(after.map((r) => r.storage_path).sort()).toEqual(["neu.jpg", "parallel.jpg"]);
     expect(after.filter((r) => r.is_primary).map((r) => r.storage_path)).toEqual(["neu.jpg"]);
@@ -177,15 +195,15 @@ describe("sync_catch_images (echter Hauptbild-Index)", () => {
 
   it("weist fremde Bild-Ids und fremde Pfade zurück", async () => {
     const foreign = await seed(["fremd.jpg"], OTHER);
-    await expect(
-      syncCatchImages(client, CATCH, toFormImages(foreign), []),
-    ).rejects.toThrow(/gehört nicht/);
-    await expect(
-      syncCatchImages(client, CATCH, addImages([], ["fremd.jpg"]), []),
-    ).rejects.toThrow(/anderen Catch/);
-    await expect(
-      syncCatchImages(client, CATCH, addImages([], ["../x.jpg"]), []),
-    ).rejects.toThrow(/Ungültiger Bildpfad/);
+    await expect(syncCatchImages(client, CATCH, toFormImages(foreign), [])).rejects.toThrow(
+      /gehört nicht/,
+    );
+    await expect(syncCatchImages(client, CATCH, addImages([], ["fremd.jpg"]), [])).rejects.toThrow(
+      /anderen Catch/,
+    );
+    await expect(syncCatchImages(client, CATCH, addImages([], ["../x.jpg"]), [])).rejects.toThrow(
+      /Ungültiger Bildpfad/,
+    );
     expect(await rows(OTHER)).toEqual(foreign);
   });
 
