@@ -46,7 +46,12 @@ it("hover can move into help content, then closes on leaving", async () => {
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 });
 it("a deliberate click pins hover help until outside click or Escape", async () => {
-  render(<><InfoHelp label="DB II">Aufwand.</InfoHelp><input aria-label="Outside" /></>);
+  render(
+    <>
+      <InfoHelp label="DB II">Aufwand.</InfoHelp>
+      <input aria-label="Outside" />
+    </>,
+  );
   const trigger = screen.getByRole("button", { name: "Info: DB II" });
   fireEvent.mouseEnter(trigger);
   fireEvent.click(trigger);

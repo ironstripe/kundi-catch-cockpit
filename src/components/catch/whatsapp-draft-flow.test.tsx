@@ -228,9 +228,12 @@ describe("saved WhatsApp template in the real preparation workspace", () => {
     const item = { ...draftCatch, post_final_text: "Gespeichert" };
     render(
       wrap(
-        <><a href="#publikation">Post öffnen</a><MountedDisclosure id="publikation" title="WhatsApp" defaultOpen>
-          <PublicationWorkspace item={item} onChanged={vi.fn()} onDirtyChange={dirty} />
-        </MountedDisclosure></>,
+        <>
+          <a href="#publikation">Post öffnen</a>
+          <MountedDisclosure id="publikation" title="WhatsApp" defaultOpen>
+            <PublicationWorkspace item={item} onChanged={vi.fn()} onDirtyChange={dirty} />
+          </MountedDisclosure>
+        </>,
       ),
     );
     const area = (await screen.findByLabelText("WhatsApp-Post-Text")) as HTMLTextAreaElement;

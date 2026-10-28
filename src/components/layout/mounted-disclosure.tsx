@@ -39,11 +39,22 @@ export function MountedDisclosure({
       revealHash();
     }
     function onAnchorClick(event: MouseEvent) {
-      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+        return;
       const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
-      if (!(anchor instanceof HTMLAnchorElement) || anchor.download || (anchor.target && anchor.target !== "_self")) return;
+      if (
+        !(anchor instanceof HTMLAnchorElement) ||
+        anchor.download ||
+        (anchor.target && anchor.target !== "_self")
+      )
+        return;
       const url = new URL(anchor.href, window.location.href);
-      if (url.origin !== window.location.origin || url.pathname !== window.location.pathname || url.search !== window.location.search) return;
+      if (
+        url.origin !== window.location.origin ||
+        url.pathname !== window.location.pathname ||
+        url.search !== window.location.search
+      )
+        return;
       // Preserve native/router navigation, including a repeated anchor that emits no hashchange.
       revealHash(url.hash.slice(1));
     }

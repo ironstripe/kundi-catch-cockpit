@@ -24,9 +24,12 @@ export function InfoHelp({ label, children }: { label: string; children: ReactNo
       closeTimer.current = null;
     }, 150);
   }
-  useEffect(() => () => {
-    if (closeTimer.current !== null) clearTimeout(closeTimer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (closeTimer.current !== null) clearTimeout(closeTimer.current);
+    },
+    [],
+  );
   return (
     <Popover open={open} onOpenChange={changeOpen}>
       <PopoverTrigger asChild>
@@ -36,10 +39,20 @@ export function InfoHelp({ label, children }: { label: string; children: ReactNo
           size="icon"
           aria-label={`Info: ${label}`}
           className="shrink-0 text-muted-foreground lg:size-6"
-          onMouseEnter={() => { cancelClose(); setOpen(true); }}
+          onMouseEnter={() => {
+            cancelClose();
+            setOpen(true);
+          }}
           onMouseLeave={leave}
-          onFocus={() => { focused.current = true; cancelClose(); setOpen(true); }}
-          onBlur={() => { focused.current = false; leave(); }}
+          onFocus={() => {
+            focused.current = true;
+            cancelClose();
+            setOpen(true);
+          }}
+          onBlur={() => {
+            focused.current = false;
+            leave();
+          }}
           onClick={(event) => {
             event.preventDefault();
             pinned.current = true;
@@ -55,8 +68,14 @@ export function InfoHelp({ label, children }: { label: string; children: ReactNo
         onCloseAutoFocus={(event) => event.preventDefault()}
         onMouseEnter={cancelClose}
         onMouseLeave={leave}
-        onFocusCapture={() => { focused.current = true; cancelClose(); }}
-        onBlurCapture={() => { focused.current = false; leave(); }}
+        onFocusCapture={() => {
+          focused.current = true;
+          cancelClose();
+        }}
+        onBlurCapture={() => {
+          focused.current = false;
+          leave();
+        }}
         onEscapeKeyDown={() => changeOpen(false)}
       >
         {children}
