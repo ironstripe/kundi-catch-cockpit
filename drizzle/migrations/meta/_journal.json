@@ -15,6 +15,13 @@
       "when": 1792766145012,
       "tag": "0001_optional_quality_manual_publication",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793213907573,
+      "tag": "0002_atomic_catch_image_sync",
+      "breakpoints": true
     }
   ]
 }
