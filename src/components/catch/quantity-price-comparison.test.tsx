@@ -33,3 +33,28 @@ it("deliberate touch/click, keyboard focus and Escape operate help", async () =>
   fireEvent.focus(screen.getByRole("button", { name: "Info: DB II" }));
   expect(await screen.findByRole("dialog")).toBeTruthy();
 });
+it("hover can move into help content, then closes on leaving", async () => {
+  render(<InfoHelp label="DB II">Aufwand pro vorbereitete Einheit.</InfoHelp>);
+  const trigger = screen.getByRole("button", { name: "Info: DB II" });
+  fireEvent.mouseEnter(trigger);
+  const content = await screen.findByRole("dialog");
+  fireEvent.mouseLeave(trigger);
+  fireEvent.mouseEnter(content);
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  expect(screen.getByRole("dialog")).toBe(content);
+  fireEvent.mouseLeave(content);
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+});
+it("a deliberate click pins hover help until outside click or Escape", async () => {
+  render(<><InfoHelp label="DB II">Aufwand.</InfoHelp><input aria-label="Outside" /></>);
+  const trigger = screen.getByRole("button", { name: "Info: DB II" });
+  fireEvent.mouseEnter(trigger);
+  fireEvent.click(trigger);
+  const content = await screen.findByRole("dialog");
+  fireEvent.mouseLeave(trigger);
+  fireEvent.mouseLeave(content);
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  expect(screen.getByRole("dialog")).toBe(content);
+  fireEvent.pointerDown(screen.getByLabelText("Outside"), { pointerType: "mouse", button: 0 });
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+});
