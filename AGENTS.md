@@ -10,6 +10,9 @@
 <!-- LOVABLE:END -->
 
 ## Project rules
+- Daily-use disclosures keep their children mounted; reveal ancestor details for hashes and validation focus so local editors, uploads and navigation guards survive collapsing.
+- Mass-price comparison is a local gross-retail scratch calculation separate from persisted financial inputs; caller identity keys reset it between Catches.
+- Quality UI writes only passed/pending through authenticated existing Catch access, never overwrites notes; inactive Sounding mutation helpers reject before database access and historic review routes remain read-only.
 - Session-upload cleanup goes through `useSessionUploads` (deferred, replay-safe): React StrictMode/Fast Refresh replays effect cleanup on mounted editors, so never delete storage objects directly in an effect cleanup.
 - Private images render via `SignedImage`, which shows an explicit load error with retry instead of a broken image or endless spinner.
 - Preparation navigation is an explicit form-save intent independent of Catch status; use draft validation for it so optional quality workflows cannot gate WhatsApp preparation.
