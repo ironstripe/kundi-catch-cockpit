@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { formatWeight } from "@/lib/pricing-basis";
 import { CheckCircle2, AlertTriangle, MinusCircle, HelpCircle } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -152,8 +153,28 @@ export function ReconciliationCard({
                     : formatPercentValue(v.db_ii_margin_percentage)
                 }
               />
+              {v.unallocated_kg !== null ? (
+                <>
+                  <Metric
+                    label="Vorbereitete Packungen"
+                    value={formatQuantity(v.prepared_quantity, v.quantity_unit)}
+                  />
+                  <Metric
+                    label="Unverkaufte Packungen"
+                    value={`${formatQuantity(v.remaining_quantity, v.quantity_unit)} · ${formatWeight(v.unsold_pack_kg ?? 0)}`}
+                  />
+                  <Metric
+                    label="Nicht verpacktes Rohgewicht"
+                    value={formatWeight(v.unallocated_kg)}
+                  />
+                </>
+              ) : null}
               <Metric
-                label="Verbleibender Warenwert"
+                label={
+                  v.unallocated_kg !== null
+                    ? "Verbleibender Warenwert (Packungen + Rohgewicht, netto)"
+                    : "Verbleibender Warenwert"
+                }
                 value={formatCurrency(v.remaining_inventory_value)}
               />
               <Metric

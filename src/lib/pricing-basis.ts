@@ -267,6 +267,7 @@ export function readPricingBasis(
 
 /** Gewicht ohne überflüssige Nullen: 2.5 kg, 500 g. */
 export function formatWeight(kg: number): string {
+  if (kg === 0) return "0 kg";
   if (kg < 1) {
     const g = Math.round(kg * 1_000_000) / 1000;
     return `${trim(g)} g`;
