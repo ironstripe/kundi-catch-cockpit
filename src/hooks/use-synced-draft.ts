@@ -74,7 +74,8 @@ export function useSyncedDraft<T>(identity: string, server: T) {
     value,
     setValue,
     base: server,
-    dirty: !same(value, server),
+    // Beim Wechsel der Identität (z. B. Vorlage geladen) bis zum Reset nie «dirty».
+    dirty: baseRef.current.identity === identity && !same(value, server),
     markSaved,
     reconcileSaved,
     restoreOpening,
