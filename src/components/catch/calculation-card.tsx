@@ -92,7 +92,8 @@ export function CalculationCard({
         <dl className="grid grid-cols-2 gap-3 border-b pb-3">
           <Primary
             label={packSummary ? "EK netto pro Verkaufspackung" : "EK netto"}
-            value={ek === null ? "—" : `${formatCurrency(ek)} / ${unit}`} />
+            value={ek === null ? "—" : `${formatCurrency(ek)} / ${unit}`}
+          />
           <Primary
             label="VP inkl. MWST"
             value={vp === null ? "—" : `${formatCurrency(vp)} / ${unit}`}

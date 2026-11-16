@@ -19,7 +19,12 @@ import { parseNumberInput } from "@/lib/catch-calculation";
 
 import { CalculationCard } from "@/components/catch/calculation-card";
 import { PackBasisSummary } from "@/components/catch/pack-basis-summary";
-import { salePackLabel, type MassUnit, type PricingBasisV1, type PurchaseBasis } from "@/lib/pricing-basis";
+import {
+  salePackLabel,
+  type MassUnit,
+  type PricingBasisV1,
+  type PurchaseBasis,
+} from "@/lib/pricing-basis";
 import { CatchImagesField } from "@/components/catch/catch-image-field";
 import {
   AlertDialog,
@@ -595,54 +600,54 @@ export function CatchForm({
                   )}
                 </div>
               ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Field label="Einkaufsmenge" required error={issueFor("purchase_quantity")}>
-                  <Input
-                    id="purchase_quantity"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    inputMode="decimal"
-                    value={values.purchase_quantity}
-                    aria-invalid={Boolean(issueFor("purchase_quantity"))}
-                    onChange={(event) => set("purchase_quantity", event.target.value)}
-                  />
-                </Field>
-                <Field label="Einheit" required>
-                  <Select
-                    value={values.quantity_unit}
-                    onValueChange={(value) => set("quantity_unit", value)}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <Field label="Einkaufsmenge" required error={issueFor("purchase_quantity")}>
+                    <Input
+                      id="purchase_quantity"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      inputMode="decimal"
+                      value={values.purchase_quantity}
+                      aria-invalid={Boolean(issueFor("purchase_quantity"))}
+                      onChange={(event) => set("purchase_quantity", event.target.value)}
+                    />
+                  </Field>
+                  <Field label="Einheit" required>
+                    <Select
+                      value={values.quantity_unit}
+                      onValueChange={(value) => set("quantity_unit", value)}
+                    >
+                      <SelectTrigger id="quantity_unit">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {QUANTITY_UNITS.map((unit) => (
+                          <SelectItem key={unit} value={unit}>
+                            {QUANTITY_UNIT_LABELS[unit]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field
+                    label={`Einkaufspreis pro Einheit ${vatBasisLabel(values.purchase_price_includes_vat)}`}
+                    required
+                    error={issueFor("purchase_price")}
+                    hint="CHF"
                   >
-                    <SelectTrigger id="quantity_unit">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {QUANTITY_UNITS.map((unit) => (
-                        <SelectItem key={unit} value={unit}>
-                          {QUANTITY_UNIT_LABELS[unit]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field
-                  label={`Einkaufspreis pro Einheit ${vatBasisLabel(values.purchase_price_includes_vat)}`}
-                  required
-                  error={issueFor("purchase_price")}
-                  hint="CHF"
-                >
-                  <Input
-                    id="purchase_price"
-                    type="number"
-                    min="0"
-                    step="0.05"
-                    inputMode="decimal"
-                    value={values.purchase_price}
-                    aria-invalid={Boolean(issueFor("purchase_price"))}
-                    onChange={(event) => set("purchase_price", event.target.value)}
-                  />
-                </Field>
-              </div>
+                    <Input
+                      id="purchase_price"
+                      type="number"
+                      min="0"
+                      step="0.05"
+                      inputMode="decimal"
+                      value={values.purchase_price}
+                      aria-invalid={Boolean(issueFor("purchase_price"))}
+                      onChange={(event) => set("purchase_price", event.target.value)}
+                    />
+                  </Field>
+                </div>
               )}
 
               <MountedDisclosure title="Steuerbasis und Lieferung">
@@ -835,7 +840,11 @@ export function CatchForm({
                   </div>
                 ) : null}
                 <Field
-                  label={packMode ? `Normalpreis inkl. MWST pro ${saleUnitText}` : "Normalpreis inkl. MWST"}
+                  label={
+                    packMode
+                      ? `Normalpreis inkl. MWST pro ${saleUnitText}`
+                      : "Normalpreis inkl. MWST"
+                  }
                   error={issueFor("regular_price")}
                   hint="CHF inkl. MWST, optional"
                 >

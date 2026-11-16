@@ -24,7 +24,12 @@ import { parseNumberInput } from "@/lib/catch-calculation";
 import { cancelCatch, closeCatch } from "@/lib/catch-lifecycle";
 import { reconcileCatch, isIntegerUnit } from "@/lib/catch-reconciliation";
 import { pickupSummary } from "@/lib/pickup-display";
-import { catchToReconciliationInput, displayUnit, packContext, type CatchDetail } from "@/lib/catches";
+import {
+  catchToReconciliationInput,
+  displayUnit,
+  packContext,
+  type CatchDetail,
+} from "@/lib/catches";
 import { formatWeight } from "@/lib/pricing-basis";
 import {
   formatCurrency,
@@ -177,9 +182,7 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
             <SourceRow
               label="Food-Catch-Preis"
               value={
-                item.catch_price === null
-                  ? "—"
-                  : `${formatCurrency(item.catch_price)} / ${unit}`
+                item.catch_price === null ? "—" : `${formatCurrency(item.catch_price)} / ${unit}`
               }
             />
             <SourceRow

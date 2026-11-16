@@ -249,7 +249,11 @@ function CatchDetailPage() {
               }
             />
             <Row
-              label={item.pricing_basis ? "Einkaufsbetrag pro Verkaufspackung" : "Einkaufspreis pro Einheit"}
+              label={
+                item.pricing_basis
+                  ? "Einkaufsbetrag pro Verkaufspackung"
+                  : "Einkaufspreis pro Einheit"
+              }
               value={item.purchase_price === null ? null : formatCurrency(item.purchase_price)}
             />
             <Row label="Lieferkosten" value={deliveryText} />

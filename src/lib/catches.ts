@@ -130,7 +130,8 @@ export function formPricingBasis(values: CatchFormValues) {
   const count = values.purchase_pack_count.trim();
   return {
     purchase_basis: values.purchase_basis,
-    purchase_rate: values.purchase_rate.trim() === "" ? null : (num(values.purchase_rate) ?? Number.NaN),
+    purchase_rate:
+      values.purchase_rate.trim() === "" ? null : (num(values.purchase_rate) ?? Number.NaN),
     purchase_total_weight:
       values.purchase_basis === "per_pack"
         ? null
@@ -549,8 +550,30 @@ export function catchDetailToForm(detail: CatchDetail): CatchFormValues {
 
 function basisToForm(basis: PricingBasisV1 | null) {
   if (!basis) {
-    const { pricing_mode, purchase_basis, purchase_rate, purchase_total_weight, purchase_total_weight_unit, purchase_pack_count, purchase_pack_weight, purchase_pack_weight_unit, sale_pack_weight, sale_pack_weight_unit } = EMPTY_CATCH_FORM;
-    return { pricing_mode, purchase_basis, purchase_rate, purchase_total_weight, purchase_total_weight_unit, purchase_pack_count, purchase_pack_weight, purchase_pack_weight_unit, sale_pack_weight, sale_pack_weight_unit };
+    const {
+      pricing_mode,
+      purchase_basis,
+      purchase_rate,
+      purchase_total_weight,
+      purchase_total_weight_unit,
+      purchase_pack_count,
+      purchase_pack_weight,
+      purchase_pack_weight_unit,
+      sale_pack_weight,
+      sale_pack_weight_unit,
+    } = EMPTY_CATCH_FORM;
+    return {
+      pricing_mode,
+      purchase_basis,
+      purchase_rate,
+      purchase_total_weight,
+      purchase_total_weight_unit,
+      purchase_pack_count,
+      purchase_pack_weight,
+      purchase_pack_weight_unit,
+      sale_pack_weight,
+      sale_pack_weight_unit,
+    };
   }
   const text = (v: number | null | undefined) => (v === null || v === undefined ? "" : String(v));
   return {
@@ -792,7 +815,9 @@ export function formValuesToCalculationInput(
 ): CalculationInput {
   const pack = formPackModel(values);
   return {
-    purchase_quantity: pack ? (pack.model?.capacity ?? null) : parseNumberInput(values.purchase_quantity),
+    purchase_quantity: pack
+      ? (pack.model?.capacity ?? null)
+      : parseNumberInput(values.purchase_quantity),
     quantity_unit: pack
       ? (salePackLabel(formPricingBasis(values) as PricingBasisV1) ?? "Verkaufspackung")
       : values.quantity_unit,
@@ -815,7 +840,14 @@ export function formValuesToCalculationInput(
 export function packContext(basis: PricingBasisV1 | null) {
   if (!basis) return null;
   const model = derivePackModel(basis).model;
-  return model ? { total_kg: model.total_kg, sale_pack_kg: model.sale_pack_kg, sale_pack_mg: model.sale_pack_mg, total_mg: model.total_mg } : null;
+  return model
+    ? {
+        total_kg: model.total_kg,
+        sale_pack_kg: model.sale_pack_kg,
+        sale_pack_mg: model.sale_pack_mg,
+        total_mg: model.total_mg,
+      }
+    : null;
 }
 
 /** Anzeigeeinheit: Verkaufspackung im Packungsmodus, sonst die gespeicherte Einheit. */

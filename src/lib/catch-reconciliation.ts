@@ -184,13 +184,18 @@ export function reconcileCatch(input: ReconciliationInput): ReconciliationResult
     if (!Number.isInteger(preparedOverride) || preparedOverride < 0) {
       errors.push("Vorbereitete Packungen als ganze Zahl ab 0 erfassen.");
     } else if (finite(purchaseQuantity) && preparedOverride > purchaseQuantity) {
-      errors.push("Es können nicht mehr Packungen vorbereitet werden als volle Packungen möglich sind.");
+      errors.push(
+        "Es können nicht mehr Packungen vorbereitet werden als volle Packungen möglich sind.",
+      );
     }
   }
   errors.push(
-    ...validateRemainingQuantity(remaining, errors.length === 0 ? prepared : purchaseQuantity, input.quantity_unit).map(
-      (message) =>
-        pack ? message.replace("die Einkaufsmenge", "die vorbereiteten Packungen") : message,
+    ...validateRemainingQuantity(
+      remaining,
+      errors.length === 0 ? prepared : purchaseQuantity,
+      input.quantity_unit,
+    ).map((message) =>
+      pack ? message.replace("die Einkaufsmenge", "die vorbereiteten Packungen") : message,
     ),
   );
 

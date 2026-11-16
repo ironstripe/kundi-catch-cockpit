@@ -38,9 +38,28 @@ const base: CatchFormValues = {
   sale_pack_weight: "2.5",
   sale_pack_weight_unit: "kg",
 };
-const perKg = { ...base, purchase_basis: "per_kg" as const, purchase_rate: "6.70", purchase_total_weight: "20", purchase_total_weight_unit: "kg" as const };
-const per100g = { ...base, purchase_basis: "per_100g" as const, purchase_rate: "0.67", purchase_total_weight: "20000", purchase_total_weight_unit: "g" as const };
-const perPack = { ...base, purchase_basis: "per_pack" as const, purchase_rate: "13.40", purchase_pack_count: "10", purchase_pack_weight: "2", purchase_pack_weight_unit: "kg" as const };
+const perKg = {
+  ...base,
+  purchase_basis: "per_kg" as const,
+  purchase_rate: "6.70",
+  purchase_total_weight: "20",
+  purchase_total_weight_unit: "kg" as const,
+};
+const per100g = {
+  ...base,
+  purchase_basis: "per_100g" as const,
+  purchase_rate: "0.67",
+  purchase_total_weight: "20000",
+  purchase_total_weight_unit: "g" as const,
+};
+const perPack = {
+  ...base,
+  purchase_basis: "per_pack" as const,
+  purchase_rate: "13.40",
+  purchase_pack_count: "10",
+  purchase_pack_weight: "2",
+  purchase_pack_weight_unit: "kg" as const,
+};
 
 /** Speichern (Spalten) und als gespeicherter Catch zurücklesen. */
 function saveAndReload(values: CatchFormValues): CatchDetail {
@@ -62,13 +81,22 @@ function saveAndReload(values: CatchFormValues): CatchDetail {
 }
 
 describe("(a) drei gleichwertige Einkaufsbasen, 2.5-kg-Verkaufspackung", () => {
-  for (const [name, values] of [["pro kg", perKg], ["pro 100 g", per100g], ["pro Packung", perPack]] as const) {
+  for (const [name, values] of [
+    ["pro kg", perKg],
+    ["pro 100 g", per100g],
+    ["pro Packung", perPack],
+  ] as const) {
     it(`${name}: 20 kg, 8 Packungen, DB I 21.95, DB II 1.95 — auch nach Reload`, () => {
-      const model = derivePackModel(JSON.parse(JSON.stringify(pricingColumns(values).pricing_basis))).model!;
+      const model = derivePackModel(
+        JSON.parse(JSON.stringify(pricingColumns(values).pricing_basis)),
+      ).model!;
       expect(model.total_kg).toBe(20);
       expect(model.capacity).toBe(8);
       expect(model.purchase_total).toBeCloseTo(134, 10);
-      for (const input of [formValuesToCalculationInput(values), catchToCalculationInput(saveAndReload(values))]) {
+      for (const input of [
+        formValuesToCalculationInput(values),
+        catchToCalculationInput(saveAndReload(values)),
+      ]) {
         const v = calculateCatch(input).values!;
         expect(v.purchase_quantity).toBe(8);
         expect(v.net_investment).toBeCloseTo(134, 9);
@@ -79,18 +107,43 @@ describe("(a) drei gleichwertige Einkaufsbasen, 2.5-kg-Verkaufspackung", () => {
         expect(input.quantity_unit).toBe("2.5-kg-Packung");
       }
       const reloaded = catchDetailToForm(saveAndReload(values));
-      for (const key of ["purchase_basis", "purchase_rate", "purchase_total_weight", "purchase_total_weight_unit", "purchase_pack_count", "purchase_pack_weight", "sale_pack_weight", "sale_pack_weight_unit"] as const) {
-        if (values[key] !== EMPTY_CATCH_FORM[key]) expect(String(reloaded[key])).toBe(String(Number(values[key]) || values[key]));
+      for (const key of [
+        "purchase_basis",
+        "purchase_rate",
+        "purchase_total_weight",
+        "purchase_total_weight_unit",
+        "purchase_pack_count",
+        "purchase_pack_weight",
+        "sale_pack_weight",
+        "sale_pack_weight_unit",
+      ] as const) {
+        if (values[key] !== EMPTY_CATCH_FORM[key])
+          expect(String(reloaded[key])).toBe(String(Number(values[key]) || values[key]));
       }
       expect(reloaded.pricing_mode).toBe("pack");
-      const cmp = compareQuantityPrice({ grossPrice: 20, quantityUnit: "Stk", knownSoldUnitKg: model.sale_pack_kg, basis: "kg", packPrice: "", packWeight: "", packWeightUnit: "g", soldUnitWeight: "", soldUnitWeightUnit: "g" });
+      const cmp = compareQuantityPrice({
+        grossPrice: 20,
+        quantityUnit: "Stk",
+        knownSoldUnitKg: model.sale_pack_kg,
+        basis: "kg",
+        packPrice: "",
+        packWeight: "",
+        packWeightUnit: "g",
+        soldUnitWeight: "",
+        soldUnitWeightUnit: "g",
+      });
       expect(cmp.ours).toBe(8);
     });
   }
 
   it("Legacy-Spalten bleiben dimensionskonsistent (Stk = Verkaufspackung)", () => {
     const cols = pricingColumns(perPack);
-    expect(cols).toMatchObject({ quantity_unit: "Stk", purchase_quantity: 8, purchase_price: 16.75, catch_price: 20 });
+    expect(cols).toMatchObject({
+      quantity_unit: "Stk",
+      purchase_quantity: 8,
+      purchase_price: 16.75,
+      catch_price: 20,
+    });
   });
 });
 
@@ -108,7 +161,11 @@ describe("(b) 3.5-kg-Verkaufspackungen mit Rohrest", () => {
   });
 
   it("4 vorbereitet, 1 unverkauft → 3 verkauft, CHF 60 brutto, CHF 10 Aufwand", () => {
-    const r = reconcileCatch({ ...catchToReconciliationInput(item), remaining_quantity: 1, prepared_quantity: 4 }).values!;
+    const r = reconcileCatch({
+      ...catchToReconciliationInput(item),
+      remaining_quantity: 1,
+      prepared_quantity: 4,
+    }).values!;
     expect(r.sold_quantity).toBe(3);
     expect(r.effective_revenue_gross).toBeCloseTo(60, 9);
     expect(r.internal_handling_cost_total).toBeCloseTo(10, 9);
@@ -122,13 +179,38 @@ describe("(b) 3.5-kg-Verkaufspackungen mit Rohrest", () => {
   });
 
   it("vorbereitete Packungen über Kapazität oder gebrochen sind ungültig", () => {
-    expect(reconcileCatch({ ...catchToReconciliationInput(item), remaining_quantity: 0, prepared_quantity: 6 }).values).toBeNull();
-    expect(reconcileCatch({ ...catchToReconciliationInput(item), remaining_quantity: 0, prepared_quantity: 2.5 }).values).toBeNull();
-    expect(reconcileCatch({ ...catchToReconciliationInput(item), remaining_quantity: 5, prepared_quantity: 4 }).values).toBeNull();
+    expect(
+      reconcileCatch({
+        ...catchToReconciliationInput(item),
+        remaining_quantity: 0,
+        prepared_quantity: 6,
+      }).values,
+    ).toBeNull();
+    expect(
+      reconcileCatch({
+        ...catchToReconciliationInput(item),
+        remaining_quantity: 0,
+        prepared_quantity: 2.5,
+      }).values,
+    ).toBeNull();
+    expect(
+      reconcileCatch({
+        ...catchToReconciliationInput(item),
+        remaining_quantity: 5,
+        prepared_quantity: 4,
+      }).values,
+    ).toBeNull();
   });
 
   it("Grenzen ohne Binärrundung: 0.3 kg in 0.1-kg-Packungen = 3", () => {
-    const m = derivePackModel({ purchase_basis: "per_kg", purchase_rate: 1, purchase_total_weight: { value: 0.3, unit: "kg" }, purchase_pack_count: null, purchase_pack_weight: null, sale_pack_weight: { value: 0.1, unit: "kg" } }).model!;
+    const m = derivePackModel({
+      purchase_basis: "per_kg",
+      purchase_rate: 1,
+      purchase_total_weight: { value: 0.3, unit: "kg" },
+      purchase_pack_count: null,
+      purchase_pack_weight: null,
+      sale_pack_weight: { value: 0.1, unit: "kg" },
+    }).model!;
     expect(m.capacity).toBe(3);
     expect(m.unallocated_kg).toBe(0);
   });
@@ -136,14 +218,36 @@ describe("(b) 3.5-kg-Verkaufspackungen mit Rohrest", () => {
 
 describe("(c) keine erfundenen Werte", () => {
   it("fehlendes Gewicht, unmögliche Packung oder Preis → keine Kalkulation", () => {
-    expect(calculateCatch(formValuesToCalculationInput({ ...perKg, sale_pack_weight: "" })).values).toBeNull();
-    expect(calculateCatch(formValuesToCalculationInput({ ...perKg, purchase_total_weight: "" })).values).toBeNull();
-    expect(calculateCatch(formValuesToCalculationInput({ ...perKg, purchase_rate: "" })).values).toBeNull();
-    expect(calculateCatch(formValuesToCalculationInput({ ...perKg, sale_pack_weight: "25" })).values).toBeNull();
-    expect(validateDraft({ ...perKg, sale_pack_weight: "25" }).map((i) => i.field)).toContain("sale_pack_weight");
-    expect(validateDraft({ ...perPack, purchase_pack_count: "2.5" }).map((i) => i.field)).toContain("purchase_pack_count");
+    expect(
+      calculateCatch(formValuesToCalculationInput({ ...perKg, sale_pack_weight: "" })).values,
+    ).toBeNull();
+    expect(
+      calculateCatch(formValuesToCalculationInput({ ...perKg, purchase_total_weight: "" })).values,
+    ).toBeNull();
+    expect(
+      calculateCatch(formValuesToCalculationInput({ ...perKg, purchase_rate: "" })).values,
+    ).toBeNull();
+    expect(
+      calculateCatch(formValuesToCalculationInput({ ...perKg, sale_pack_weight: "25" })).values,
+    ).toBeNull();
+    expect(validateDraft({ ...perKg, sale_pack_weight: "25" }).map((i) => i.field)).toContain(
+      "sale_pack_weight",
+    );
+    expect(validateDraft({ ...perPack, purchase_pack_count: "2.5" }).map((i) => i.field)).toContain(
+      "purchase_pack_count",
+    );
     expect(validateDraft({ ...perKg, sale_pack_weight: "" })).toEqual([]);
-    const cmp = compareQuantityPrice({ grossPrice: 20, quantityUnit: "Stk", knownSoldUnitKg: 0, basis: "kg", packPrice: "10", packWeight: "1", packWeightUnit: "kg", soldUnitWeight: "", soldUnitWeightUnit: "g" });
+    const cmp = compareQuantityPrice({
+      grossPrice: 20,
+      quantityUnit: "Stk",
+      knownSoldUnitKg: 0,
+      basis: "kg",
+      packPrice: "10",
+      packWeight: "1",
+      packWeightUnit: "kg",
+      soldUnitWeight: "",
+      soldUnitWeightUnit: "g",
+    });
     expect(cmp.ours).toBeNull();
     expect(cmp.difference).toBeNull();
   });
@@ -157,8 +261,12 @@ describe("(c) keine erfundenen Werte", () => {
     expect(pricingColumns(catchDetailToForm(draftCatch)).pricing_basis).toBeNull();
     const source = catchToPostSource(draftCatch);
     expect(generatePostText(source)).toContain("CHF 7.90/kg");
-    expect(JSON.parse(postSourceSignature(source))).toHaveLength(15);
-    const r = reconcileCatch({ ...catchToReconciliationInput(draftCatch), remaining_quantity: 10 }).values!;
+    expect(JSON.parse(postSourceSignature(source))).toHaveLength(14);
+    expect(postSourceSignature(source)).not.toContain("sale_unit");
+    const r = reconcileCatch({
+      ...catchToReconciliationInput(draftCatch),
+      remaining_quantity: 10,
+    }).values!;
     expect(r.sold_quantity).toBe(90);
     expect(r.remaining_inventory_value).toBe(65);
   });
@@ -177,21 +285,34 @@ describe("(d) WhatsApp: echte Verkaufspackung, Legacy-Signatur unverändert", ()
     expect(text).toContain("~CHF 25.00 pro 2.5-kg-Packung~ → *CHF 20.00 pro 2.5-kg-Packung*");
     expect(text).toContain("20.0 % günstiger");
     expect(text).not.toContain("/Stück");
-    const other = saveAndReload({ ...perKg, regular_price: "25", sale_pack_weight: "500", sale_pack_weight_unit: "g" });
+    const other = saveAndReload({
+      ...perKg,
+      regular_price: "25",
+      sale_pack_weight: "500",
+      sale_pack_weight_unit: "g",
+    });
     expect(salePackLabel(other.pricing_basis)).toBe("500-g-Packung");
-    expect(postSourceSignature(catchToPostSource(other))).not.toBe(postSourceSignature(catchToPostSource(item)));
+    expect(postSourceSignature(catchToPostSource(other))).not.toBe(
+      postSourceSignature(catchToPostSource(item)),
+    );
   });
 });
 
 describe("Migration (isoliertes PGlite)", () => {
   it("fügt nur eine optionale, versionierte Spalte hinzu", async () => {
     const db = new PGlite();
-    await db.exec(`CREATE TABLE public.catches (id int PRIMARY KEY, quantity_unit text NOT NULL DEFAULT 'kg'); INSERT INTO public.catches VALUES (1, 'kg');`);
+    await db.exec(
+      `CREATE TABLE public.catches (id int PRIMARY KEY, quantity_unit text NOT NULL DEFAULT 'kg'); INSERT INTO public.catches VALUES (1, 'kg');`,
+    );
     await db.exec(readFileSync("db/pending/add_catch_pricing_basis.sql", "utf8"));
-    const legacy = await db.query<{ pricing_basis: unknown }>("SELECT pricing_basis FROM public.catches WHERE id = 1");
+    const legacy = await db.query<{ pricing_basis: unknown }>(
+      "SELECT pricing_basis FROM public.catches WHERE id = 1",
+    );
     expect(legacy.rows[0]!.pricing_basis).toBeNull();
     await db.exec(`INSERT INTO public.catches VALUES (2, 'Stk', '{"version":1}')`);
-    await expect(db.exec(`INSERT INTO public.catches VALUES (3, 'Stk', '{"version":2}')`)).rejects.toThrow();
+    await expect(
+      db.exec(`INSERT INTO public.catches VALUES (3, 'Stk', '{"version":2}')`),
+    ).rejects.toThrow();
     await db.close();
   });
 });

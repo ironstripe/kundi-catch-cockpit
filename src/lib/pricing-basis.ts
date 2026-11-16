@@ -112,7 +112,11 @@ export function derivePackModel(
     const count = basis.purchase_pack_count;
     const packMg = toMilligrams(basis.purchase_pack_weight);
     if (!(typeof count === "number" && Number.isInteger(count) && count > 0)) {
-      flag("purchase_pack_count", count, "Anzahl Einkaufspackungen als ganze Zahl über 0 erfassen.");
+      flag(
+        "purchase_pack_count",
+        count,
+        "Anzahl Einkaufspackungen als ganze Zahl über 0 erfassen.",
+      );
     }
     if (packMg === null) {
       flag(
