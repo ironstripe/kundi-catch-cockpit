@@ -304,7 +304,7 @@ describe("Migration (isoliertes PGlite)", () => {
     await db.exec(
       `CREATE TABLE public.catches (id int PRIMARY KEY, quantity_unit text NOT NULL DEFAULT 'kg'); INSERT INTO public.catches VALUES (1, 'kg');`,
     );
-    await db.exec(readFileSync("db/pending/add_catch_pricing_basis.sql", "utf8"));
+    await db.exec(readFileSync("drizzle/migrations/0004_add_catch_pricing_basis.sql", "utf8"));
     const legacy = await db.query<{ pricing_basis: unknown }>(
       "SELECT pricing_basis FROM public.catches WHERE id = 1",
     );
