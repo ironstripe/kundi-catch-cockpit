@@ -1,14 +1,15 @@
 /**
  * Deterministische Erzeugung des WhatsApp-Posts aus Catch-Daten.
  *
- * Kein KI-Dienst: gespeicherte Vorlage (Einstellungen › WhatsApp-Vorlage),
- * Catch-Fakten immer automatisch; leere/ausgeblendete Abschnitte entfallen.
+ * Kein KI-Dienst: ein Vorlagentext (Einstellungen › WhatsApp-Vorlage) mit
+ * {{catch}}-Platzhalter; Catch-Fakten immer automatisch, leere Angaben entfallen.
  */
 
 import {
+  CATCH_MARKER,
   DEFAULT_TEMPLATE_SETTINGS,
+  ensureCatchMarker,
   normalizeTemplate,
-  type TemplateBlock,
   type TemplateSettings,
 } from "@/lib/app-settings";
 import { QUANTITY_UNIT_LABELS } from "@/lib/catch-domain";
@@ -161,99 +162,76 @@ export function generatePostText(
   source: PostSource,
   template: TemplateSettings = DEFAULT_TEMPLATE_SETTINGS,
 ): string {
-  const t = normalizeTemplate(template);
-  const blocks: string[] = [];
-  const header = clean(t.header);
-  if (header) blocks.push(header);
-
-  const build: Record<TemplateBlock, () => string | null> = {
-    intro: () => clean(t.intro),
-    claim: () => clean(t.claim),
-    story: () => clean(source.handicap_story),
-    product: () => {
-      const productLines: string[] = [`*${source.product_name.trim()}*`];
-      const description = clean(source.description);
-      const packaging = clean(source.packaging);
-      for (const field of t.detail_order) {
-        if (field === "description" && description) productLines.push(description);
-        if (
-          field === "packaging" &&
-          packaging &&
-          !(description && normalise(description).includes(normalise(packaging)))
-        ) {
-          productLines.push(packaging);
-        }
-      }
-      return productLines.join("\n");
-    },
-    price: () => {
-      const catchPrice = source.catch_price;
-      if (catchPrice === null || !(catchPrice > 0)) return null;
-      const regular = source.regular_price;
-      const hasComparison = regular !== null && Number.isFinite(regular) && regular > catchPrice;
-      if (hasComparison) {
-        const discount = ((regular - catchPrice) / regular) * 100;
-        const priceLine = `~${postPrice(regular, source.quantity_unit, source.sale_unit_label)}~ → *${postPrice(catchPrice, source.quantity_unit, source.sale_unit_label)}* 🔥`;
-        return t.show_discount && discount > 0
-          ? `${priceLine}\n${postPercent(discount)} günstiger\n${VAT_NOTE}`
-          : `${priceLine}\n${VAT_NOTE}`;
-      }
-      return `*FOOD CATCH ${postPrice(catchPrice, source.quantity_unit, source.sale_unit_label)}* 🔥\n${VAT_NOTE}`;
-    },
-    stock: () => {
-      const stockLines: string[] = [];
-      if (t.show_expiry && source.expiry_date)
-        stockLines.push(`MHD: ${formatDate(source.expiry_date)}`);
-      stockLines.push("*Nur solange Vorrat.*");
-      return stockLines.join("\n");
-    },
-    pickup: () => {
-      const actionLines: string[] = [];
-      const pickup = pickupBlock(source.locations, t.pickup_label.trim());
-      if (pickup) actionLines.push(pickup);
-      if (source.available_from) {
-        actionLines.push(
-          `${t.available_from_label.trim()} ${postDateTime(source.available_from, "ab")}`,
-        );
-      }
-      if (t.show_available_until && source.available_until) {
-        actionLines.push(`📅 Verfügbar bis: ${postDateTime(source.available_until, "bis")}`);
-      }
-      return actionLines.length > 0 ? actionLines.join("\n") : null;
-    },
-    shop: () => {
-      const shopUrl = clean(source.online_shop_url);
-      return shopUrl ? `🛒 Im Onlineshop bestellen:\n${shopUrl}` : null;
-    },
-    footer: () => clean(t.footer),
-  };
-
-  for (const block of t.block_order) {
-    if (t.hidden_blocks.includes(block)) continue;
-    const content = build[block]();
-    if (content) blocks.push(content);
-  }
-
-  return blocks.join("\n\n");
+  const text = ensureCatchMarker(normalizeTemplate(template).text);
+  const facts = catchFactsBlock(source);
+  const [before = "", after = ""] = text.split(CATCH_MARKER);
+  return `${before}${facts}${after}`.replace(/\n{3,}/g, "\n\n").trim();
 }
 
-/** Nur die Vorlagenwerte, die den Text beeinflussen (ohne Zusatzschlüssel). */
+/**
+ * Catch-Fakten in fester Reihenfolge, immer vollständig aus dem Catch:
+ * Geschichte, Produkt, Preis, MHD/Vorrat, Abholung/Verfügbarkeit, Shop.
+ * Leere optionale Angaben entfallen restlos; nichts wird ergänzt oder geraten.
+ */
+export function catchFactsBlock(source: PostSource): string {
+  const d = DEFAULT_TEMPLATE_SETTINGS;
+  const blocks: (string | null)[] = [];
+  blocks.push(clean(source.handicap_story));
+
+  const productLines: string[] = [`*${source.product_name.trim()}*`];
+  const description = clean(source.description);
+  const packaging = clean(source.packaging);
+  if (description) productLines.push(description);
+  if (packaging && !(description && normalise(description).includes(normalise(packaging)))) {
+    productLines.push(packaging);
+  }
+  blocks.push(productLines.join("\n"));
+
+  const catchPrice = source.catch_price;
+  if (catchPrice !== null && Number.isFinite(catchPrice) && catchPrice > 0) {
+    const regular = source.regular_price;
+    const unit = source.quantity_unit;
+    const label = source.sale_unit_label;
+    if (regular !== null && Number.isFinite(regular) && regular > catchPrice) {
+      const discount = ((regular - catchPrice) / regular) * 100;
+      blocks.push(
+        `~${postPrice(regular, unit, label)}~ → *${postPrice(catchPrice, unit, label)}* 🔥\n${postPercent(discount)} günstiger\n${VAT_NOTE}`,
+      );
+    } else {
+      blocks.push(`*FOOD CATCH ${postPrice(catchPrice, unit, label)}* 🔥\n${VAT_NOTE}`);
+    }
+  }
+
+  const stockLines: string[] = [];
+  if (source.expiry_date) stockLines.push(`MHD: ${formatDate(source.expiry_date)}`);
+  stockLines.push("*Nur solange Vorrat.*");
+  blocks.push(stockLines.join("\n"));
+
+  const actionLines: string[] = [];
+  const pickup = pickupBlock(source.locations, d.pickup_label);
+  if (pickup) actionLines.push(pickup);
+  if (source.available_from) {
+    const from = postDateTime(source.available_from, "ab");
+    if (from) actionLines.push(`${d.available_from_label} ${from}`);
+  }
+  if (source.available_until) {
+    const until = postDateTime(source.available_until, "bis");
+    if (until) actionLines.push(`📅 Verfügbar bis: ${until}`);
+  }
+  if (actionLines.length > 0) blocks.push(actionLines.join("\n"));
+
+  const shopUrl = clean(source.online_shop_url);
+  if (shopUrl) blocks.push(`🛒 Im Onlineshop bestellen:\n${shopUrl}`);
+
+  return blocks.filter((block): block is string => Boolean(block)).join("\n\n");
+}
+
+/**
+ * Nur der wirksame Vorlagentext beeinflusst den Post; frühere Schalter,
+ * Reihenfolgen und Einzelfelder werden nicht mehr ausgewertet.
+ */
 export function templateFingerprint(template: TemplateSettings): string {
-  const t = normalizeTemplate(template);
-  return JSON.stringify([
-    t.header,
-    t.intro,
-    t.claim,
-    t.footer,
-    t.pickup_label,
-    t.available_from_label,
-    t.detail_order,
-    t.show_expiry,
-    t.show_available_until,
-    t.show_discount,
-    t.block_order,
-    t.hidden_blocks,
-  ]);
+  return JSON.stringify([ensureCatchMarker(normalizeTemplate(template).text)]);
 }
 
 function hashString(value: string): string {

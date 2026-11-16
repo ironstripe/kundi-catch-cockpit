@@ -278,7 +278,7 @@ describe("saved WhatsApp template in the real preparation workspace", () => {
     expect(saved.signature).toBe(postSourceSignature(source, normalizeTemplate(mocks.template)));
   });
 
-  it("flags a saved post after a template change, keeps its text, regenerates only on request", async () => {
+  it("template change on a saved draft: preview uses regenerated text, old text stays readable", async () => {
     const oldText = "Mein gespeicherter Text";
     mocks.template = { header: "Neuer Titel" };
     render(
@@ -297,10 +297,154 @@ describe("saved WhatsApp template in the real preparation workspace", () => {
     );
     expect(await screen.findByText(/Vorlage geändert/)).toBeTruthy();
     const area = screen.getByLabelText("WhatsApp-Post-Text") as HTMLTextAreaElement;
-    expect(area.value).toBe(oldText);
+    expect(area.value.startsWith("Neuer Titel")).toBe(true);
+    expect(screen.getByLabelText("Gespeicherter alter Text").textContent).toBe(oldText);
     expect(mocks.saveText).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Post neu generieren" }));
+    fireEvent.click(screen.getByRole("button", { name: "Text sichern" }));
     await waitFor(() => expect(mocks.saveText).toHaveBeenCalledTimes(1));
-    expect(mocks.saveText.mock.calls[0]![0].finalText.startsWith("Neuer Titel")).toBe(true);
+    const saved = mocks.saveText.mock.calls[0]![0];
+    expect(saved.finalText.startsWith("Neuer Titel")).toBe(true);
+    expect(saved.reason).toBe("generated");
+  });
+});
+
+const STADT_NOTE = "(Eintritt via EC Karte - ausser Postfinance)";
+const poulet = {
+  ...draftCatch,
+  id: "catch-6",
+  catch_number: "KC-2026-006",
+  product_name: "Pouletschenkel",
+  packaging: "2.5 kg",
+  handicap_story: "Etwas zu viel geliefert.",
+  available_from: "2026-11-18T09:00:00.000Z",
+  locations: [
+    { id: "l1", name: "Hofladen Kundelfingerhof", address: null, pickup_note: null },
+    {
+      id: "l2",
+      name: "Stadtladen Schaffhausen",
+      address: "Kirchhofplatz 10, 8200 Schaffhausen",
+      pickup_note: STADT_NOTE,
+    },
+  ],
+  location_names: ["Hofladen Kundelfingerhof", "Stadtladen Schaffhausen"],
+  location_ids: ["l1", "l2"],
+};
+const oldPoulet = "Pouletschenkel – alter, manuell bearbeiteter Text";
+// Alte Signatur: ohne Orte, Verfügbarkeit und Geschichte (wie gespeichert am 28.10.).
+const oldSignature = postSourceSignature(
+  catchToPostSource({
+    ...poulet,
+    locations: [],
+    available_from: null,
+    handicap_story: null,
+  }),
+  normalizeTemplate({}),
+);
+const stalePoulet = {
+  ...poulet,
+  post_final_text: oldPoulet,
+  post_generated_text: "Generiert damals",
+  post_source_signature: oldSignature,
+  post_outdated_decision: "keep" as const,
+};
+
+describe("KC-2026-006: veralteter Entwurf → aktuelle Vorschau", () => {
+  it("Vorschau, Textfeld und Kopie zeigen aktuelle Daten ohne Speichern; alter Text bleibt lesbar", async () => {
+    const dirty = vi.fn();
+    render(
+      wrap(<PublicationWorkspace item={stalePoulet} onChanged={vi.fn()} onDirtyChange={dirty} />),
+    );
+    const area = (await screen.findByLabelText("WhatsApp-Post-Text")) as HTMLTextAreaElement;
+    for (const expected of [
+      "Hofladen Kundelfingerhof",
+      "Stadtladen Schaffhausen",
+      `Kirchhofplatz 10\n  ${STADT_NOTE}`,
+      "📅 Ab: 18.11.2026",
+      "Etwas zu viel geliefert.",
+    ]) {
+      expect(area.value).toContain(expected);
+    }
+    expect(area.value).not.toContain("8200");
+    expect(screen.getByText(/Catch-Daten geändert/)).toBeTruthy();
+    const old = screen.getByLabelText("Gespeicherter alter Text");
+    expect(old.textContent).toBe(oldPoulet);
+    expect(old.closest("details")).toBeTruthy();
+    // Vorschau zeigt denselben aktiven Text.
+    expect(document.body.textContent).toContain(STADT_NOTE);
+    fireEvent.click(screen.getByRole("button", { name: "Text kopieren" }));
+    await waitFor(() => expect(mocks.copy).toHaveBeenCalledWith(area.value));
+    expect(mocks.saveText).not.toHaveBeenCalled();
+    expect(dirty).not.toHaveBeenCalledWith(true);
+    expect(screen.queryByRole("button", { name: "Bestehenden Text behalten" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Post neu generieren" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Text sichern" }).hasAttribute("disabled")).toBe(
+      false,
+    );
+  });
+
+  it("aktueller manuell bearbeiteter Entwurf bleibt (Signatur passt)", async () => {
+    const sig = postSourceSignature(catchToPostSource(poulet), normalizeTemplate({}));
+    render(
+      wrap(
+        <PublicationWorkspace
+          item={{ ...poulet, post_final_text: "Eigener Text", post_source_signature: sig }}
+          onChanged={vi.fn()}
+        />,
+      ),
+    );
+    const area = (await screen.findByLabelText("WhatsApp-Post-Text")) as HTMLTextAreaElement;
+    expect(area.value).toBe("Eigener Text");
+    expect(screen.queryByText(/Catch-Daten geändert/)).toBeNull();
+  });
+
+  it("frischer Catch ohne gespeicherten Text zeigt den generierten Text", async () => {
+    render(wrap(<PublicationWorkspace item={poulet} onChanged={vi.fn()} />));
+    const area = (await screen.findByLabelText("WhatsApp-Post-Text")) as HTMLTextAreaElement;
+    expect(area.value).toContain("Stadtladen Schaffhausen");
+    expect(screen.queryByLabelText("Gespeicherter alter Text")).toBeNull();
+  });
+
+  it("lokale Änderungen überstehen weitere Datenänderungen (Refetch)", async () => {
+    const view = render(wrap(<PublicationWorkspace item={stalePoulet} onChanged={vi.fn()} />));
+    const area = (await screen.findByLabelText("WhatsApp-Post-Text")) as HTMLTextAreaElement;
+    fireEvent.change(area, { target: { value: "Lokal bearbeitet" } });
+    view.rerender(
+      wrap(
+        <PublicationWorkspace
+          item={{ ...stalePoulet, handicap_story: "Neue Geschichte" }}
+          onChanged={vi.fn()}
+        />,
+      ),
+    );
+    expect(
+      ((await screen.findByLabelText("WhatsApp-Post-Text")) as HTMLTextAreaElement).value,
+    ).toBe("Lokal bearbeitet");
+    expect(mocks.saveText).not.toHaveBeenCalled();
+  });
+
+  it("publizierter Catch: gespeicherter Text bleibt, kein automatischer Ersatz", async () => {
+    render(
+      wrap(
+        <PublicationWorkspace
+          item={{
+            ...stalePoulet,
+            status: "published",
+            published_text: oldPoulet,
+            published_at: "2026-10-28T10:00:00.000Z",
+          }}
+          onChanged={vi.fn()}
+        />,
+      ),
+    );
+    const area = (await screen.findByLabelText("WhatsApp-Post-Text")) as HTMLTextAreaElement;
+    expect(area.value).toBe(oldPoulet);
+    expect(screen.queryByText(/Catch-Daten geändert/)).toBeNull();
+    expect(mocks.saveText).not.toHaveBeenCalled();
+  });
+
+  it("Signatur erkennt die neuen Orte, Geschichte und Verfügbarkeit", () => {
+    expect(postSourceSignature(catchToPostSource(poulet), normalizeTemplate({}))).not.toBe(
+      oldSignature,
+    );
   });
 });
