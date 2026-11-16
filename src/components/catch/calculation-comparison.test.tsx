@@ -14,7 +14,9 @@ import {
 } from "@/lib/catches";
 import { draftCatch } from "@/test/catch-fixture";
 import { readPricingBasis, toMilligrams } from "@/lib/pricing-basis";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency as currency } from "@/lib/format";
+
+const formatCurrency = (value: number) => currency(value).replace(/\s/g, " ");
 
 afterEach(cleanup);
 const values: CatchFormValues = {
