@@ -47,8 +47,8 @@ export function QuantityPriceComparison({
         <span className="flex items-center text-sm font-semibold">
           Preisvergleich pro kg
           <InfoHelp label="Preisvergleich">
-            Preise inkl. MWST. Nur bekannte Nettofüllmengen verwenden. Normalpreis,
-            gespeicherte Einheit und Kalkulation bleiben unverändert.
+            Preise inkl. MWST. Nur bekannte Nettofüllmengen verwenden. Normalpreis, gespeicherte
+            Einheit und Kalkulation bleiben unverändert.
           </InfoHelp>
         </span>
       </div>
@@ -95,13 +95,13 @@ export function QuantityPriceComparison({
           <Label htmlFor={`${id}-weight`}>Gewicht der Vergleichspackung</Label>
           <div className="grid grid-cols-[minmax(0,1fr)_5rem] items-end gap-2">
             <Input
-            id={`${id}-weight`}
-            type="number"
-            min="0"
-            step="any"
-            inputMode="decimal"
-            value={packWeight}
-            onChange={(event) => setPackWeight(event.target.value)}
+              id={`${id}-weight`}
+              type="number"
+              min="0"
+              step="any"
+              inputMode="decimal"
+              value={packWeight}
+              onChange={(event) => setPackWeight(event.target.value)}
             />
             <WeightSelect
               label="Gewichtseinheit der Vergleichspackung"

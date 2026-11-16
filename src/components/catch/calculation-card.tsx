@@ -90,23 +90,25 @@ export function CalculationCard({
           </InfoHelp>
         </p>
         {description ? <span className="sr-only">{description}</span> : null}
-        {pricingBasis && input ? <PackBasisSummary basis={pricingBasis} input={input} /> : (
-        <>
-        <dl className="grid grid-cols-2 gap-3 border-b pb-3">
-          <Primary
-            label="EK netto"
-            value={ek === null ? "—" : `${formatCurrency(ek)} / ${unit}`}
-          />
-          <Primary
-            label="VP inkl. MWST"
-            value={vp === null ? "—" : `${formatCurrency(vp)} / ${unit}`}
-          />
-        </dl>
-        <p className="text-xs text-muted-foreground">
-          Einkaufsmenge:{" "}
-          {quantity === null || quantity <= 0 ? "—" : formatQuantity(quantity, unit)}
-        </p>
-        </>
+        {pricingBasis && input ? (
+          <PackBasisSummary basis={pricingBasis} input={input} />
+        ) : (
+          <>
+            <dl className="grid grid-cols-2 gap-3 border-b pb-3">
+              <Primary
+                label="EK netto"
+                value={ek === null ? "—" : `${formatCurrency(ek)} / ${unit}`}
+              />
+              <Primary
+                label="VP inkl. MWST"
+                value={vp === null ? "—" : `${formatCurrency(vp)} / ${unit}`}
+              />
+            </dl>
+            <p className="text-xs text-muted-foreground">
+              Einkaufsmenge:{" "}
+              {quantity === null || quantity <= 0 ? "—" : formatQuantity(quantity, unit)}
+            </p>
+          </>
         )}
         {comparison}
         {!result.complete ? (

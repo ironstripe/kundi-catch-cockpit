@@ -20,20 +20,17 @@ export type BasisInput = Pick<
 >;
 
 /** Original-Netto-EK und Brutto-Packungs-VP; Masse und volle Kapazität einmal. */
-export function PackBasisSummary({
-  basis,
-  input,
-}: {
-  basis: BasisInput;
-  input: CalculationInput;
-}) {
+export function PackBasisSummary({ basis, input }: { basis: BasisInput; input: CalculationInput }) {
   const { model } = derivePackModel(basis);
   const sale = salePackLabel(basis as PricingBasisV1) ?? "Verkaufspackung";
-  const rate = basis.purchase_rate === null ? null : netCost(
-    basis.purchase_rate,
-    Boolean(input.purchase_price_includes_vat),
-    resolveVatRate(input.purchase_vat_rate, DEFAULT_PURCHASE_VAT_RATE),
-  );
+  const rate =
+    basis.purchase_rate === null
+      ? null
+      : netCost(
+          basis.purchase_rate,
+          Boolean(input.purchase_price_includes_vat),
+          resolveVatRate(input.purchase_vat_rate, DEFAULT_PURCHASE_VAT_RATE),
+        );
   const purchasePackMg = toMilligrams(basis.purchase_pack_weight);
   const rateText =
     rate === null || !Number.isFinite(rate)
@@ -62,16 +59,16 @@ export function PackBasisSummary({
         </div>
       </dl>
       <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-      <dt className="text-muted-foreground">Einkaufsgewicht</dt>
-      <dd className="text-right">{model ? formatWeight(model.total_kg) : "—"}</dd>
-      <dt className="text-muted-foreground">Volle Verkaufspackungen</dt>
-      <dd className="text-right">{model ? `${model.capacity} × ${sale}` : "—"}</dd>
-      {model && model.unallocated_kg > 0 ? (
-        <>
-          <dt className="text-muted-foreground">Nicht verpacktes Restgewicht</dt>
-          <dd className="text-right">{formatWeight(model.unallocated_kg)}</dd>
-        </>
-      ) : null}
+        <dt className="text-muted-foreground">Einkaufsgewicht</dt>
+        <dd className="text-right">{model ? formatWeight(model.total_kg) : "—"}</dd>
+        <dt className="text-muted-foreground">Volle Verkaufspackungen</dt>
+        <dd className="text-right">{model ? `${model.capacity} × ${sale}` : "—"}</dd>
+        {model && model.unallocated_kg > 0 ? (
+          <>
+            <dt className="text-muted-foreground">Nicht verpacktes Restgewicht</dt>
+            <dd className="text-right">{formatWeight(model.unallocated_kg)}</dd>
+          </>
+        ) : null}
       </dl>
     </div>
   );
