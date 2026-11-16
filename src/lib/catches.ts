@@ -8,6 +8,7 @@ import {
   derivePackModel,
   legacyColumnsFor,
   readPricingBasis,
+  salePackLabel,
   weightFromText,
   type MassUnit,
   type PricingBasisV1,
@@ -209,7 +210,9 @@ export interface CatchListItem {
   /** Interner Aufwand pro vorbereiteter Einheit in CHF; null = nicht erfasst. */
   internal_handling_cost_per_unit: number | null;
   /** Getrennte Einkaufs-/Verkaufsbasis; null = bisherige gemeinsame Einheit. */
-  pricing_basis: PricingBasisV1 | null;
+  pricing_basis?: PricingBasisV1 | null;
+  /** Packungsmodus: im Abschluss fixierte vorbereitete Packungen. */
+  prepared_quantity?: number | null;
   supplier_id: string | null;
   supplier_name: string | null;
   published_at: string | null;
@@ -273,7 +276,7 @@ const LIST_SELECT = `
   published_at, published_text, published_image_path,
   supplier_id, remaining_quantity, inventory_counted_at, learning,
   closed_at, cancelled_at, cancellation_reason, online_shop_url,
-  internal_handling_cost_per_unit, pricing_basis,
+  internal_handling_cost_per_unit, pricing_basis, reconciliation_snapshot,
   suppliers ( id, name ),
   catch_images ( id, storage_path, is_primary, sort_order ),
   catch_locations ( location_id, locations ( id, name, address, pickup_note ) )
@@ -390,6 +393,10 @@ function mapList(row: any): CatchListItem {
       catch_price: row.catch_price === null ? null : Number(row.catch_price),
       regular_price: row.regular_price === null ? null : Number(row.regular_price),
     }),
+    prepared_quantity:
+      typeof row.reconciliation_snapshot?.prepared_quantity === "number"
+        ? row.reconciliation_snapshot.prepared_quantity
+        : null,
   };
 }
 
@@ -752,7 +759,8 @@ export function catchToReconciliationInput(
     remaining_quantity: item.remaining_quantity,
     published_at: item.published_at,
     inventory_counted_at: item.inventory_counted_at,
-    pack: packContext(item.pricing_basis),
+    pack: packContext(item.pricing_basis ?? null),
+    prepared_quantity: item.prepared_quantity ?? null,
   };
 }
 
@@ -763,7 +771,7 @@ export function catchToCalculationInput(
 ): CalculationInput {
   return {
     purchase_quantity: item.purchase_quantity || null,
-    quantity_unit: item.quantity_unit,
+    quantity_unit: displayUnit(item),
     purchase_price: item.purchase_price,
     delivery_cost: item.delivery_included ? 0 : item.delivery_cost,
     regular_price: item.regular_price,
@@ -785,7 +793,9 @@ export function formValuesToCalculationInput(
   const pack = formPackModel(values);
   return {
     purchase_quantity: pack ? (pack.model?.capacity ?? null) : parseNumberInput(values.purchase_quantity),
-    quantity_unit: pack ? "Stk" : values.quantity_unit,
+    quantity_unit: pack
+      ? (salePackLabel(formPricingBasis(values) as PricingBasisV1) ?? "Verkaufspackung")
+      : values.quantity_unit,
     purchase_price: pack
       ? (pack.model?.purchase_price_per_sale_pack ?? null)
       : parseNumberInput(values.purchase_price),
@@ -806,4 +816,9 @@ export function packContext(basis: PricingBasisV1 | null) {
   if (!basis) return null;
   const model = derivePackModel(basis).model;
   return model ? { total_kg: model.total_kg, sale_pack_kg: model.sale_pack_kg, sale_pack_mg: model.sale_pack_mg, total_mg: model.total_mg } : null;
+}
+
+/** Anzeigeeinheit: Verkaufspackung im Packungsmodus, sonst die gespeicherte Einheit. */
+export function displayUnit(item: Pick<CatchListItem, "quantity_unit" | "pricing_basis">): string {
+  return salePackLabel(item.pricing_basis ?? null) ?? item.quantity_unit;
 }
