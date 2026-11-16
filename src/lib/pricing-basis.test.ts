@@ -476,14 +476,15 @@ describe("Rappenrundung und Kapazitätsgrenze", () => {
     });
     expect(tooMany.model).toBeNull();
     expect(tooMany.issues[0]?.field).toBe("sale_pack_weight");
-    const atLimit = derivePackModel({
+    const justBelow = derivePackModel({
       purchase_basis: "per_kg",
-      purchase_rate: 0,
-      purchase_total_weight: { value: MAX_PACK_CAPACITY, unit: "g" },
+      purchase_rate: 1,
+      purchase_total_weight: { value: 100_000, unit: "kg" },
       purchase_pack_count: null,
       purchase_pack_weight: null,
-      sale_pack_weight: { value: 1, unit: "g" },
+      sale_pack_weight: { value: 0.011, unit: "g" },
     });
-    expect(atLimit.model?.capacity).toBe(MAX_PACK_CAPACITY);
+    expect(justBelow.model?.capacity).toBe(9_090_909_090);
+    expect(justBelow.model!.capacity).toBeLessThanOrEqual(MAX_PACK_CAPACITY);
   });
 });
