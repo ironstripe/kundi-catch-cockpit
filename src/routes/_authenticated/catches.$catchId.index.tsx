@@ -30,7 +30,10 @@ import {
   type HandicapReason,
 } from "@/lib/catch-domain";
 import { calculateCatch } from "@/lib/catch-calculation";
-import { catchToCalculationInput, fetchCatch } from "@/lib/catches";
+import { catchToCalculationInput, displayUnit, fetchCatch } from "@/lib/catches";
+import { toMilligrams } from "@/lib/pricing-basis";
+import { vatBasisLabel } from "@/lib/vat";
+import { PackBasisSummary } from "@/components/catch/pack-basis-summary";
 import { formatCurrency, formatDate, formatDateTime, formatQuantity } from "@/lib/format";
 import { fetchAppSettings } from "@/lib/app-settings";
 import { catchToPostSource } from "@/lib/publication";
