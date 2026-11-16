@@ -26,6 +26,16 @@ export interface ReconciliationInput extends CalculationInput {
   remaining_quantity: number | null;
   published_at: string | null;
   inventory_counted_at: string | null;
+  /**
+   * Packungsmodus: Massen für Restbestand und Kapazität. null/fehlend =
+   * bisherige gemeinsame Einheit.
+   */
+  pack?: { total_kg: number; sale_pack_kg: number; total_mg: number; sale_pack_mg: number } | null;
+  /**
+   * Packungsmodus: tatsächlich vorbereitete Verkaufspackungen. Fehlt der Wert,
+   * gilt die volle Packungskapazität (purchase_quantity).
+   */
+  prepared_quantity?: number | null;
 }
 
 export interface ReconciliationValues {
@@ -57,7 +67,18 @@ export interface ReconciliationValues {
   db_ii: number | null;
   /** DB-II-Marge effektiv in Prozent des Nettoerlöses. */
   db_ii_margin_percentage: number | null;
+  /**
+   * Restwarenwert netto zu Einkaufskosten (ohne Lieferung). Packungsmodus:
+   * (unverkaufte Packungen × Packungsgewicht + nicht verpacktes Rohgewicht)
+   * × Einkaufskosten pro kg.
+   */
   remaining_inventory_value: number;
+  /** Packungsmodus: vorbereitete Packungen (sonst = Einkaufsmenge). */
+  prepared_quantity: number;
+  /** Packungsmodus: nicht verpacktes Rohgewicht in kg; sonst null. */
+  unallocated_kg: number | null;
+  /** Packungsmodus: Gewicht der unverkauften Packungen in kg; sonst null. */
+  unsold_pack_kg: number | null;
   /** Dauer in Millisekunden, null ohne Publikationszeitpunkt. */
   action_duration_ms: number | null;
   break_even_sell_through: number | null;
@@ -155,14 +176,36 @@ export function reconcileCatch(input: ReconciliationInput): ReconciliationResult
   const planned = calculateCatch(input);
   const purchaseQuantity = input.purchase_quantity;
   const remaining = input.remaining_quantity;
-  const errors = validateRemainingQuantity(remaining, purchaseQuantity, input.quantity_unit);
+  const pack = input.pack ?? null;
+  const preparedOverride = pack ? (input.prepared_quantity ?? null) : null;
+  const prepared = preparedOverride ?? purchaseQuantity;
+  const errors: string[] = [];
+  if (pack && preparedOverride !== null) {
+    if (!Number.isInteger(preparedOverride) || preparedOverride < 0) {
+      errors.push("Vorbereitete Packungen als ganze Zahl ab 0 erfassen.");
+    } else if (finite(purchaseQuantity) && preparedOverride > purchaseQuantity) {
+      errors.push("Es können nicht mehr Packungen vorbereitet werden als volle Packungen möglich sind.");
+    }
+  }
+  errors.push(
+    ...validateRemainingQuantity(remaining, errors.length === 0 ? prepared : purchaseQuantity, input.quantity_unit).map(
+      (message) =>
+        pack ? message.replace("die Einkaufsmenge", "die vorbereiteten Packungen") : message,
+    ),
+  );
 
   const missing: string[] = [];
   if (!finite(purchaseQuantity) || (purchaseQuantity ?? 0) <= 0) missing.push("Einkaufsmenge");
   if (!finite(input.purchase_price)) missing.push("Einkaufspreis pro Einheit");
   if (!finite(input.catch_price)) missing.push("Food-Catch-Preis");
 
-  if (errors.length > 0 || missing.length > 0 || !finite(remaining) || !finite(purchaseQuantity)) {
+  if (
+    errors.length > 0 ||
+    missing.length > 0 ||
+    !finite(remaining) ||
+    !finite(purchaseQuantity) ||
+    !finite(prepared)
+  ) {
     return {
       complete: false,
       errors,
@@ -194,20 +237,26 @@ export function reconcileCatch(input: ReconciliationInput): ReconciliationResult
     resolveVatRate(input.delivery_vat_rate, DEFAULT_DELIVERY_VAT_RATE),
   );
 
-  const soldQuantity = Math.max(0, purchaseQuantity - remaining);
-  const sellThrough = purchaseQuantity > 0 ? (soldQuantity / purchaseQuantity) * 100 : null;
+  const soldQuantity = Math.max(0, prepared - remaining);
+  const sellThrough = prepared > 0 ? (soldQuantity / prepared) * 100 : null;
   const effectiveRevenueGross = soldQuantity * catchPrice;
   const effectiveRevenue = soldQuantity * catchPriceNet;
   const effectiveVat = effectiveRevenueGross - effectiveRevenue;
   const totalInvestment = purchaseQuantity * netPurchasePrice + netDeliveryCost;
   const effectiveContributionMargin = effectiveRevenue - totalInvestment;
-  const remainingInventoryValue = remaining * netPurchasePrice;
+  // Packungsmodus: ganzzahlige Milligramm, damit kein Rundungsrest entsteht.
+  const unallocatedKg = pack ? (pack.total_mg - prepared * pack.sale_pack_mg) / 1_000_000 : null;
+  const unsoldPackKg = pack ? (remaining * pack.sale_pack_mg) / 1_000_000 : null;
+  const remainingInventoryValue =
+    pack && unallocatedKg !== null && unsoldPackKg !== null
+      ? ((unsoldPackKg + unallocatedKg) * (purchaseQuantity * netPurchasePrice)) / pack.total_kg
+      : remaining * netPurchasePrice;
   const duration = durationMs(input.published_at, input.inventory_counted_at);
   const breakEven = planned.values?.break_even_sell_through ?? null;
   const result = breakEvenResult(sellThrough, breakEven);
   const handling = internalHandling(
     input.internal_handling_cost_per_unit,
-    purchaseQuantity,
+    prepared,
     effectiveContributionMargin,
     effectiveRevenue,
   );
@@ -231,6 +280,9 @@ export function reconcileCatch(input: ReconciliationInput): ReconciliationResult
       db_i: effectiveContributionMargin,
       ...handling,
       remaining_inventory_value: remainingInventoryValue,
+      prepared_quantity: prepared,
+      unallocated_kg: unallocatedKg,
+      unsold_pack_kg: unsoldPackKg,
       action_duration_ms: duration,
       break_even_sell_through: breakEven,
     },

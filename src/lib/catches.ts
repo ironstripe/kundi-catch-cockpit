@@ -300,7 +300,7 @@ const DETAIL_SELECT = `
   reconciliation_snapshot, online_shop_url,
   internal_handling_cost_per_unit, pricing_basis,
   suppliers ( id, name ),
-  catch_images ( id, storage_path, is_primary, sort_order ),
+  catch_images ( storage_path, is_primary, sort_order ),
   catch_locations ( location_id, locations ( id, name, address, pickup_note ) )
 `;
 
