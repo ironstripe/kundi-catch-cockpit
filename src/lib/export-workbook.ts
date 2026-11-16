@@ -5,7 +5,7 @@
  */
 
 import { packContext } from "@/lib/catches";
-import { readPricingBasis, salePackLabel } from "@/lib/pricing-basis";
+import { exactPackColumns, readPricingBasis, salePackLabel } from "@/lib/pricing-basis";
 import { supabase } from "@/integrations/supabase/client";
 import { CATCH_STATUS_LABELS, TEMPERATURE_LABELS, type CatchStatus } from "@/lib/catch-domain";
 import { calculateCatch } from "@/lib/catch-calculation";
@@ -84,10 +84,16 @@ function catchRow(row: any) {
     regular_price: row.regular_price === null ? null : Number(row.regular_price),
   });
   const unitLabel = salePackLabel(basis) ?? row.quantity_unit ?? "kg";
+  // Packungsmodus: exakte Kapazität und Einkaufsbetrag, nie die gerundete Spalte.
+  const exact = exactPackColumns(basis);
   const input = {
-    purchase_quantity: Number(row.purchase_quantity ?? 0),
+    purchase_quantity: exact ? exact.purchase_quantity : Number(row.purchase_quantity ?? 0),
     quantity_unit: unitLabel,
-    purchase_price: row.purchase_price ?? null,
+    purchase_price: exact
+      ? exact.purchase_price
+      : row.purchase_price === null || row.purchase_price === undefined
+        ? null
+        : Number(row.purchase_price),
     delivery_cost: Number(row.delivery_cost ?? 0),
     delivery_included: Boolean(row.delivery_included),
     regular_price: row.regular_price ?? null,
@@ -143,9 +149,9 @@ function catchRow(row: any) {
     packaging: row.packaging ?? "",
     expiry_date: toDate(row.expiry_date),
     supplier: row.suppliers?.name ?? "",
-    purchase_quantity: Number(row.purchase_quantity ?? 0),
+    purchase_quantity: input.purchase_quantity,
     quantity_unit: unitLabel,
-    purchase_price: row.purchase_price ?? null,
+    purchase_price: input.purchase_price,
     delivery_cost: Number(row.delivery_cost ?? 0),
     regular_price: row.regular_price ?? null,
     catch_price: row.catch_price ?? null,

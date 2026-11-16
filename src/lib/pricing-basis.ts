@@ -172,10 +172,29 @@ export function derivePackModel(
   }
 
   const totalKg = totalMg / 1_000_000;
+  if (!Number.isSafeInteger(totalMg) || totalMg > MAX_TOTAL_MG) {
+    return {
+      model: null,
+      issues: [
+        { field: "purchase_total_weight", message: "Einkaufsgewicht ist unrealistisch gross." },
+      ],
+      incomplete: false,
+    };
+  }
   let purchaseTotal: number;
   if (basis.purchase_basis === "per_pack") purchaseTotal = rate * (basis.purchase_pack_count ?? 0);
   else if (basis.purchase_basis === "per_kg") purchaseTotal = (rate * totalMg) / 1_000_000;
   else purchaseTotal = (rate * totalMg) / 100_000;
+
+  if (!Number.isFinite(purchaseTotal) || purchaseTotal > MAX_MONEY) {
+    return {
+      model: null,
+      issues: [
+        { field: "purchase_rate", message: "Einkaufsbetrag ist ausserhalb des gültigen Bereichs." },
+      ],
+      incomplete: false,
+    };
+  }
 
   return {
     model: {
@@ -194,18 +213,47 @@ export function derivePackModel(
   };
 }
 
-/** Abgeleitete, dimensionskonsistente Legacy-Spalten. */
+/** Grenzen der Spalten numeric(12,2) bzw. ein plausibles Maximalgewicht (100 t). */
+export const MAX_MONEY = 9_999_999_999.99;
+const MAX_TOTAL_MG = 100_000 * 1_000_000;
+
+/**
+ * Rundet wie PostgreSQL beim Schreiben in numeric(12,2): kaufmännisch auf
+ * Rappen, Hälfte von null weg. Dezimal-Exponent statt `x*100`, damit z. B.
+ * 1.005 nicht binär zu 1.00 wird.
+ */
+export function roundCents(value: number): number {
+  const sign = value < 0 ? -1 : 1;
+  const abs = Math.abs(value);
+  const rounded = Number(`${Math.round(Number(`${abs}e2`))}e-2`);
+  return sign * rounded;
+}
+
+function centsOrNull(value: number | null): number | null {
+  return value === null || !Number.isFinite(value) ? null : roundCents(value);
+}
+
+/**
+ * Abgeleitete, dimensionskonsistente Legacy-Spalten — bereits auf Rappen
+ * gerundet, also genau der Wert, den numeric(12,2) speichert. Nur für ältere
+ * Frontends; aktuelle Rechnungen nutzen immer das exakte Packungsmodell.
+ */
 export function legacyColumnsFor(model: PackModel | null) {
   return {
     quantity_unit: PACK_LEGACY_UNIT,
     purchase_quantity: model ? model.capacity : 0,
-    purchase_price: model ? model.purchase_price_per_sale_pack : null,
+    purchase_price: model ? roundCents(model.purchase_price_per_sale_pack) : null,
   };
 }
 
-function close(a: number | null, b: number | null): boolean {
-  if (a === null || b === null) return a === b;
-  return Math.abs(a - b) <= 1e-6 * Math.max(1, Math.abs(a), Math.abs(b));
+/** Vergleich auf Rappenebene: gespeicherter (evtl. exakter) Abdruck vs. Spalte. */
+function sameCents(fingerprint: number | null, column: number | null): boolean {
+  if (fingerprint === null || column === null) return fingerprint === column;
+  return Math.abs(roundCents(fingerprint) - roundCents(column)) < 0.0001;
+}
+
+function sameQuantity(a: number, b: number): boolean {
+  return Math.abs(a - b) < 1e-9;
 }
 
 function readWeight(raw: unknown): WeightInput | null {
@@ -243,17 +291,19 @@ export function readPricingBasis(
   if (basis !== "per_100g" && basis !== "per_kg" && basis !== "per_pack") return null;
   if (row.quantity_unit !== PACK_LEGACY_UNIT) return null;
   const legacy = (r.legacy ?? {}) as { [K in keyof PricingBasisV1["legacy"]]?: unknown };
+  // Ältere Builds speicherten den Einkaufsbetrag pro Packung ungerundet;
+  // verglichen wird immer der rappengenaue Wert, den die Spalte enthält.
   const fingerprint = {
     purchase_quantity: readNumber(legacy.purchase_quantity) ?? 0,
-    purchase_price: readNumber(legacy.purchase_price),
-    catch_price: readNumber(legacy.catch_price),
-    regular_price: readNumber(legacy.regular_price),
+    purchase_price: centsOrNull(readNumber(legacy.purchase_price)),
+    catch_price: centsOrNull(readNumber(legacy.catch_price)),
+    regular_price: centsOrNull(readNumber(legacy.regular_price)),
   };
   if (
-    !close(fingerprint.purchase_quantity, row.purchase_quantity ?? 0) ||
-    !close(fingerprint.purchase_price, row.purchase_price) ||
-    !close(fingerprint.catch_price, row.catch_price) ||
-    !close(fingerprint.regular_price, row.regular_price)
+    !sameQuantity(fingerprint.purchase_quantity, row.purchase_quantity ?? 0) ||
+    !sameCents(fingerprint.purchase_price, row.purchase_price) ||
+    !sameCents(fingerprint.catch_price, row.catch_price) ||
+    !sameCents(fingerprint.regular_price, row.regular_price)
   ) {
     return null;
   }
@@ -310,4 +360,19 @@ export function quantityUnitDisplay(
 ): string {
   const label = salePackLabel(basis);
   return label ? `× ${label}` : unit;
+}
+
+/**
+ * Exakte Menge/Einkaufsbetrag pro Verkaufspackung aus der Basis. Ersetzt die
+ * gerundeten Kompatibilitätsspalten in allen aktuellen Berechnungen.
+ */
+export function exactPackColumns(basis: PricingBasisV1 | null): {
+  purchase_quantity: number;
+  purchase_price: number;
+} | null {
+  if (!basis) return null;
+  const model = derivePackModel(basis).model;
+  return model
+    ? { purchase_quantity: model.capacity, purchase_price: model.purchase_price_per_sale_pack }
+    : null;
 }

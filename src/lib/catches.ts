@@ -6,8 +6,10 @@ import { zurichLocalToIso } from "@/lib/format";
 import { normaliseProductUrl } from "@/lib/product-link";
 import {
   derivePackModel,
+  exactPackColumns,
   legacyColumnsFor,
   readPricingBasis,
+  roundCents,
   salePackLabel,
   weightFromText,
   type MassUnit,
@@ -324,6 +326,13 @@ function primaryImagePath(row: any): string | null {
 }
 
 function mapList(row: any): CatchListItem {
+  const item = mapListColumns(row);
+  // Packungsmodus: exakte Werte statt der auf Rappen gerundeten Spalten.
+  const exact = exactPackColumns(item.pricing_basis ?? null);
+  return exact ? { ...item, ...exact } : item;
+}
+
+function mapListColumns(row: any): CatchListItem {
   return {
     id: row.id,
     catch_number: row.catch_number,
@@ -595,9 +604,11 @@ function basisToForm(basis: PricingBasisV1 | null) {
  * Legacy-Spalten dimensionskonsistent abgeleitet (siehe pricing-basis.ts).
  */
 export function pricingColumns(values: CatchFormValues) {
-  const regular = num(values.regular_price);
-  const catchPrice = num(values.catch_price);
   const basis = formPricingBasis(values);
+  // Im Packungsmodus sind VP/Normalpreis normale CHF-Beträge auf Rappen —
+  // derselbe Wert wie in numeric(12,2), damit Abdruck und Reload stabil sind.
+  const regular = basis ? centsOrNullForm(values.regular_price) : num(values.regular_price);
+  const catchPrice = basis ? centsOrNullForm(values.catch_price) : num(values.catch_price);
   if (!basis) {
     return {
       purchase_quantity: num(values.purchase_quantity) ?? 0,
@@ -620,6 +631,11 @@ export function pricingColumns(values: CatchFormValues) {
     },
   };
   return { ...legacy, regular_price: regular, catch_price: catchPrice, pricing_basis: stored };
+}
+
+function centsOrNullForm(value: string): number | null {
+  const parsed = num(value);
+  return parsed === null ? null : roundCents(parsed);
 }
 
 function num(value: string): number | null {
@@ -792,10 +808,12 @@ export function catchToCalculationInput(
   item: CatchListItem,
   defaultVatRate: number = DEFAULT_VAT_RATE,
 ): CalculationInput {
+  // Packungsmodus: immer das exakte Modell, nie die gerundete Kompatibilitätsspalte.
+  const exact = exactPackColumns(item.pricing_basis ?? null);
   return {
-    purchase_quantity: item.purchase_quantity || null,
+    purchase_quantity: (exact ? exact.purchase_quantity : item.purchase_quantity) || null,
     quantity_unit: displayUnit(item),
-    purchase_price: item.purchase_price,
+    purchase_price: exact ? exact.purchase_price : item.purchase_price,
     delivery_cost: item.delivery_included ? 0 : item.delivery_cost,
     regular_price: item.regular_price,
     catch_price: item.catch_price,

@@ -4,7 +4,10 @@
  */
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// PGlite-Starts brauchen unter voller Suite-Last mehrere Sekunden.
+vi.setConfig({ testTimeout: 30_000 });
 
 import { calculateCatch } from "@/lib/catch-calculation";
 import { reconcileCatch } from "@/lib/catch-reconciliation";
@@ -314,5 +317,116 @@ describe("Migration (isoliertes PGlite)", () => {
       db.exec(`INSERT INTO public.catches VALUES (3, 'Stk', '{"version":2}')`),
     ).rejects.toThrow();
     await db.close();
+  });
+});
+
+describe("Round-trip durch numeric(12,2) (PGlite)", () => {
+  const ratio300g: CatchFormValues = {
+    ...perKg,
+    sale_pack_weight: "300",
+    sale_pack_weight_unit: "g",
+    catch_price: "3.333",
+    regular_price: "4.995",
+  };
+
+  async function roundTrip(values: CatchFormValues, legacyOverride?: Record<string, unknown>) {
+    const db = new PGlite();
+    await db.exec(`CREATE TABLE c (
+      purchase_quantity numeric(12,3), quantity_unit text, purchase_price numeric(12,2),
+      catch_price numeric(12,2), regular_price numeric(12,2), pricing_basis jsonb)`);
+    const cols = pricingColumns(values);
+    const basis = legacyOverride
+      ? { ...cols.pricing_basis!, legacy: { ...cols.pricing_basis!.legacy, ...legacyOverride } }
+      : cols.pricing_basis;
+    await db.query(`INSERT INTO c VALUES ($1,$2,$3,$4,$5,$6)`, [
+      cols.purchase_quantity,
+      cols.quantity_unit,
+      cols.purchase_price,
+      cols.catch_price,
+      cols.regular_price,
+      JSON.stringify(basis),
+    ]);
+    const read = async () => {
+      const r = (
+        await db.query<{
+          quantity_unit: string;
+          purchase_quantity: unknown;
+          purchase_price: unknown;
+          catch_price: unknown;
+          regular_price: unknown;
+          pricing_basis: unknown;
+        }>("SELECT * FROM c")
+      ).rows[0]!;
+      const toNum = (v: unknown) => (v === null ? null : Number(v));
+      const row = {
+        quantity_unit: String(r.quantity_unit),
+        purchase_quantity: Number(r.purchase_quantity),
+        purchase_price: toNum(r.purchase_price),
+        catch_price: toNum(r.catch_price),
+        regular_price: toNum(r.regular_price),
+      };
+      return { row, basis: readPricingBasis(r.pricing_basis, row) };
+    };
+    return { db, read };
+  }
+
+  it("300-g-Packungen: 66 Stück, CHF 134 Einkauf, Basis bleibt aktiv", async () => {
+    const { db, read } = await roundTrip(ratio300g);
+    const { row, basis } = await read();
+    expect(row.purchase_price).toBe(2.03);
+    expect(row.catch_price).toBe(3.33);
+    expect(row.regular_price).toBe(5);
+    expect(basis).not.toBeNull();
+    const item = {
+      ...draftCatch,
+      ...row,
+      vat_rate: 2.6,
+      purchase_price_includes_vat: false,
+      delivery_cost: 0,
+      delivery_included: false,
+      internal_handling_cost_per_unit: 2.5,
+      pricing_basis: basis,
+    };
+    const v = calculateCatch(catchToCalculationInput(item)).values!;
+    expect(v.purchase_quantity).toBe(66);
+    expect(v.net_investment).toBeCloseTo(134, 9);
+    expect(v.maximum_gross_revenue).toBeCloseTo(66 * 3.33, 9);
+    const r = reconcileCatch({ ...catchToReconciliationInput(item), remaining_quantity: 0 });
+    expect(r.values!.total_investment).toBeCloseTo(134, 9);
+    expect(r.values!.sold_quantity).toBe(66);
+    expect(catchDetailToForm(item).catch_price).toBe("3.33");
+    const text = generatePostText(catchToPostSource({ ...item, locations: [] }));
+    expect(text).toContain("CHF 3.33 pro 300-g-Packung");
+    // Reload → Formular → erneutes Speichern ist stabil.
+    expect(pricingColumns(catchDetailToForm(item)).pricing_basis!.legacy).toEqual(basis!.legacy);
+    await db.close();
+  });
+
+  it("exakter Abdruck eines früheren Builds wird über Rappen erkannt", async () => {
+    const { db, read } = await roundTrip(ratio300g, { purchase_price: 134 / 66 });
+    expect((await read()).basis).not.toBeNull();
+    await db.close();
+  });
+
+  it("echte Spaltenänderung eines älteren Frontends deaktiviert die Basis", async () => {
+    const { db, read } = await roundTrip(ratio300g);
+    await db.exec("UPDATE c SET purchase_price = 2.10");
+    expect((await read()).basis).toBeNull();
+    await db.exec("UPDATE c SET purchase_price = 2.03, catch_price = 3.40");
+    expect((await read()).basis).toBeNull();
+    await db.close();
+  });
+
+  it("unrealistische Beträge werden abgelehnt statt still verloren", () => {
+    const huge = derivePackModel({
+      purchase_basis: "per_kg",
+      purchase_rate: 1e12,
+      purchase_total_weight: { value: 20, unit: "kg" },
+      purchase_pack_count: null,
+      purchase_pack_weight: null,
+      sale_pack_weight: { value: 300, unit: "g" },
+    });
+    expect(huge.model).toBeNull();
+    expect(huge.issues[0]?.field).toBe("purchase_rate");
   });
 });
