@@ -180,11 +180,25 @@ function CatchDetailPage() {
             <CalculationCard
               result={calculation}
               input={catchToCalculationInput(item)}
+              packSummary={
+                item.pricing_basis ? (
+                  <PackBasisSummary
+                    basis={item.pricing_basis}
+                    catchPrice={item.catch_price}
+                    purchaseVatLabel={vatBasisLabel(item.purchase_price_includes_vat)}
+                  />
+                ) : null
+              }
               comparison={
                 <QuantityPriceComparison
                   key={item.id}
                   grossPrice={item.catch_price}
                   quantityUnit={item.quantity_unit}
+                  salePackKg={
+                    item.pricing_basis
+                      ? (toMilligrams(item.pricing_basis.sale_pack_weight) ?? 0) / 1_000_000
+                      : null
+                  }
                 />
               }
               description={`Berechnete Werte aus den gespeicherten Eingaben · Stand ${formatDateTime(item.updated_at)}`}
@@ -219,16 +233,20 @@ function CatchDetailPage() {
               label="Einkaufsmenge"
               value={
                 item.purchase_quantity
-                  ? formatQuantity(item.purchase_quantity, item.quantity_unit)
+                  ? formatQuantity(item.purchase_quantity, displayUnit(item))
                   : null
               }
             />
             <Row
-              label="Einheit"
-              value={QUANTITY_UNIT_LABELS[item.quantity_unit] ?? item.quantity_unit}
+              label={item.pricing_basis ? "Verkaufseinheit" : "Einheit"}
+              value={
+                item.pricing_basis
+                  ? displayUnit(item)
+                  : (QUANTITY_UNIT_LABELS[item.quantity_unit] ?? item.quantity_unit)
+              }
             />
             <Row
-              label="Einkaufspreis pro Einheit"
+              label={item.pricing_basis ? "Einkaufsbetrag pro Verkaufspackung" : "Einkaufspreis pro Einheit"}
               value={item.purchase_price === null ? null : formatCurrency(item.purchase_price)}
             />
             <Row label="Lieferkosten" value={deliveryText} />
@@ -237,11 +255,19 @@ function CatchDetailPage() {
           <Section title="Verkaufspreis">
             <Row
               label="Normalpreis"
-              value={item.regular_price === null ? null : formatCurrency(item.regular_price)}
+              value={
+                item.regular_price === null
+                  ? null
+                  : `${formatCurrency(item.regular_price)} / ${displayUnit(item)}`
+              }
             />
             <Row
               label="Food-Catch-Preis"
-              value={item.catch_price === null ? null : formatCurrency(item.catch_price)}
+              value={
+                item.catch_price === null
+                  ? null
+                  : `${formatCurrency(item.catch_price)} / ${displayUnit(item)}`
+              }
             />
           </Section>
 
