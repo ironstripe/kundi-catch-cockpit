@@ -16,6 +16,10 @@ export interface ReconciliationSnapshot {
   published_at: string | null;
   remaining_quantity: number;
   inventory_counted_at: string;
+  /** Packungsmodus: vorbereitete Verkaufspackungen (fehlt im Legacy-Modus). */
+  prepared_quantity?: number;
+  /** Packungsmodus: gespeicherte Original-Preisbasis (fehlt im Legacy-Modus). */
+  pricing_basis?: unknown;
 }
 
 async function actor(): Promise<string | null> {
@@ -42,7 +46,14 @@ export function buildSnapshot(
   item: CatchDetail,
   remainingQuantity: number,
   inventoryCountedAt: string,
+  preparedQuantity?: number | null,
 ): ReconciliationSnapshot {
+  const pack = item.pricing_basis
+    ? {
+        prepared_quantity: preparedQuantity ?? item.purchase_quantity,
+        pricing_basis: item.pricing_basis,
+      }
+    : {};
   return {
     purchase_quantity: item.purchase_quantity,
     quantity_unit: item.quantity_unit,
@@ -53,7 +64,20 @@ export function buildSnapshot(
     published_at: item.published_at,
     remaining_quantity: remainingQuantity,
     inventory_counted_at: inventoryCountedAt,
+    ...pack,
   };
+}
+
+/** Abverkaufsquote: verkauft ÷ vorbereitet (Packungsmodus) bzw. ÷ Einkaufsmenge. */
+export function actualSellThrough(
+  item: Pick<CatchDetail, "purchase_quantity" | "pricing_basis">,
+  remainingQuantity: number,
+  preparedQuantity?: number | null,
+): number | null {
+  const denominator = item.pricing_basis
+    ? (preparedQuantity ?? item.purchase_quantity)
+    : item.purchase_quantity;
+  return denominator > 0 ? ((denominator - remainingQuantity) / denominator) * 100 : null;
 }
 
 interface CloseArgs {
@@ -61,6 +85,8 @@ interface CloseArgs {
   remainingQuantity: number;
   inventoryCountedAt: string;
   learning: string;
+  /** Packungsmodus: vorbereitete Packungen; fehlt = volle Kapazität. */
+  preparedQuantity?: number | null;
   /** Berechnete Kennzahlen — nur fürs Audit, nicht als Quelle der Wahrheit. */
   result: Record<string, unknown>;
 }
@@ -71,11 +97,12 @@ export async function closeCatch({
   remainingQuantity,
   inventoryCountedAt,
   learning,
+  preparedQuantity,
   result,
 }: CloseArgs): Promise<void> {
   const actorId = await actor();
   const closedAt = new Date().toISOString();
-  const snapshot = buildSnapshot(item, remainingQuantity, inventoryCountedAt);
+  const snapshot = buildSnapshot(item, remainingQuantity, inventoryCountedAt, preparedQuantity);
 
   const previous = {
     status: item.status,
@@ -91,13 +118,10 @@ export async function closeCatch({
       remaining_quantity: remainingQuantity,
       inventory_counted_at: inventoryCountedAt,
       learning: learning.trim() || null,
-      actual_sell_through:
-        item.purchase_quantity > 0
-          ? ((item.purchase_quantity - remainingQuantity) / item.purchase_quantity) * 100
-          : null,
+      actual_sell_through: actualSellThrough(item, remainingQuantity, preparedQuantity),
       closed_at: closedAt,
       closed_by: actorId,
-      reconciliation_snapshot: snapshot as unknown as never,
+      reconciliation_snapshot: JSON.parse(JSON.stringify(snapshot)) as never,
     })
     .eq("id", item.id)
     .in("status", ["published", "closed"]);

@@ -543,7 +543,7 @@ export function catchDetailToForm(detail: CatchDetail): CatchFormValues {
       detail.internal_handling_cost_per_unit === null
         ? ""
         : detail.internal_handling_cost_per_unit.toFixed(2),
-    ...basisToForm(detail.pricing_basis),
+    ...basisToForm(detail.pricing_basis ?? null),
   };
 }
 
