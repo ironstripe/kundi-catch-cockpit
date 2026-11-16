@@ -4,7 +4,10 @@
  */
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// PGlite-Starts brauchen unter voller Suite-Last mehrere Sekunden.
+vi.setConfig({ testTimeout: 30_000 });
 
 import { calculateCatch } from "@/lib/catch-calculation";
 import { reconcileCatch } from "@/lib/catch-reconciliation";
