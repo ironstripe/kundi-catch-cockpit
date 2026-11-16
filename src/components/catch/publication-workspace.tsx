@@ -42,7 +42,6 @@ import { formatDateTime } from "@/lib/format";
 import {
   catchToPostSource,
   ensureOptimizedImage,
-  keepOutdatedPost,
   markCatchPublished,
   prepareAllImages,
   savePostVersion,
@@ -105,9 +104,20 @@ export function PublicationWorkspace({
   const fallbackRef = useRef<HTMLTextAreaElement>(null);
   const catchId = item.id;
 
+  // Veralteter Entwurf: gespeicherter Text passt nicht mehr zu Catch-Daten/Vorlage.
+  // Nur unpublizierte Catches; eine frühere «behalten»-Entscheidung unterdrückt
+  // spätere Datenänderungen nicht (die Signatur wird immer neu verglichen).
+  const staleDraft =
+    template !== null &&
+    item.status !== "published" &&
+    item.post_final_text !== null &&
+    item.post_source_signature !== null &&
+    item.post_source_signature !== signature;
   // Basis = gespeicherter Text bzw. (noch nicht gespeicherter) generierter Text.
+  // Bei veraltetem Entwurf zeigt die Arbeitsfassung sofort den aktuellen Text —
+  // ungespeichert, bis «Text sichern»; der alte Text bleibt in der Datenbank.
   // Nur echte Nutzeränderungen gelten als «bearbeitet» und werden bei Refetch nicht überschrieben.
-  const baseText = item.post_final_text ?? generated;
+  const baseText = staleDraft ? generated : (item.post_final_text ?? generated);
   // Solange die Vorlage lädt, eigene Identität: danach harter Wechsel auf den echten Text.
   const text = useSyncedDraft(template ? item.id : `${item.id}:loading`, baseText);
   const finalText = text.value;
@@ -133,12 +143,8 @@ export function PublicationWorkspace({
   const storedGenerated = item.post_generated_text;
   const hasManualEdits = storedGenerated !== null && finalText.trim() !== storedGenerated.trim();
   const unsaved = finalText !== (item.post_final_text ?? "");
-  const outdated =
-    template !== null &&
-    item.post_source_signature !== null &&
-    item.post_source_signature !== signature &&
-    item.post_outdated_decision !== "keep";
-  const templateUpdated = outdated && isTemplateOnlyChange(item.post_source_signature, signature);
+  const templateUpdated =
+    staleDraft && isTemplateOnlyChange(item.post_source_signature, signature);
 
   const saveText = useMutation({
     mutationFn: async (args: { text: string; reason: "generated" | "edited" | "reset" }) => {
@@ -161,14 +167,6 @@ export function PublicationWorkspace({
       toast.error("Speichern fehlgeschlagen", {
         description: error instanceof Error ? error.message : "Unbekannter Fehler.",
       }),
-  });
-
-  const keepText = useMutation({
-    mutationFn: () => keepOutdatedPost(catchId, signature),
-    onSuccess: async () => {
-      await onChanged();
-      toast.success("Bestehender Text bleibt bestehen");
-    },
   });
 
   const publish = useMutation({
@@ -195,7 +193,8 @@ export function PublicationWorkspace({
   function saveEditedText() {
     if (saveText.isPending || !unsaved) return;
     const submitted = finalText;
-    return saveText.mutateAsync({ text: submitted, reason: "edited" }).catch(() => undefined);
+    const reason = submitted === generated ? "generated" : "edited";
+    return saveText.mutateAsync({ text: submitted, reason }).catch(() => undefined);
   }
   // Nur Text sichern; Neu generieren, Zurücksetzen und Publizieren bleiben eigene Aktionen.
   const textScope = useEditShortcuts({
@@ -328,26 +327,31 @@ export function PublicationWorkspace({
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         {/* Linke Spalte: Inhalt und Text */}
         <div className="space-y-4">
-          {outdated ? (
+          {staleDraft ? (
             <div
-              role="alert"
+              role="status"
               className="rounded-md border border-warning/40 bg-warning/5 p-3 text-sm"
             >
-              <p className="flex items-center gap-2 font-medium">
-                <AlertTriangle className="size-4" />
+              <p className="flex items-start gap-2 font-medium">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
                 {templateUpdated
-                  ? "Vorlage geändert: Die WhatsApp-Vorlage wurde angepasst. Der bestehende Text bleibt, bis du ihn neu generierst."
-                  : "Die Catch-Daten wurden geändert. Der WhatsApp-Post ist möglicherweise nicht mehr aktuell."}
+                  ? "Vorlage geändert. Der Text unten ist neu erstellt und noch nicht gespeichert."
+                  : "Catch-Daten geändert. Der Text unten ist neu erstellt und noch nicht gespeichert."}
               </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Button size="sm" onClick={() => applyGenerated("generated")}>
-                  <RefreshCw />
-                  Post neu generieren
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => keepText.mutate()}>
-                  Bestehenden Text behalten
-                </Button>
-              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Der bisherige Text bleibt gespeichert, bis du «Text sichern» wählst.
+              </p>
+              <details className="mt-2">
+                <summary className="cursor-pointer text-xs font-medium">
+                  Gespeicherten alten Text anzeigen
+                </summary>
+                <pre
+                  aria-label="Gespeicherter alter Text"
+                  className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap rounded-md border bg-card p-2 font-mono text-xs text-muted-foreground"
+                >
+                  {item.post_final_text}
+                </pre>
+              </details>
             </div>
           ) : null}
 
