@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-badge";
 import { Button } from "@/components/ui/button";
 import { calculateCatch } from "@/lib/catch-calculation";
-import { catchToCalculationInput, type CatchListItem } from "@/lib/catches";
+import { catchToCalculationInput, displayUnit, type CatchListItem } from "@/lib/catches";
 import { formatCurrency, formatPercentValue, formatQuantity } from "@/lib/format";
 import { netCost, resolveVatRate, DEFAULT_PURCHASE_VAT_RATE } from "@/lib/vat";
 

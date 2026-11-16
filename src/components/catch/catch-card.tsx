@@ -13,6 +13,7 @@ import {
   catchToCalculationInput,
   catchToReconciliationInput,
   type CatchListItem,
+  displayUnit,
 } from "@/lib/catches";
 import { formatCurrency, formatDateTime, formatPercentValue, formatQuantity } from "@/lib/format";
 

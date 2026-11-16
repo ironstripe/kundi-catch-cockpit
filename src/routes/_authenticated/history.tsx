@@ -47,7 +47,12 @@ import {
   formatDuration,
   reconcileCatch,
 } from "@/lib/catch-reconciliation";
-import { catchToReconciliationInput, fetchHistoryCatches, type CatchListItem } from "@/lib/catches";
+import {
+  catchToReconciliationInput,
+  displayUnit,
+  fetchHistoryCatches,
+  type CatchListItem,
+} from "@/lib/catches";
 import { formatCurrency, formatDateTime, formatPercentValue, formatQuantity } from "@/lib/format";
 
 const ALL = "alle";
