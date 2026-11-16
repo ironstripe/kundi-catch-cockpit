@@ -206,7 +206,7 @@ function close(a: number | null, b: number | null): boolean {
 
 function readWeight(raw: unknown): WeightInput | null {
   if (!raw || typeof raw !== "object") return null;
-  const r = raw as Record<string, unknown>;
+  const r = raw as { unit?: unknown; value?: unknown };
   const unit = r.unit === "g" || r.unit === "kg" ? r.unit : null;
   if (!unit) return null;
   const value = typeof r.value === "number" && Number.isFinite(r.value) ? r.value : null;
@@ -232,12 +232,13 @@ export function readPricingBasis(
   },
 ): PricingBasisV1 | null {
   if (!raw || typeof raw !== "object") return null;
-  const r = raw as Record<string, unknown>;
+  type Raw = { [K in keyof PricingBasisV1]?: unknown };
+  const r = raw as Raw;
   if (r.version !== 1) return null;
   const basis = r.purchase_basis;
   if (basis !== "per_100g" && basis !== "per_kg" && basis !== "per_pack") return null;
   if (row.quantity_unit !== PACK_LEGACY_UNIT) return null;
-  const legacy = (r.legacy ?? {}) as Record<string, unknown>;
+  const legacy = (r.legacy ?? {}) as { [K in keyof PricingBasisV1["legacy"]]?: unknown };
   const fingerprint = {
     purchase_quantity: readNumber(legacy.purchase_quantity) ?? 0,
     purchase_price: readNumber(legacy.purchase_price),
