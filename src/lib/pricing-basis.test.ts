@@ -25,7 +25,13 @@ import {
 } from "@/lib/catches";
 import { validateDraft } from "@/lib/catch-validation";
 import { catchToPostSource } from "@/lib/publication";
-import { derivePackModel, readPricingBasis, salePackLabel } from "@/lib/pricing-basis";
+import {
+  derivePackModel,
+  MAX_PACK_CAPACITY,
+  readPricingBasis,
+  roundCents,
+  salePackLabel,
+} from "@/lib/pricing-basis";
 import { compareQuantityPrice } from "@/lib/quantity-price";
 import { generatePostText, postSourceSignature } from "@/lib/whatsapp-post";
 import { draftCatch } from "@/test/catch-fixture";
@@ -428,5 +434,56 @@ describe("Round-trip durch numeric(12,2) (PGlite)", () => {
     });
     expect(huge.model).toBeNull();
     expect(huge.issues[0]?.field).toBe("purchase_rate");
+  });
+});
+
+describe("Rappenrundung und Kapazitätsgrenze", () => {
+  it("roundCents: winzige Beträge → +0, Halbrappen kaufmännisch", () => {
+    expect(Object.is(roundCents(5e-8), 0)).toBe(true);
+    expect(Object.is(roundCents(-5e-8), 0)).toBe(true);
+    expect(roundCents(0.004999)).toBe(0);
+    expect(roundCents(0.005)).toBe(0.01);
+    expect(roundCents(1.005)).toBe(1.01);
+    expect(roundCents(2.030303)).toBe(2.03);
+  });
+
+  it("winziger Einkaufsbetrag: Spalte 0, Basis bleibt aktiv und exakt", () => {
+    const values: CatchFormValues = {
+      ...base,
+      purchase_basis: "per_kg",
+      purchase_rate: "0.00000005",
+      purchase_total_weight: "1",
+      purchase_total_weight_unit: "kg",
+      sale_pack_weight: "1",
+      sale_pack_weight_unit: "kg",
+    };
+    const cols = JSON.parse(JSON.stringify(pricingColumns(values)));
+    expect(cols.purchase_price).toBe(0);
+    const basis = readPricingBasis(cols.pricing_basis, { ...cols, purchase_price: 0 });
+    expect(basis).not.toBeNull();
+    expect(basis!.purchase_rate).toBe(5e-8);
+    expect(derivePackModel(basis!).model!.purchase_price_per_sale_pack).toBe(5e-8);
+  });
+
+  it("Kapazität über numeric(12,2)-Bereich → Feldmeldung statt Modell", () => {
+    const tooMany = derivePackModel({
+      purchase_basis: "per_kg",
+      purchase_rate: 1,
+      purchase_total_weight: { value: 100_000, unit: "kg" },
+      purchase_pack_count: null,
+      purchase_pack_weight: null,
+      sale_pack_weight: { value: 0.001, unit: "g" },
+    });
+    expect(tooMany.model).toBeNull();
+    expect(tooMany.issues[0]?.field).toBe("sale_pack_weight");
+    const atLimit = derivePackModel({
+      purchase_basis: "per_kg",
+      purchase_rate: 0,
+      purchase_total_weight: { value: MAX_PACK_CAPACITY, unit: "g" },
+      purchase_pack_count: null,
+      purchase_pack_weight: null,
+      sale_pack_weight: { value: 1, unit: "g" },
+    });
+    expect(atLimit.model?.capacity).toBe(MAX_PACK_CAPACITY);
   });
 });
