@@ -326,6 +326,13 @@ function primaryImagePath(row: any): string | null {
 }
 
 function mapList(row: any): CatchListItem {
+  const item = mapListColumns(row);
+  // Packungsmodus: exakte Werte statt der auf Rappen gerundeten Spalten.
+  const exact = exactPackColumns(item.pricing_basis ?? null);
+  return exact ? { ...item, ...exact } : item;
+}
+
+function mapListColumns(row: any): CatchListItem {
   return {
     id: row.id,
     catch_number: row.catch_number,
