@@ -73,6 +73,33 @@ function renderForm(initial: CatchFormValues) {
 const price = (id: string) => document.getElementById(id) as HTMLInputElement;
 
 describe("Preisbasis-Wechsel", () => {
+  it("known sale-pack comparison stays scratch-only in the real form", () => {
+    renderForm({
+      ...legacy,
+      pricing_mode: "pack",
+      purchase_basis: "per_kg",
+      purchase_rate: "6.75",
+      purchase_total_weight: "20",
+      purchase_total_weight_unit: "kg",
+      sale_pack_weight: "2.5",
+      sale_pack_weight_unit: "kg",
+    });
+    expect(screen.queryByRole("combobox", { name: "Vergleichsbasis" })).toBeNull();
+    expect(screen.queryByLabelText("Nettogewicht pro Verkaufseinheit")).toBeNull();
+    expect(
+      screen.getByRole("combobox", { name: "Gewichtseinheit der Vergleichspackung" }),
+    ).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Vergleichspreis pro Packung"), {
+      target: { value: "40" },
+    });
+    fireEvent.change(screen.getByLabelText("Gewicht der Vergleichspackung"), {
+      target: { value: "2500" },
+    });
+    expect(price("regular_price").value).toBe("30");
+    expect(price("catch_price").value).toBe("20");
+    expect(mocks.save).not.toHaveBeenCalled();
+  });
+
   it("übernimmt CHF/kg nie still als Packungspreis und stellt beim Zurückwechseln wieder her", async () => {
     renderForm(legacy);
     expect(price("catch_price").value).toBe("20");

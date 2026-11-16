@@ -7,19 +7,17 @@ import { InfoHelp } from "@/components/ui/info-help";
 afterEach(cleanup);
 it("switching Catch identity resets competitor entries and known sold weight", () => {
   const view = render(<QuantityPriceComparison key="one" grossPrice={10} quantityUnit="Stk" />);
-  fireEvent.change(screen.getByLabelText("Vergleich: Packpreis inkl. MWST"), {
+  fireEvent.change(screen.getByLabelText("Vergleichspreis pro Packung"), {
     target: { value: "8" },
   });
-  fireEvent.change(screen.getByLabelText("Nettofüllmenge der Packung"), {
+  fireEvent.change(screen.getByLabelText("Gewicht der Vergleichspackung"), {
     target: { value: "500" },
   });
   fireEvent.change(screen.getByLabelText("Nettogewicht pro Verkaufseinheit"), {
     target: { value: "500" },
   });
   view.rerender(<QuantityPriceComparison key="two" grossPrice={12} quantityUnit="Stk" />);
-  expect((screen.getByLabelText("Vergleich: Packpreis inkl. MWST") as HTMLInputElement).value).toBe(
-    "",
-  );
+  expect((screen.getByLabelText("Vergleichspreis pro Packung") as HTMLInputElement).value).toBe("");
   expect(
     (screen.getByLabelText("Nettogewicht pro Verkaufseinheit") as HTMLInputElement).value,
   ).toBe("");
