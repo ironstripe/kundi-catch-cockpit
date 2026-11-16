@@ -46,38 +46,60 @@ function renderSection() {
   );
 }
 
-const title = () =>
-  screen.findByLabelText("Titel mit Teilen-Aufruf") as Promise<HTMLTextAreaElement>;
+const editor = () => screen.findByLabelText("Vorlagentext") as Promise<HTMLTextAreaElement>;
 
 describe("Einstellungen › WhatsApp-Vorlage", () => {
-  it("zeigt den Standardtitel, speichert Änderungen und lädt sie neu", async () => {
+  it("ein Textfeld mit Standardtext; speichert Text, behält Altwerte, lädt neu", async () => {
+    mocks.stored = { hidden_blocks: ["claim"], show_expiry: false, extra: 1 };
     renderSection();
-    expect((await title()).value).toBe(DEFAULT_POST_HEADER);
-    fireEvent.change(await title(), { target: { value: "🐟 *Neu*" } });
-    expect(screen.getByText("Beispielvorschau")).toBeTruthy();
+    const area = await editor();
+    expect(area.value.startsWith(DEFAULT_POST_HEADER)).toBe(true);
+    expect(area.value).toContain("{{catch}}");
+    expect(screen.getAllByRole("textbox")).toHaveLength(1);
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(screen.queryByRole("button", { name: /nach oben|nach unten/ })).toBeNull();
+    expect(screen.queryByText("Beispielvorschau")).toBeNull();
+    fireEvent.change(area, { target: { value: "🐟 *Neu*\nZeile\n\n{{catch}}" } });
     fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
     await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(1));
-    expect(mocks.save.mock.calls[0]![1].header).toBe("🐟 *Neu*");
+    const saved = mocks.save.mock.calls[0]![1];
+    expect(saved.text).toBe("🐟 *Neu*\nZeile\n\n{{catch}}");
+    expect(saved.extra).toBe(1);
     expect(mocks.save.mock.calls[0]![2]).toBe(3);
     cleanup();
     renderSection();
-    expect((await title()).value).toBe("🐟 *Neu*");
+    expect((await editor()).value).toBe("🐟 *Neu*\nZeile\n\n{{catch}}");
+  });
+
+  it("gespeicherte eigene Altformulierung erscheint im Text", async () => {
+    mocks.stored = { header: "Teilt bitte!", intro: "Hallo", claim: "", footer: "Danke" };
+    renderSection();
+    expect((await editor()).value).toBe("Teilt bitte!\n\nHallo\n\n{{catch}}\n\nDanke");
+  });
+
+  it("fehlender Platzhalter wird beim Speichern sichtbar ergänzt", async () => {
+    renderSection();
+    fireEvent.change(await editor(), { target: { value: "Nur Text" } });
+    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(1));
+    expect(mocks.save.mock.calls[0]![1].text).toBe("Nur Text\n\n{{catch}}");
+    await waitFor(async () => expect((await editor()).value).toBe("Nur Text\n\n{{catch}}"));
   });
 
   it("Standard wiederherstellen wirkt nur lokal; Verwerfen stellt Gespeichertes her", async () => {
-    mocks.stored = { header: "Gespeichert" };
+    mocks.stored = { text: "Gespeichert {{catch}}" };
     renderSection();
-    expect((await title()).value).toBe("Gespeichert");
+    expect((await editor()).value).toBe("Gespeichert {{catch}}");
     fireEvent.click(screen.getByRole("button", { name: "Standard wiederherstellen" }));
-    expect((await title()).value).toBe(DEFAULT_POST_HEADER);
+    expect((await editor()).value.startsWith(DEFAULT_POST_HEADER)).toBe(true);
     expect(mocks.save).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Verwerfen" }));
-    expect((await title()).value).toBe("Gespeichert");
+    expect((await editor()).value).toBe("Gespeichert {{catch}}");
   });
 
-  it("ungültiger leerer Titel wird nicht gespeichert", async () => {
+  it("leerer Text wird nicht gespeichert", async () => {
     renderSection();
-    fireEvent.change(await title(), { target: { value: "  " } });
+    fireEvent.change(await editor(), { target: { value: " {{catch}} " } });
     fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
     expect(await screen.findByRole("alert")).toBeTruthy();
     expect(mocks.save).not.toHaveBeenCalled();
@@ -86,7 +108,7 @@ describe("Einstellungen › WhatsApp-Vorlage", () => {
   it("Viewer sieht die Vorlage nur lesend", async () => {
     mocks.isAdmin = false;
     renderSection();
-    expect((await title()).closest("fieldset")?.disabled).toBe(true);
+    expect((await editor()).closest("fieldset")?.disabled).toBe(true);
     expect(screen.queryByRole("button", { name: "Speichern" })).toBeNull();
   });
 
