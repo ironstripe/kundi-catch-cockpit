@@ -6,8 +6,10 @@ import { zurichLocalToIso } from "@/lib/format";
 import { normaliseProductUrl } from "@/lib/product-link";
 import {
   derivePackModel,
+  exactPackColumns,
   legacyColumnsFor,
   readPricingBasis,
+  roundCents,
   salePackLabel,
   weightFromText,
   type MassUnit,
@@ -595,9 +597,11 @@ function basisToForm(basis: PricingBasisV1 | null) {
  * Legacy-Spalten dimensionskonsistent abgeleitet (siehe pricing-basis.ts).
  */
 export function pricingColumns(values: CatchFormValues) {
-  const regular = num(values.regular_price);
-  const catchPrice = num(values.catch_price);
   const basis = formPricingBasis(values);
+  // Im Packungsmodus sind VP/Normalpreis normale CHF-Beträge auf Rappen —
+  // derselbe Wert wie in numeric(12,2), damit Abdruck und Reload stabil sind.
+  const regular = basis ? centsOrNullForm(values.regular_price) : num(values.regular_price);
+  const catchPrice = basis ? centsOrNullForm(values.catch_price) : num(values.catch_price);
   if (!basis) {
     return {
       purchase_quantity: num(values.purchase_quantity) ?? 0,
@@ -620,6 +624,11 @@ export function pricingColumns(values: CatchFormValues) {
     },
   };
   return { ...legacy, regular_price: regular, catch_price: catchPrice, pricing_basis: stored };
+}
+
+function centsOrNullForm(value: string): number | null {
+  const parsed = num(value);
+  return parsed === null ? null : roundCents(parsed);
 }
 
 function num(value: string): number | null {
