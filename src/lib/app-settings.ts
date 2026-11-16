@@ -76,6 +76,51 @@ export interface TemplateSettings {
   footer: string;
   block_order: TemplateBlock[];
   hidden_blocks: TemplateBlock[];
+  /**
+   * Der eine bearbeitbare Vorlagentext. {{catch}} markiert, wo die Catch-Fakten
+   * eingefügt werden. Ältere Vorlagen ohne `text` werden aus Titel, Einleitung,
+   * Claim und Abschluss zusammengesetzt. Die übrigen Felder bleiben nur als
+   * gespeicherte Altwerte erhalten und steuern den Post nicht mehr.
+   */
+  text: string;
+}
+
+/** Platzhalter für die automatisch eingefügten Catch-Fakten. */
+export const CATCH_MARKER = "{{catch}}";
+const MARKER_PATTERN = /\{\{\s*catch\s*\}\}/gi;
+
+/** Enthält der Text den Platzhalter (tolerant für Gross-/Kleinschreibung, Leerzeichen)? */
+export function hasCatchMarker(text: string): boolean {
+  return new RegExp(MARKER_PATTERN.source, "i").test(text);
+}
+
+/**
+ * Text mit genau einem sichtbaren Platzhalter: fehlt er, wird er am Ende
+ * ergänzt; Wiederholungen entfallen. Zeilenumbrüche bleiben sonst unverändert.
+ */
+export function ensureCatchMarker(text: string): string {
+  let seen = false;
+  const single = text.replace(MARKER_PATTERN, () => {
+    if (seen) return "";
+    seen = true;
+    return CATCH_MARKER;
+  });
+  if (seen) return single.replace(/\n{3,}/g, "\n\n");
+  const base = single.replace(/\s+$/, "");
+  return base === "" ? CATCH_MARKER : `${base}\n\n${CATCH_MARKER}`;
+}
+
+/** Text aus den früheren Einzelfeldern (feste Reihenfolge). */
+export function legacyTemplateText(parts: {
+  header: string;
+  intro: string;
+  claim: string;
+  footer: string;
+}): string {
+  const clean = (v: string) => v.trim();
+  return [clean(parts.header), clean(parts.intro), clean(parts.claim), CATCH_MARKER, clean(parts.footer)]
+    .filter((part) => part !== "")
+    .join("\n\n");
 }
 
 export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
@@ -91,7 +136,15 @@ export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   footer: "*Gut essen. Food Waste vermeiden.*",
   block_order: [...TEMPLATE_BLOCKS],
   hidden_blocks: [],
+  text: legacyTemplateText({
+    header: DEFAULT_POST_HEADER,
+    intro: "",
+    claim: "*Guter Fisch. Kleines Handicap. Grosser Fang.*",
+    footer: "*Gut essen. Food Waste vermeiden.*",
+  }),
 };
+
+export const TEMPLATE_TEXT_MAX = 4000;
 
 export const TEMPLATE_TEXT_LIMITS = {
   header: 300,
@@ -136,6 +189,15 @@ export function normalizeTemplate(value: unknown): TemplateSettings {
       )
     : [];
   for (const field of d.detail_order) if (!details.includes(field)) details.push(field);
+  const text =
+    typeof raw["text"] === "string"
+      ? (raw["text"] as string)
+      : legacyTemplateText({
+          header: str("header"),
+          intro: str("intro"),
+          claim: str("claim"),
+          footer: str("footer"),
+        });
   return {
     ...raw,
     detail_order: details,
@@ -150,6 +212,7 @@ export function normalizeTemplate(value: unknown): TemplateSettings {
     footer: str("footer"),
     block_order: blocks,
     hidden_blocks: hidden,
+    text: ensureCatchMarker(text),
   };
 }
 
@@ -162,7 +225,17 @@ const TEMPLATE_FIELD_LABELS: Record<keyof typeof TEMPLATE_TEXT_LIMITS, string> =
   available_from_label: "Bezeichnung Verfügbar ab",
 };
 
-/** Deutsche Fehlermeldung oder null. */
+/** Deutsche Fehlermeldung oder null (einfacher Vorlagentext). */
+export function validateTemplateText(text: string): string | null {
+  if (text.length > TEMPLATE_TEXT_MAX)
+    return `Der Vorlagentext darf höchstens ${TEMPLATE_TEXT_MAX} Zeichen haben.`;
+  if (/<\/?[a-z][^>]*>/i.test(text))
+    return "HTML wird nicht unterstützt — bitte nur WhatsApp-Formatierung verwenden.";
+  if (text.replace(MARKER_PATTERN, "").trim() === "") return "Bitte einen Vorlagentext erfassen.";
+  return null;
+}
+
+/** Deutsche Fehlermeldung oder null (frühere Einzelfelder). */
 export function validateTemplate(values: TemplateSettings): string | null {
   for (const [key, limit] of Object.entries(TEMPLATE_TEXT_LIMITS) as [
     keyof typeof TEMPLATE_TEXT_LIMITS,
