@@ -86,9 +86,15 @@ describe("Preisbasis-Wechsel", () => {
     });
     expect(screen.queryByRole("combobox", { name: "Vergleichsbasis" })).toBeNull();
     expect(screen.queryByLabelText("Nettogewicht pro Verkaufseinheit")).toBeNull();
-    expect(screen.getByRole("combobox", { name: "Gewichtseinheit der Vergleichspackung" })).toBeTruthy();
-    fireEvent.change(screen.getByLabelText("Vergleichspreis pro Packung"), { target: { value: "40" } });
-    fireEvent.change(screen.getByLabelText("Gewicht der Vergleichspackung"), { target: { value: "2500" } });
+    expect(
+      screen.getByRole("combobox", { name: "Gewichtseinheit der Vergleichspackung" }),
+    ).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Vergleichspreis pro Packung"), {
+      target: { value: "40" },
+    });
+    fireEvent.change(screen.getByLabelText("Gewicht der Vergleichspackung"), {
+      target: { value: "2500" },
+    });
     expect(price("regular_price").value).toBe("30");
     expect(price("catch_price").value).toBe("20");
     expect(mocks.save).not.toHaveBeenCalled();

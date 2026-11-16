@@ -17,9 +17,7 @@ it("switching Catch identity resets competitor entries and known sold weight", (
     target: { value: "500" },
   });
   view.rerender(<QuantityPriceComparison key="two" grossPrice={12} quantityUnit="Stk" />);
-  expect((screen.getByLabelText("Vergleichspreis pro Packung") as HTMLInputElement).value).toBe(
-    "",
-  );
+  expect((screen.getByLabelText("Vergleichspreis pro Packung") as HTMLInputElement).value).toBe("");
   expect(
     (screen.getByLabelText("Nettogewicht pro Verkaufseinheit") as HTMLInputElement).value,
   ).toBe("");
