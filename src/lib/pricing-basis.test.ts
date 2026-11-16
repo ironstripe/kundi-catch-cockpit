@@ -380,7 +380,8 @@ describe("Round-trip durch numeric(12,2) (PGlite)", () => {
     expect(v.net_investment).toBeCloseTo(134, 9);
     expect(v.maximum_gross_revenue).toBeCloseTo(66 * 3.33, 9);
     const r = reconcileCatch({ ...catchToReconciliationInput(item), remaining_quantity: 0 });
-    expect(r.values?.net_investment ?? r.net_investment).toBeCloseTo(134, 9);
+    expect(r.values!.total_investment).toBeCloseTo(134, 9);
+    expect(r.values!.sold_quantity).toBe(66);
     expect(catchDetailToForm(item).catch_price).toBe("3.33");
     const text = generatePostText(catchToPostSource({ ...item, locations: [] }));
     expect(text).toContain("CHF 3.33 pro 300-g-Packung");
