@@ -520,8 +520,8 @@ export function CatchForm({
                   <ToggleGroupItem value="unit">Gemeinsame Einheit</ToggleGroupItem>
                   <ToggleGroupItem value="pack">Einkauf und Verkauf getrennt</ToggleGroupItem>
                 </ToggleGroup>
-                {pricesNeedReentry ? (
-                  <p role="status" className="mt-2 text-sm text-warning-foreground">
+                {pricesNeedReentry && values.catch_price === "" ? (
+                  <p role="status" className="mt-2 text-sm font-medium text-foreground">
                     Preisbasis gewechselt: Food-Catch-Preis und Normalpreis bitte neu{" "}
                     {packMode ? "pro Verkaufspackung" : "pro Einheit"} erfassen.
                   </p>
