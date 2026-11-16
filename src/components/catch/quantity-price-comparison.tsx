@@ -15,9 +15,12 @@ import { compareQuantityPrice, type DisplayBasis, type MassUnit } from "@/lib/qu
 export function QuantityPriceComparison({
   grossPrice,
   quantityUnit,
+  salePackKg = null,
 }: {
   grossPrice: number | null;
   quantityUnit: string;
+  /** Packungsmodus: bekanntes Nettogewicht der Verkaufspackung in kg. */
+  salePackKg?: number | null;
 }) {
   const id = useId();
   const [basis, setBasis] = useState<DisplayBasis>("kg");
@@ -26,9 +29,11 @@ export function QuantityPriceComparison({
   const [packWeightUnit, setPackWeightUnit] = useState<MassUnit>("g");
   const [soldUnitWeight, setSoldUnitWeight] = useState("");
   const [soldUnitWeightUnit, setSoldUnitWeightUnit] = useState<MassUnit>("g");
+  const packMode = salePackKg !== null;
   const result = compareQuantityPrice({
     grossPrice,
     quantityUnit,
+    knownSoldUnitKg: salePackKg,
     basis,
     packPrice,
     packWeight,
@@ -58,7 +63,7 @@ export function QuantityPriceComparison({
           </SelectContent>
         </Select>
       </div>
-      {quantityUnit !== "kg" ? (
+      {quantityUnit !== "kg" && !packMode ? (
         <div className="grid grid-cols-[minmax(0,1fr)_5rem] items-end gap-2">
           <div>
             <Label htmlFor={`${id}-sold`}>Bekanntes Nettogewicht pro {quantityUnit}</Label>

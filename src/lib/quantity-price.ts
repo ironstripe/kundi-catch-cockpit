@@ -24,6 +24,7 @@ export function compareQuantityPrice({
   packWeight,
   packWeightUnit,
   basis,
+  knownSoldUnitKg = null,
 }: {
   grossPrice: number | null;
   quantityUnit: string;
@@ -33,8 +34,17 @@ export function compareQuantityPrice({
   packWeight: string;
   packWeightUnit: MassUnit;
   basis: DisplayBasis;
+  /** Packungsmodus: gespeichertes Nettogewicht der Verkaufspackung (kg). */
+  knownSoldUnitKg?: number | null;
 }) {
-  const ourWeight = quantityUnit === "kg" ? 1 : weightKg(soldUnitWeight, soldUnitWeightUnit);
+  const ourWeight =
+    knownSoldUnitKg !== null
+      ? positive(knownSoldUnitKg)
+        ? knownSoldUnitKg
+        : null
+      : quantityUnit === "kg"
+        ? 1
+        : weightKg(soldUnitWeight, soldUnitWeightUnit);
   const competitorWeight = weightKg(packWeight, packWeightUnit);
   const competitorPrice = parseNumberInput(packPrice);
   const factor = basis === "100g" ? 0.1 : 1;

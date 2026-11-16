@@ -5,6 +5,16 @@ import { ACTIVE_STATUSES, type CatchStatus, type Temperature } from "@/lib/catch
 import { zurichLocalToIso } from "@/lib/format";
 import { normaliseProductUrl } from "@/lib/product-link";
 import {
+  derivePackModel,
+  legacyColumnsFor,
+  readPricingBasis,
+  salePackLabel,
+  weightFromText,
+  type MassUnit,
+  type PricingBasisV1,
+  type PurchaseBasis,
+} from "@/lib/pricing-basis";
+import {
   DEFAULT_DELIVERY_VAT_RATE,
   DEFAULT_PURCHASE_VAT_RATE,
   DEFAULT_VAT_RATE,
@@ -51,6 +61,18 @@ export interface CatchFormValues {
   online_shop_url: string;
   /** Interner Aufwand in CHF pro vorbereiteter Einheit; leer = nicht erfasst. */
   internal_handling_cost_per_unit: string;
+  /** "unit" = bisherige gemeinsame Einheit, "pack" = getrennte Einkaufs-/Verkaufsbasis. */
+  pricing_mode: "unit" | "pack";
+  purchase_basis: PurchaseBasis;
+  /** Einkaufspreis pro 100 g / kg / Einkaufspackung (Packungsmodus). */
+  purchase_rate: string;
+  purchase_total_weight: string;
+  purchase_total_weight_unit: MassUnit;
+  purchase_pack_count: string;
+  purchase_pack_weight: string;
+  purchase_pack_weight_unit: MassUnit;
+  sale_pack_weight: string;
+  sale_pack_weight_unit: MassUnit;
 }
 
 /** Abholort mit vollständigen Stammdaten. */
@@ -90,7 +112,45 @@ export const EMPTY_CATCH_FORM: CatchFormValues = {
   internal_note: "",
   online_shop_url: "",
   internal_handling_cost_per_unit: "",
+  pricing_mode: "unit",
+  purchase_basis: "per_kg",
+  purchase_rate: "",
+  purchase_total_weight: "",
+  purchase_total_weight_unit: "kg",
+  purchase_pack_count: "",
+  purchase_pack_weight: "",
+  purchase_pack_weight_unit: "kg",
+  sale_pack_weight: "",
+  sale_pack_weight_unit: "kg",
 };
+
+/** Formular -> Packungsbasis (ohne Fingerabdruck); null im gemeinsamen Einheitenmodus. */
+export function formPricingBasis(values: CatchFormValues) {
+  if (values.pricing_mode !== "pack") return null;
+  const count = values.purchase_pack_count.trim();
+  return {
+    purchase_basis: values.purchase_basis,
+    purchase_rate:
+      values.purchase_rate.trim() === "" ? null : (num(values.purchase_rate) ?? Number.NaN),
+    purchase_total_weight:
+      values.purchase_basis === "per_pack"
+        ? null
+        : weightFromText(values.purchase_total_weight, values.purchase_total_weight_unit),
+    purchase_pack_count:
+      values.purchase_basis === "per_pack" && count !== "" ? (num(count) ?? Number.NaN) : null,
+    purchase_pack_weight:
+      values.purchase_basis === "per_pack"
+        ? weightFromText(values.purchase_pack_weight, values.purchase_pack_weight_unit)
+        : null,
+    sale_pack_weight: weightFromText(values.sale_pack_weight, values.sale_pack_weight_unit),
+  };
+}
+
+/** Packungsmodell aus dem Formular (null im Einheitenmodus). */
+export function formPackModel(values: CatchFormValues) {
+  const basis = formPricingBasis(values);
+  return basis ? derivePackModel(basis) : null;
+}
 
 /**
  * Setzt den globalen Standardwert für den internen Aufwand als Ausgangswert ein.
@@ -150,6 +210,10 @@ export interface CatchListItem {
   online_shop_url: string | null;
   /** Interner Aufwand pro vorbereiteter Einheit in CHF; null = nicht erfasst. */
   internal_handling_cost_per_unit: number | null;
+  /** Getrennte Einkaufs-/Verkaufsbasis; null = bisherige gemeinsame Einheit. */
+  pricing_basis?: PricingBasisV1 | null;
+  /** Packungsmodus: im Abschluss fixierte vorbereitete Packungen. */
+  prepared_quantity?: number | null;
   supplier_id: string | null;
   supplier_name: string | null;
   published_at: string | null;
@@ -213,7 +277,7 @@ const LIST_SELECT = `
   published_at, published_text, published_image_path,
   supplier_id, remaining_quantity, inventory_counted_at, learning,
   closed_at, cancelled_at, cancellation_reason, online_shop_url,
-  internal_handling_cost_per_unit,
+  internal_handling_cost_per_unit, pricing_basis, reconciliation_snapshot,
   suppliers ( id, name ),
   catch_images ( id, storage_path, is_primary, sort_order ),
   catch_locations ( location_id, locations ( id, name, address, pickup_note ) )
@@ -238,7 +302,7 @@ const DETAIL_SELECT = `
   closed_at, closed_by, reopened_at, reopened_by, reopen_reason,
   cancelled_at, cancelled_by, cancellation_reason,
   reconciliation_snapshot, online_shop_url,
-  internal_handling_cost_per_unit,
+  internal_handling_cost_per_unit, pricing_basis,
   suppliers ( id, name ),
   catch_images ( storage_path, is_primary, sort_order ),
   catch_locations ( location_id, locations ( id, name, address, pickup_note ) )
@@ -323,6 +387,17 @@ function mapList(row: any): CatchListItem {
       row.internal_handling_cost_per_unit === undefined
         ? null
         : Number(row.internal_handling_cost_per_unit),
+    pricing_basis: readPricingBasis(row.pricing_basis, {
+      quantity_unit: row.quantity_unit,
+      purchase_quantity: Number(row.purchase_quantity ?? 0),
+      purchase_price: row.purchase_price === null ? null : Number(row.purchase_price),
+      catch_price: row.catch_price === null ? null : Number(row.catch_price),
+      regular_price: row.regular_price === null ? null : Number(row.regular_price),
+    }),
+    prepared_quantity:
+      typeof row.reconciliation_snapshot?.prepared_quantity === "number"
+        ? row.reconciliation_snapshot.prepared_quantity
+        : null,
   };
 }
 
@@ -469,7 +544,82 @@ export function catchDetailToForm(detail: CatchDetail): CatchFormValues {
       detail.internal_handling_cost_per_unit === null
         ? ""
         : detail.internal_handling_cost_per_unit.toFixed(2),
+    ...basisToForm(detail.pricing_basis ?? null),
   };
+}
+
+function basisToForm(basis: PricingBasisV1 | null) {
+  if (!basis) {
+    const {
+      pricing_mode,
+      purchase_basis,
+      purchase_rate,
+      purchase_total_weight,
+      purchase_total_weight_unit,
+      purchase_pack_count,
+      purchase_pack_weight,
+      purchase_pack_weight_unit,
+      sale_pack_weight,
+      sale_pack_weight_unit,
+    } = EMPTY_CATCH_FORM;
+    return {
+      pricing_mode,
+      purchase_basis,
+      purchase_rate,
+      purchase_total_weight,
+      purchase_total_weight_unit,
+      purchase_pack_count,
+      purchase_pack_weight,
+      purchase_pack_weight_unit,
+      sale_pack_weight,
+      sale_pack_weight_unit,
+    };
+  }
+  const text = (v: number | null | undefined) => (v === null || v === undefined ? "" : String(v));
+  return {
+    pricing_mode: "pack" as const,
+    purchase_basis: basis.purchase_basis,
+    purchase_rate: text(basis.purchase_rate),
+    purchase_total_weight: text(basis.purchase_total_weight?.value),
+    purchase_total_weight_unit: basis.purchase_total_weight?.unit ?? "kg",
+    purchase_pack_count: text(basis.purchase_pack_count),
+    purchase_pack_weight: text(basis.purchase_pack_weight?.value),
+    purchase_pack_weight_unit: basis.purchase_pack_weight?.unit ?? "kg",
+    sale_pack_weight: text(basis.sale_pack_weight?.value),
+    sale_pack_weight_unit: basis.sale_pack_weight?.unit ?? "kg",
+  };
+}
+
+/**
+ * Spaltenwerte für Menge/Preis/Basis. Im Packungsmodus werden die
+ * Legacy-Spalten dimensionskonsistent abgeleitet (siehe pricing-basis.ts).
+ */
+export function pricingColumns(values: CatchFormValues) {
+  const regular = num(values.regular_price);
+  const catchPrice = num(values.catch_price);
+  const basis = formPricingBasis(values);
+  if (!basis) {
+    return {
+      purchase_quantity: num(values.purchase_quantity) ?? 0,
+      quantity_unit: values.quantity_unit,
+      purchase_price: num(values.purchase_price),
+      regular_price: regular,
+      catch_price: catchPrice,
+      pricing_basis: null as PricingBasisV1 | null,
+    };
+  }
+  const legacy = legacyColumnsFor(derivePackModel(basis).model);
+  const stored: PricingBasisV1 = {
+    version: 1,
+    ...basis,
+    legacy: {
+      purchase_quantity: legacy.purchase_quantity,
+      purchase_price: legacy.purchase_price,
+      catch_price: catchPrice,
+      regular_price: regular,
+    },
+  };
+  return { ...legacy, regular_price: regular, catch_price: catchPrice, pricing_basis: stored };
 }
 
 function num(value: string): number | null {
@@ -500,9 +650,7 @@ export async function saveCatch({ id, values, status, audit }: SaveArgs): Promis
     packaging: values.packaging.trim() || null,
     expiry_date: values.expiry_date || null,
     supplier_id: values.supplier_id || null,
-    purchase_quantity: num(values.purchase_quantity) ?? 0,
-    quantity_unit: values.quantity_unit,
-    purchase_price: num(values.purchase_price),
+    ...pricingColumns(values),
     purchase_price_includes_vat: values.purchase_price_includes_vat,
     purchase_vat_rate: parseVatRate(values.purchase_vat_rate) ?? DEFAULT_PURCHASE_VAT_RATE,
     delivery_cost: values.delivery_included ? 0 : (num(values.delivery_cost) ?? 0),
@@ -511,8 +659,6 @@ export async function saveCatch({ id, values, status, audit }: SaveArgs): Promis
       ? false
       : values.delivery_cost_includes_vat,
     delivery_vat_rate: parseVatRate(values.delivery_vat_rate) ?? DEFAULT_DELIVERY_VAT_RATE,
-    regular_price: num(values.regular_price),
-    catch_price: num(values.catch_price),
     vat_rate: parseVatRate(values.vat_rate),
     vat_basis_confirmed: values.vat_basis_confirmed,
     available_from: values.available_from ? zurichLocalToIso(values.available_from) : null,
@@ -528,12 +674,15 @@ export async function saveCatch({ id, values, status, audit }: SaveArgs): Promis
   let catchId = id;
 
   if (catchId) {
-    const { error } = await supabase.from("catches").update(payload).eq("id", catchId);
+    const { error } = await supabase
+      .from("catches")
+      .update(payload as never)
+      .eq("id", catchId);
     if (error) throw error;
   } else {
     const { data, error } = await supabase
       .from("catches")
-      .insert({ ...payload, created_by: userId })
+      .insert({ ...payload, created_by: userId } as never)
       .select("id")
       .single();
     if (error) throw error;
@@ -633,6 +782,8 @@ export function catchToReconciliationInput(
     remaining_quantity: item.remaining_quantity,
     published_at: item.published_at,
     inventory_counted_at: item.inventory_counted_at,
+    pack: packContext(item.pricing_basis ?? null),
+    prepared_quantity: item.prepared_quantity ?? null,
   };
 }
 
@@ -643,7 +794,7 @@ export function catchToCalculationInput(
 ): CalculationInput {
   return {
     purchase_quantity: item.purchase_quantity || null,
-    quantity_unit: item.quantity_unit,
+    quantity_unit: displayUnit(item),
     purchase_price: item.purchase_price,
     delivery_cost: item.delivery_included ? 0 : item.delivery_cost,
     regular_price: item.regular_price,
@@ -662,10 +813,17 @@ export function formValuesToCalculationInput(
   values: CatchFormValues,
   defaultVatRate: number = DEFAULT_VAT_RATE,
 ): CalculationInput {
+  const pack = formPackModel(values);
   return {
-    purchase_quantity: parseNumberInput(values.purchase_quantity),
-    quantity_unit: values.quantity_unit,
-    purchase_price: parseNumberInput(values.purchase_price),
+    purchase_quantity: pack
+      ? (pack.model?.capacity ?? null)
+      : parseNumberInput(values.purchase_quantity),
+    quantity_unit: pack
+      ? (salePackLabel(formPricingBasis(values) as PricingBasisV1) ?? "Verkaufspackung")
+      : values.quantity_unit,
+    purchase_price: pack
+      ? (pack.model?.purchase_price_per_sale_pack ?? null)
+      : parseNumberInput(values.purchase_price),
     delivery_cost: values.delivery_included ? 0 : parseNumberInput(values.delivery_cost),
     regular_price: parseNumberInput(values.regular_price),
     catch_price: parseNumberInput(values.catch_price),
@@ -676,4 +834,23 @@ export function formValuesToCalculationInput(
     delivery_vat_rate: parseVatRate(values.delivery_vat_rate),
     internal_handling_cost_per_unit: parseNumberInput(values.internal_handling_cost_per_unit),
   };
+}
+
+/** Massenangaben fürs Nachkalkulieren im Packungsmodus; null sonst. */
+export function packContext(basis: PricingBasisV1 | null) {
+  if (!basis) return null;
+  const model = derivePackModel(basis).model;
+  return model
+    ? {
+        total_kg: model.total_kg,
+        sale_pack_kg: model.sale_pack_kg,
+        sale_pack_mg: model.sale_pack_mg,
+        total_mg: model.total_mg,
+      }
+    : null;
+}
+
+/** Anzeigeeinheit: Verkaufspackung im Packungsmodus, sonst die gespeicherte Einheit. */
+export function displayUnit(item: Pick<CatchListItem, "quantity_unit" | "pricing_basis">): string {
+  return salePackLabel(item.pricing_basis ?? null) ?? item.quantity_unit;
 }

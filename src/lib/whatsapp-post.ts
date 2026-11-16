@@ -38,6 +38,8 @@ export interface PostSource {
   regular_price: number | null;
   catch_price: number | null;
   quantity_unit: string;
+  /** Packungsmodus: Verkaufspackung, z. B. «2.5-kg-Packung»; sonst leer. */
+  sale_unit_label?: string | null;
   locations: PostLocation[];
   available_from: string | null;
   available_until: string | null;
@@ -55,7 +57,8 @@ export function unitLabel(unit: string): string {
 }
 
 /** Preis im Postformat: "CHF 7.90/kg" (immer zwei Nachkommastellen). */
-export function postPrice(value: number, unit: string): string {
+export function postPrice(value: number, unit: string, saleUnitLabel?: string | null): string {
+  if (saleUnitLabel) return `CHF ${value.toFixed(2)} pro ${saleUnitLabel}`;
   return `CHF ${value.toFixed(2)}/${unitLabel(unit)}`;
 }
 
@@ -190,12 +193,12 @@ export function generatePostText(
       const hasComparison = regular !== null && Number.isFinite(regular) && regular > catchPrice;
       if (hasComparison) {
         const discount = ((regular - catchPrice) / regular) * 100;
-        const priceLine = `~${postPrice(regular, source.quantity_unit)}~ → *${postPrice(catchPrice, source.quantity_unit)}* 🔥`;
+        const priceLine = `~${postPrice(regular, source.quantity_unit, source.sale_unit_label)}~ → *${postPrice(catchPrice, source.quantity_unit, source.sale_unit_label)}* 🔥`;
         return t.show_discount && discount > 0
           ? `${priceLine}\n${postPercent(discount)} günstiger\n${VAT_NOTE}`
           : `${priceLine}\n${VAT_NOTE}`;
       }
-      return `*FOOD CATCH ${postPrice(catchPrice, source.quantity_unit)}* 🔥\n${VAT_NOTE}`;
+      return `*FOOD CATCH ${postPrice(catchPrice, source.quantity_unit, source.sale_unit_label)}* 🔥\n${VAT_NOTE}`;
     },
     stock: () => {
       const stockLines: string[] = [];
@@ -297,6 +300,8 @@ export function postSourceSignature(
     clean(source.handicap_story),
     source.image_path,
     clean(source.online_shop_url),
+    // Nur im Packungsmodus — bestehende Signaturen bleiben unverändert.
+    ...(source.sale_unit_label ? [["sale_unit", source.sale_unit_label]] : []),
     templateSignatureTag(template),
   ]);
 }

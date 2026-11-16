@@ -4,6 +4,8 @@
  * (`calculateCatch`, `reconcileCatch`) — keine separaten Tabellenformeln.
  */
 
+import { packContext } from "@/lib/catches";
+import { readPricingBasis, salePackLabel } from "@/lib/pricing-basis";
 import { supabase } from "@/integrations/supabase/client";
 import { CATCH_STATUS_LABELS, TEMPERATURE_LABELS, type CatchStatus } from "@/lib/catch-domain";
 import { calculateCatch } from "@/lib/catch-calculation";
@@ -57,7 +59,7 @@ const CATCH_SELECT = `
   purchase_price_includes_vat, purchase_vat_rate, delivery_cost_includes_vat,
   delivery_vat_rate, vat_basis_confirmed, available_from, available_until,
   handicap_story, published_at, closed_at, remaining_quantity, inventory_counted_at,
-  learning, created_at, updated_at,
+  learning, created_at, updated_at, pricing_basis, reconciliation_snapshot,
   suppliers ( name ),
   online_shop_url,
   catch_locations ( locations ( name, address, pickup_note ) )
@@ -74,9 +76,17 @@ async function loadCatchRows() {
 }
 
 function catchRow(row: any) {
+  const basis = readPricingBasis(row.pricing_basis, {
+    quantity_unit: row.quantity_unit ?? "kg",
+    purchase_quantity: Number(row.purchase_quantity ?? 0),
+    purchase_price: row.purchase_price === null ? null : Number(row.purchase_price),
+    catch_price: row.catch_price === null ? null : Number(row.catch_price),
+    regular_price: row.regular_price === null ? null : Number(row.regular_price),
+  });
+  const unitLabel = salePackLabel(basis) ?? row.quantity_unit ?? "kg";
   const input = {
     purchase_quantity: Number(row.purchase_quantity ?? 0),
-    quantity_unit: row.quantity_unit ?? "kg",
+    quantity_unit: unitLabel,
     purchase_price: row.purchase_price ?? null,
     delivery_cost: Number(row.delivery_cost ?? 0),
     delivery_included: Boolean(row.delivery_included),
@@ -100,6 +110,11 @@ function catchRow(row: any) {
     remaining_quantity: row.remaining_quantity ?? null,
     published_at: row.published_at ?? null,
     inventory_counted_at: row.inventory_counted_at ?? null,
+    pack: packContext(basis),
+    prepared_quantity:
+      typeof row.reconciliation_snapshot?.prepared_quantity === "number"
+        ? row.reconciliation_snapshot.prepared_quantity
+        : null,
   });
   const values = reconciliation.values;
   const locationRecords = (row.catch_locations ?? [])
@@ -129,7 +144,7 @@ function catchRow(row: any) {
     expiry_date: toDate(row.expiry_date),
     supplier: row.suppliers?.name ?? "",
     purchase_quantity: Number(row.purchase_quantity ?? 0),
-    quantity_unit: row.quantity_unit ?? "",
+    quantity_unit: unitLabel,
     purchase_price: row.purchase_price ?? null,
     delivery_cost: Number(row.delivery_cost ?? 0),
     regular_price: row.regular_price ?? null,

@@ -24,7 +24,13 @@ import { parseNumberInput } from "@/lib/catch-calculation";
 import { cancelCatch, closeCatch } from "@/lib/catch-lifecycle";
 import { reconcileCatch, isIntegerUnit } from "@/lib/catch-reconciliation";
 import { pickupSummary } from "@/lib/pickup-display";
-import { catchToCalculationInput, type CatchDetail } from "@/lib/catches";
+import {
+  catchToReconciliationInput,
+  displayUnit,
+  packContext,
+  type CatchDetail,
+} from "@/lib/catches";
+import { formatWeight } from "@/lib/pricing-basis";
 import {
   formatCurrency,
   formatDateTime,
@@ -57,6 +63,11 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
   const [countedAt, setCountedAt] = useState(
     isoToZurichLocal(item.inventory_counted_at ?? new Date().toISOString()),
   );
+  const packMode = Boolean(item.pricing_basis);
+  const unit = displayUnit(item);
+  const [prepared, setPrepared] = useState(
+    packMode ? String(item.prepared_quantity ?? item.purchase_quantity) : "",
+  );
   const [learning, setLearning] = useState(item.learning ?? "");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -64,20 +75,24 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
   const [touched, setTouched] = useState(false);
 
   const remainingValue = parseNumberInput(remaining);
+  const preparedValue = packMode ? parseNumberInput(prepared) : null;
+  const preparedInvalid = packMode && prepared.trim() !== "" && preparedValue === null;
   const countedIso = countedAt ? zurichLocalToIso(countedAt) : null;
 
   const result = useMemo(
     () =>
       reconcileCatch({
-        ...catchToCalculationInput(item),
+        ...catchToReconciliationInput(item),
+        pack: packContext(item.pricing_basis ?? null),
+        prepared_quantity: packMode ? (preparedValue ?? Number.NaN) : null,
         remaining_quantity: remainingValue,
         published_at: item.published_at,
         inventory_counted_at: countedIso,
       }),
-    [item, remainingValue, countedIso],
+    [item, remainingValue, countedIso, packMode, preparedValue],
   );
 
-  const step = isIntegerUnit(item.quantity_unit) ? "1" : "0.01";
+  const step = isIntegerUnit(unit) ? "1" : "0.01";
 
   const close = useMutation({
     mutationFn: async () => {
@@ -87,6 +102,7 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
         remainingQuantity: result.values.remaining_quantity,
         inventoryCountedAt: countedIso ?? new Date().toISOString(),
         learning,
+        preparedQuantity: packMode ? result.values.prepared_quantity : null,
         result: {
           sold_quantity: result.values.sold_quantity,
           sell_through_percentage: result.values.sell_through_percentage,
@@ -121,7 +137,7 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
     },
   });
 
-  const canClose = result.complete && countedIso !== null;
+  const canClose = result.complete && countedIso !== null && !preparedInvalid;
   const v = result.values;
 
   return (
@@ -130,7 +146,9 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
         <CardHeader>
           <CardTitle className="text-section-title">Nachkalkulation erfassen</CardTitle>
           <CardDescription className="text-xs">
-            Die verkaufte Menge ergibt sich aus Einkaufsmenge minus effektiver Restmenge.
+            {packMode
+              ? "Verkauft = vorbereitete Packungen minus unverkaufte Packungen."
+              : "Die verkaufte Menge ergibt sich aus Einkaufsmenge minus effektiver Restmenge."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -143,10 +161,14 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
             <SourceRow label="Produktart" value={item.temperature === "frozen" ? "TK" : "Frisch"} />
             <SourceRow
               label="Einkaufsmenge"
-              value={formatQuantity(item.purchase_quantity, item.quantity_unit)}
+              value={
+                packMode && v
+                  ? `${formatQuantity(item.purchase_quantity, unit)} möglich`
+                  : formatQuantity(item.purchase_quantity, unit)
+              }
             />
             <SourceRow
-              label="Einkaufspreis pro Einheit"
+              label={packMode ? "Einkaufsbetrag pro Verkaufspackung" : "Einkaufspreis pro Einheit"}
               value={item.purchase_price === null ? "—" : formatCurrency(item.purchase_price)}
             />
             <SourceRow
@@ -160,9 +182,7 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
             <SourceRow
               label="Food-Catch-Preis"
               value={
-                item.catch_price === null
-                  ? "—"
-                  : `${formatCurrency(item.catch_price)} / ${item.quantity_unit}`
+                item.catch_price === null ? "—" : `${formatCurrency(item.catch_price)} / ${unit}`
               }
             />
             <SourceRow
@@ -176,8 +196,36 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
             <SourceRow label="Abholorte" value={pickupSummary(item.locations) ?? "—"} />
           </div>
 
+          {packMode ? (
+            <div className="space-y-1.5">
+              <Label htmlFor="prepared-quantity">Vorbereitete Packungen</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="prepared-quantity"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={item.purchase_quantity}
+                  step="1"
+                  value={prepared}
+                  onChange={(event) => {
+                    setPrepared(event.target.value);
+                    setTouched(true);
+                  }}
+                />
+                <span className="text-sm text-muted-foreground">× {unit}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Standard: volle Kapazität ({item.purchase_quantity}). Interner Aufwand gilt pro
+                vorbereitete Packung.
+              </p>
+            </div>
+          ) : null}
+
           <div className="space-y-1.5">
-            <Label htmlFor="remaining-quantity">Effektive Restmenge</Label>
+            <Label htmlFor="remaining-quantity">
+              {packMode ? "Unverkaufte Packungen" : "Effektive Restmenge"}
+            </Label>
             <div className="flex items-center gap-2">
               <Input
                 id="remaining-quantity"
@@ -194,7 +242,7 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
                 aria-invalid={touched && result.errors.length > 0}
                 aria-describedby="remaining-help"
               />
-              <span className="text-sm text-muted-foreground">{item.quantity_unit}</span>
+              <span className="text-sm text-muted-foreground">{unit}</span>
             </div>
             <p id="remaining-help" className="text-xs text-muted-foreground">
               Restbestand nach Abschluss der Aktion und vor Umlagerung, interner Verwendung oder
@@ -278,10 +326,22 @@ export function ReconciliationWorkspace({ item, onChanged }: Props) {
                 label="Restmenge"
                 value={formatQuantity(v.remaining_quantity, v.quantity_unit)}
               />
+              {packMode ? (
+                <SourceRow
+                  label="Vorbereitete Packungen"
+                  value={formatQuantity(v.prepared_quantity, v.quantity_unit)}
+                />
+              ) : null}
               <SourceRow
                 label="Verkaufte Menge"
                 value={formatQuantity(v.sold_quantity, v.quantity_unit)}
               />
+              {v.unallocated_kg !== null ? (
+                <SourceRow
+                  label="Nicht verpacktes Rohgewicht"
+                  value={formatWeight(v.unallocated_kg)}
+                />
+              ) : null}
               <SourceRow
                 label="Abverkaufsquote"
                 value={

@@ -412,6 +412,7 @@ export type Database = {
           post_generated_text: string | null
           post_outdated_decision: string | null
           post_source_signature: string | null
+          pricing_basis: Json | null
           product_name: string
           published_at: string | null
           published_by: string | null
@@ -491,6 +492,7 @@ export type Database = {
           post_generated_text?: string | null
           post_outdated_decision?: string | null
           post_source_signature?: string | null
+          pricing_basis?: Json | null
           product_name: string
           published_at?: string | null
           published_by?: string | null
@@ -570,6 +572,7 @@ export type Database = {
           post_generated_text?: string | null
           post_outdated_decision?: string | null
           post_source_signature?: string | null
+          pricing_basis?: Json | null
           product_name?: string
           published_at?: string | null
           published_by?: string | null

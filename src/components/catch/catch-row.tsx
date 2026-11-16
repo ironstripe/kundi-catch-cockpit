@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 import { CatchStatusBadge, TemperatureBadge } from "@/components/catch/status-badge";
 import { Button } from "@/components/ui/button";
 import { calculateCatch } from "@/lib/catch-calculation";
-import { catchToCalculationInput, type CatchListItem } from "@/lib/catches";
+import { catchToCalculationInput, displayUnit, type CatchListItem } from "@/lib/catches";
 import { formatCurrency, formatPercentValue, formatQuantity } from "@/lib/format";
 import { netCost, resolveVatRate, DEFAULT_PURCHASE_VAT_RATE } from "@/lib/vat";
 
@@ -44,20 +44,20 @@ export function CatchRow({ item }: { item: CatchListItem }) {
         label="Einkaufsmenge"
         value={
           item.purchase_quantity > 0
-            ? formatQuantity(item.purchase_quantity, item.quantity_unit)
+            ? formatQuantity(item.purchase_quantity, displayUnit(item))
             : "—"
         }
       />
       <Value
         label="EK netto"
-        value={ek === null ? "—" : `${formatCurrency(ek)} / ${item.quantity_unit}`}
+        value={ek === null ? "—" : `${formatCurrency(ek)} / ${displayUnit(item)}`}
       />
       <Value
         label="VP inkl. MWST"
         value={
           item.catch_price === null
             ? "—"
-            : `${formatCurrency(item.catch_price)} / ${item.quantity_unit}`
+            : `${formatCurrency(item.catch_price)} / ${displayUnit(item)}`
         }
       />
       <div className="text-sm lg:text-right">

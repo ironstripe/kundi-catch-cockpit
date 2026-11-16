@@ -47,7 +47,12 @@ import {
   formatDuration,
   reconcileCatch,
 } from "@/lib/catch-reconciliation";
-import { catchToReconciliationInput, fetchHistoryCatches, type CatchListItem } from "@/lib/catches";
+import {
+  catchToReconciliationInput,
+  displayUnit,
+  fetchHistoryCatches,
+  type CatchListItem,
+} from "@/lib/catches";
 import { formatCurrency, formatDateTime, formatPercentValue, formatQuantity } from "@/lib/format";
 
 const ALL = "alle";
@@ -540,7 +545,7 @@ function HistoryRow({ row }: { row: CatchListItem }) {
         {duration === null ? "—" : formatDuration(duration)}
       </TableCell>
       <TableCell className="text-right tabular-nums">
-        {formatQuantity(row.purchase_quantity, row.quantity_unit)}
+        {formatQuantity(row.purchase_quantity, displayUnit(row))}
       </TableCell>
       <TableCell className="text-right tabular-nums">
         {v ? formatQuantity(v.sold_quantity, v.quantity_unit) : "—"}
@@ -548,7 +553,7 @@ function HistoryRow({ row }: { row: CatchListItem }) {
       <TableCell className="text-right tabular-nums">
         {row.remaining_quantity === null
           ? "—"
-          : formatQuantity(row.remaining_quantity, row.quantity_unit)}
+          : formatQuantity(row.remaining_quantity, displayUnit(row))}
       </TableCell>
       <TableCell className="text-right tabular-nums">
         {row.catch_price === null ? "—" : formatCurrency(row.catch_price)}

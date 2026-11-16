@@ -35,7 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEditShortcuts } from "@/hooks/use-edit-session";
 import { useSyncedDraft } from "@/hooks/use-synced-draft";
 import { supabase } from "@/integrations/supabase/client";
-import type { CatchDetail } from "@/lib/catches";
+import { displayUnit, type CatchDetail } from "@/lib/catches";
 import { pickupSummary } from "@/lib/pickup-display";
 import { fetchAppSettings } from "@/lib/app-settings";
 import { formatDateTime } from "@/lib/format";
@@ -366,7 +366,7 @@ export function PublicationWorkspace({
                   value={
                     item.catch_price === null
                       ? "—"
-                      : `CHF ${item.catch_price.toFixed(2)}/${item.quantity_unit}`
+                      : `CHF ${item.catch_price.toFixed(2)}/${displayUnit(item)}`
                   }
                 />
                 <Fact label="Abholorte" value={pickupSummary(item.locations) ?? "—"} />

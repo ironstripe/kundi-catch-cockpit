@@ -18,6 +18,13 @@ import { QuantityPriceComparison } from "@/components/catch/quantity-price-compa
 import { parseNumberInput } from "@/lib/catch-calculation";
 
 import { CalculationCard } from "@/components/catch/calculation-card";
+import { PackBasisSummary } from "@/components/catch/pack-basis-summary";
+import {
+  salePackLabel,
+  type MassUnit,
+  type PricingBasisV1,
+  type PurchaseBasis,
+} from "@/lib/pricing-basis";
 import { CatchImagesField } from "@/components/catch/catch-image-field";
 import {
   AlertDialog,
@@ -71,6 +78,8 @@ import {
   CATCH_IMAGE_BUCKET,
   fetchLocations,
   fetchSuppliers,
+  formPackModel,
+  formPricingBasis,
   formValuesToCalculationInput,
   saveCatch,
   type CatchFormValues,
@@ -115,6 +124,11 @@ const FIELD_LABELS: Record<string, string> = {
   handicap_reason: "Grund für den Catch",
   handicap_story: "Handicap-Story",
   online_shop_url: "Produktlink im Onlineshop",
+  purchase_rate: "Einkaufspreis",
+  purchase_total_weight: "Einkaufsgewicht",
+  purchase_pack_count: "Anzahl Einkaufspackungen",
+  purchase_pack_weight: "Gewicht pro Einkaufspackung",
+  sale_pack_weight: "Gewicht pro Verkaufspackung",
 };
 
 export function CatchForm({
@@ -179,6 +193,12 @@ export function CatchForm({
 
   const suppliers = useQuery({ queryKey: ["suppliers"], queryFn: fetchSuppliers });
   const locations = useQuery({ queryKey: ["locations"], queryFn: fetchLocations });
+
+  const packMode = values.pricing_mode === "pack";
+  const packBasis = formPricingBasis(values);
+  const packModel = packBasis ? (formPackModel(values)?.model ?? null) : null;
+  const saleLabel = packBasis ? salePackLabel(packBasis as PricingBasisV1) : null;
+  const saleUnitText = saleLabel ?? "Verkaufspackung";
 
   const hasDeliveryCost =
     !values.delivery_included && (Number(values.delivery_cost.replace(",", ".")) || 0) > 0;
@@ -452,54 +472,183 @@ export function CatchForm({
                 </Select>
               </Field>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Field label="Einkaufsmenge" required error={issueFor("purchase_quantity")}>
-                  <Input
-                    id="purchase_quantity"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    inputMode="decimal"
-                    value={values.purchase_quantity}
-                    aria-invalid={Boolean(issueFor("purchase_quantity"))}
-                    onChange={(event) => set("purchase_quantity", event.target.value)}
-                  />
-                </Field>
-                <Field label="Einheit" required>
-                  <Select
-                    value={values.quantity_unit}
-                    onValueChange={(value) => set("quantity_unit", value)}
-                  >
-                    <SelectTrigger id="quantity_unit">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {QUANTITY_UNITS.map((unit) => (
-                        <SelectItem key={unit} value={unit}>
-                          {QUANTITY_UNIT_LABELS[unit]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field
-                  label={`Einkaufspreis pro Einheit ${vatBasisLabel(values.purchase_price_includes_vat)}`}
-                  required
-                  error={issueFor("purchase_price")}
-                  hint="CHF"
+              <Field
+                label="Preisbasis"
+                hint="Getrennt: Einkauf pro 100 g, kg oder Packung; Verkauf pro Verkaufspackung."
+              >
+                <ToggleGroup
+                  id="pricing_mode"
+                  type="single"
+                  variant="outline"
+                  value={values.pricing_mode}
+                  onValueChange={(next) => {
+                    if (next) set("pricing_mode", next as "unit" | "pack");
+                  }}
+                  className="justify-start"
                 >
-                  <Input
-                    id="purchase_price"
-                    type="number"
-                    min="0"
-                    step="0.05"
-                    inputMode="decimal"
-                    value={values.purchase_price}
-                    aria-invalid={Boolean(issueFor("purchase_price"))}
-                    onChange={(event) => set("purchase_price", event.target.value)}
-                  />
-                </Field>
-              </div>
+                  <ToggleGroupItem value="unit">Gemeinsame Einheit</ToggleGroupItem>
+                  <ToggleGroupItem value="pack">Einkauf und Verkauf getrennt</ToggleGroupItem>
+                </ToggleGroup>
+              </Field>
+
+              {packMode ? (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Field label="Einkaufspreis gilt" required>
+                      <Select
+                        value={values.purchase_basis}
+                        onValueChange={(value) => set("purchase_basis", value as PurchaseBasis)}
+                      >
+                        <SelectTrigger id="purchase_basis" aria-label="Einkaufspreis gilt">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="per_100g">pro 100 g</SelectItem>
+                          <SelectItem value="per_kg">pro 1 kg</SelectItem>
+                          <SelectItem value="per_pack">pro Einkaufspackung</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field
+                      label={`Einkaufspreis ${
+                        values.purchase_basis === "per_100g"
+                          ? "pro 100 g"
+                          : values.purchase_basis === "per_kg"
+                            ? "pro kg"
+                            : "pro Packung"
+                      } ${vatBasisLabel(values.purchase_price_includes_vat)}`}
+                      required
+                      error={issueFor("purchase_rate")}
+                      hint="CHF"
+                    >
+                      <Input
+                        id="purchase_rate"
+                        type="number"
+                        min="0"
+                        step="any"
+                        inputMode="decimal"
+                        value={values.purchase_rate}
+                        aria-invalid={Boolean(issueFor("purchase_rate"))}
+                        onChange={(event) => set("purchase_rate", event.target.value)}
+                      />
+                    </Field>
+                  </div>
+                  {values.purchase_basis === "per_pack" ? (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_5.5rem]">
+                      <Field
+                        label="Anzahl Einkaufspackungen"
+                        required
+                        error={issueFor("purchase_pack_count")}
+                      >
+                        <Input
+                          id="purchase_pack_count"
+                          type="number"
+                          min="1"
+                          step="1"
+                          inputMode="numeric"
+                          value={values.purchase_pack_count}
+                          aria-invalid={Boolean(issueFor("purchase_pack_count"))}
+                          onChange={(event) => set("purchase_pack_count", event.target.value)}
+                        />
+                      </Field>
+                      <Field
+                        label="Nettogewicht pro Einkaufspackung"
+                        required
+                        error={issueFor("purchase_pack_weight")}
+                      >
+                        <Input
+                          id="purchase_pack_weight"
+                          type="number"
+                          min="0"
+                          step="any"
+                          inputMode="decimal"
+                          value={values.purchase_pack_weight}
+                          aria-invalid={Boolean(issueFor("purchase_pack_weight"))}
+                          onChange={(event) => set("purchase_pack_weight", event.target.value)}
+                        />
+                      </Field>
+                      <MassSelect
+                        label="Einheit Einkaufspackung"
+                        value={values.purchase_pack_weight_unit}
+                        onChange={(unit) => set("purchase_pack_weight_unit", unit)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-[minmax(0,1fr)_5.5rem] gap-4">
+                      <Field
+                        label="Gesamtes Einkaufsgewicht"
+                        required
+                        error={issueFor("purchase_total_weight")}
+                      >
+                        <Input
+                          id="purchase_total_weight"
+                          type="number"
+                          min="0"
+                          step="any"
+                          inputMode="decimal"
+                          value={values.purchase_total_weight}
+                          aria-invalid={Boolean(issueFor("purchase_total_weight"))}
+                          onChange={(event) => set("purchase_total_weight", event.target.value)}
+                        />
+                      </Field>
+                      <MassSelect
+                        label="Einheit Einkaufsgewicht"
+                        value={values.purchase_total_weight_unit}
+                        onChange={(unit) => set("purchase_total_weight_unit", unit)}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <Field label="Einkaufsmenge" required error={issueFor("purchase_quantity")}>
+                    <Input
+                      id="purchase_quantity"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      inputMode="decimal"
+                      value={values.purchase_quantity}
+                      aria-invalid={Boolean(issueFor("purchase_quantity"))}
+                      onChange={(event) => set("purchase_quantity", event.target.value)}
+                    />
+                  </Field>
+                  <Field label="Einheit" required>
+                    <Select
+                      value={values.quantity_unit}
+                      onValueChange={(value) => set("quantity_unit", value)}
+                    >
+                      <SelectTrigger id="quantity_unit">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {QUANTITY_UNITS.map((unit) => (
+                          <SelectItem key={unit} value={unit}>
+                            {QUANTITY_UNIT_LABELS[unit]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field
+                    label={`Einkaufspreis pro Einheit ${vatBasisLabel(values.purchase_price_includes_vat)}`}
+                    required
+                    error={issueFor("purchase_price")}
+                    hint="CHF"
+                  >
+                    <Input
+                      id="purchase_price"
+                      type="number"
+                      min="0"
+                      step="0.05"
+                      inputMode="decimal"
+                      value={values.purchase_price}
+                      aria-invalid={Boolean(issueFor("purchase_price"))}
+                      onChange={(event) => set("purchase_price", event.target.value)}
+                    />
+                  </Field>
+                </div>
+              )}
 
               <MountedDisclosure title="Steuerbasis und Lieferung">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -664,8 +813,38 @@ export function CatchForm({
               description="Was zahlt die Kundschaft? Alle Kundenpreise sind Bruttopreise inklusive MWST."
             >
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {packMode ? (
+                  <div className="grid grid-cols-[minmax(0,1fr)_5.5rem] gap-4 sm:col-span-2">
+                    <Field
+                      label="Nettogewicht pro Verkaufspackung"
+                      required
+                      error={issueFor("sale_pack_weight")}
+                      hint="Unabhängig von der Einkaufspackung"
+                    >
+                      <Input
+                        id="sale_pack_weight"
+                        type="number"
+                        min="0"
+                        step="any"
+                        inputMode="decimal"
+                        value={values.sale_pack_weight}
+                        aria-invalid={Boolean(issueFor("sale_pack_weight"))}
+                        onChange={(event) => set("sale_pack_weight", event.target.value)}
+                      />
+                    </Field>
+                    <MassSelect
+                      label="Einheit Verkaufspackung"
+                      value={values.sale_pack_weight_unit}
+                      onChange={(unit) => set("sale_pack_weight_unit", unit)}
+                    />
+                  </div>
+                ) : null}
                 <Field
-                  label="Normalpreis inkl. MWST"
+                  label={
+                    packMode
+                      ? `Normalpreis inkl. MWST pro ${saleUnitText}`
+                      : "Normalpreis inkl. MWST"
+                  }
                   error={issueFor("regular_price")}
                   hint="CHF inkl. MWST, optional"
                 >
@@ -680,7 +859,11 @@ export function CatchForm({
                   />
                 </Field>
                 <Field
-                  label="Food-Catch-Preis inkl. MWST"
+                  label={
+                    packMode
+                      ? `Food-Catch-Preis inkl. MWST pro ${saleUnitText}`
+                      : "Food-Catch-Preis inkl. MWST"
+                  }
                   required
                   error={issueFor("catch_price")}
                   hint="CHF inkl. MWST"
@@ -718,6 +901,7 @@ export function CatchForm({
                 key={catchId ?? "new"}
                 grossPrice={parseNumberInput(values.catch_price)}
                 quantityUnit={values.quantity_unit}
+                salePackKg={packMode ? (packModel?.sale_pack_kg ?? 0) : null}
               />
             </FormSection>
 
@@ -896,9 +1080,13 @@ export function CatchForm({
                 description="Direkt zurechenbarer Catch-Aufwand — Grundlage für DB II."
               >
                 <Field
-                  label="Interner Aufwand pro vorbereitete Einheit"
+                  label={
+                    packMode
+                      ? "Interner Aufwand pro vorbereitete Verkaufspackung"
+                      : "Interner Aufwand pro vorbereitete Einheit"
+                  }
                   error={issueFor("internal_handling_cost_per_unit")}
-                  hint={`CHF / ${values.quantity_unit}`}
+                  hint={`CHF / ${packMode ? saleUnitText : values.quantity_unit}`}
                 >
                   <Input
                     id="internal_handling_cost_per_unit"
@@ -923,6 +1111,15 @@ export function CatchForm({
             <CalculationCard
               result={calculation}
               input={formValuesToCalculationInput(values, defaultVatRate)}
+              packSummary={
+                packBasis ? (
+                  <PackBasisSummary
+                    basis={packBasis as PricingBasisV1}
+                    catchPrice={parseNumberInput(values.catch_price)}
+                    purchaseVatLabel={vatBasisLabel(values.purchase_price_includes_vat)}
+                  />
+                ) : null
+              }
               compact
               description="Aktualisiert sich sofort bei Änderungen an Menge und Preisen."
             />
@@ -1025,6 +1222,33 @@ function Field({
       </Label>
       {children}
       {error ? <p className="text-xs font-medium text-destructive">{error}</p> : null}
+    </div>
+  );
+}
+
+function MassSelect({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: MassUnit;
+  onChange: (unit: MassUnit) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <span className="block text-sm font-medium text-transparent select-none" aria-hidden>
+        Einheit
+      </span>
+      <Select value={value} onValueChange={(unit) => onChange(unit as MassUnit)}>
+        <SelectTrigger aria-label={label}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="g">g</SelectItem>
+          <SelectItem value="kg">kg</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 }
