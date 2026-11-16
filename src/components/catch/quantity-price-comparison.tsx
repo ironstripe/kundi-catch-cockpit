@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { InfoHelp } from "@/components/ui/info-help";
 import { formatCurrency, formatPercentValue } from "@/lib/format";
-import { compareQuantityPrice, type DisplayBasis, type MassUnit } from "@/lib/quantity-price";
+import { compareQuantityPrice, type MassUnit } from "@/lib/quantity-price";
 
 export function QuantityPriceComparison({
   grossPrice,
@@ -23,7 +23,6 @@ export function QuantityPriceComparison({
   salePackKg?: number | null;
 }) {
   const id = useId();
-  const [basis, setBasis] = useState<DisplayBasis>("kg");
   const [packPrice, setPackPrice] = useState("");
   const [packWeight, setPackWeight] = useState("");
   const [packWeightUnit, setPackWeightUnit] = useState<MassUnit>("g");
@@ -34,34 +33,24 @@ export function QuantityPriceComparison({
     grossPrice,
     quantityUnit,
     knownSoldUnitKg: salePackKg,
-    basis,
+    basis: "kg",
     packPrice,
     packWeight,
     packWeightUnit,
     soldUnitWeight,
     soldUnitWeightUnit,
   });
-  const suffix = basis === "kg" ? "kg" : "100 g";
   const showInvalid = (packPrice !== "" || packWeight !== "") && result.competitor === null;
   return (
     <div className="space-y-3 border-t pt-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="flex items-center text-sm font-semibold">
-          Preisvergleich inkl. MWST
+          Preisvergleich pro kg
           <InfoHelp label="Preisvergleich">
-            Lokaler Packpreis-Vergleich. Nur bekannte Nettofüllmengen verwenden. Normalpreis,
+            Preise inkl. MWST. Nur bekannte Nettofüllmengen verwenden. Normalpreis,
             gespeicherte Einheit und Kalkulation bleiben unverändert.
           </InfoHelp>
         </span>
-        <Select value={basis} onValueChange={(value) => setBasis(value as DisplayBasis)}>
-          <SelectTrigger aria-label="Vergleichsbasis" className="w-28">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="kg">pro kg</SelectItem>
-            <SelectItem value="100g">pro 100 g</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
       {quantityUnit !== "kg" && !packMode ? (
         <div className="grid grid-cols-[minmax(0,1fr)_5rem] items-end gap-2">
@@ -89,9 +78,9 @@ export function QuantityPriceComparison({
           Nettogewicht fehlt — kein vergleichbarer Massenpreis.
         </p>
       ) : null}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_5rem]">
-        <div>
-          <Label htmlFor={`${id}-price`}>Vergleich: Packpreis inkl. MWST</Label>
+      <div className="grid grid-cols-1 items-end gap-2 sm:grid-cols-2">
+        <div className="min-w-0">
+          <Label htmlFor={`${id}-price`}>Vergleichspreis pro Packung</Label>
           <Input
             id={`${id}-price`}
             type="number"
@@ -102,9 +91,10 @@ export function QuantityPriceComparison({
             onChange={(event) => setPackPrice(event.target.value)}
           />
         </div>
-        <div>
-          <Label htmlFor={`${id}-weight`}>Nettofüllmenge der Packung</Label>
-          <Input
+        <div className="min-w-0">
+          <Label htmlFor={`${id}-weight`}>Gewicht der Vergleichspackung</Label>
+          <div className="grid grid-cols-[minmax(0,1fr)_5rem] items-end gap-2">
+            <Input
             id={`${id}-weight`}
             type="number"
             min="0"
@@ -112,13 +102,14 @@ export function QuantityPriceComparison({
             inputMode="decimal"
             value={packWeight}
             onChange={(event) => setPackWeight(event.target.value)}
-          />
+            />
+            <WeightSelect
+              label="Gewichtseinheit der Vergleichspackung"
+              value={packWeightUnit}
+              onChange={setPackWeightUnit}
+            />
+          </div>
         </div>
-        <WeightSelect
-          label="Gewichtseinheit Packung"
-          value={packWeightUnit}
-          onChange={setPackWeightUnit}
-        />
       </div>
       {showInvalid ? (
         <p role="status" className="text-xs text-warning-foreground">
@@ -127,11 +118,11 @@ export function QuantityPriceComparison({
       ) : null}
       <dl className="grid grid-cols-2 gap-3 text-sm" aria-live="polite">
         <div>
-          <dt className="text-xs text-muted-foreground">Unser VP / {suffix}</dt>
+          <dt className="text-xs text-muted-foreground">Unser VP / kg</dt>
           <dd>{result.ours === null ? "—" : formatCurrency(result.ours)}</dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground">Vergleich / {suffix}</dt>
+          <dt className="text-xs text-muted-foreground">Vergleich / kg</dt>
           <dd>{result.competitor === null ? "—" : formatCurrency(result.competitor)}</dd>
         </div>
       </dl>

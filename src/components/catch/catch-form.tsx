@@ -18,7 +18,6 @@ import { QuantityPriceComparison } from "@/components/catch/quantity-price-compa
 import { parseNumberInput } from "@/lib/catch-calculation";
 
 import { CalculationCard } from "@/components/catch/calculation-card";
-import { PackBasisSummary } from "@/components/catch/pack-basis-summary";
 import {
   salePackLabel,
   type MassUnit,
@@ -1148,15 +1147,7 @@ export function CatchForm({
             <CalculationCard
               result={calculation}
               input={formValuesToCalculationInput(values, defaultVatRate)}
-              packSummary={
-                packBasis ? (
-                  <PackBasisSummary
-                    basis={packBasis as PricingBasisV1}
-                    catchPrice={parseNumberInput(values.catch_price)}
-                    purchaseVatLabel={vatBasisLabel(values.purchase_price_includes_vat)}
-                  />
-                ) : null
-              }
+              pricingBasis={packBasis}
               compact
               description="Aktualisiert sich sofort bei Änderungen an Menge und Preisen."
             />

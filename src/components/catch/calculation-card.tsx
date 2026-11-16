@@ -4,6 +4,7 @@ import { DECISION_CLASSES, DECISION_ICONS } from "@/components/catch/decision-ba
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { InfoHelp } from "@/components/ui/info-help";
 import { MountedDisclosure } from "@/components/layout/mounted-disclosure";
+import { PackBasisSummary, type BasisInput } from "@/components/catch/pack-basis-summary";
 import type { CalculationResult, CalculationInput } from "@/lib/catch-calculation";
 import { formatCurrency, formatPercentValue, formatQuantity } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -37,7 +38,7 @@ interface CalculationCardProps {
   input?: CalculationInput;
   comparison?: ReactNode;
   /** Packungsmodus: Originalbasis von Einkauf und Verkauf. */
-  packSummary?: ReactNode;
+  pricingBasis?: BasisInput | null;
   /** Kompakte Variante für die Formularspalte. */
   compact?: boolean;
   description?: string;
@@ -48,7 +49,7 @@ export function CalculationCard({
   result,
   input,
   comparison,
-  packSummary,
+  pricingBasis,
   compact = false,
   description,
   footer,
@@ -89,9 +90,11 @@ export function CalculationCard({
           </InfoHelp>
         </p>
         {description ? <span className="sr-only">{description}</span> : null}
+        {pricingBasis && input ? <PackBasisSummary basis={pricingBasis} input={input} /> : (
+        <>
         <dl className="grid grid-cols-2 gap-3 border-b pb-3">
           <Primary
-            label={packSummary ? "EK netto pro Verkaufspackung" : "EK netto"}
+            label="EK netto"
             value={ek === null ? "—" : `${formatCurrency(ek)} / ${unit}`}
           />
           <Primary
@@ -100,10 +103,11 @@ export function CalculationCard({
           />
         </dl>
         <p className="text-xs text-muted-foreground">
-          {packSummary ? "Vorbereitete Verkaufspackungen (volle Kapazität)" : "Einkaufsmenge"}:{" "}
+          Einkaufsmenge:{" "}
           {quantity === null || quantity <= 0 ? "—" : formatQuantity(quantity, unit)}
         </p>
-        {packSummary}
+        </>
+        )}
         {comparison}
         {!result.complete ? (
           <div className="space-y-1.5 text-xs text-muted-foreground">
