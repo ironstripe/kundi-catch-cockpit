@@ -158,6 +158,18 @@ export function derivePackModel(
   }
 
   const capacity = Math.floor(totalMg / saleMg);
+  if (capacity > MAX_PACK_CAPACITY) {
+    return {
+      model: null,
+      issues: [
+        {
+          field: "sale_pack_weight",
+          message: "Zu viele Verkaufspackungen für die Speicherung.",
+        },
+      ],
+      incomplete: false,
+    };
+  }
   if (capacity < 1) {
     return {
       model: null,
@@ -215,6 +227,8 @@ export function derivePackModel(
 
 /** Grenzen der Spalten numeric(12,2) bzw. ein plausibles Maximalgewicht (100 t). */
 export const MAX_MONEY = 9_999_999_999.99;
+/** Grösste ganze Zahl in purchase_quantity numeric(12,2). */
+export const MAX_PACK_CAPACITY = 9_999_999_999;
 const MAX_TOTAL_MG = 100_000 * 1_000_000;
 
 /**
@@ -225,6 +239,8 @@ const MAX_TOTAL_MG = 100_000 * 1_000_000;
 export function roundCents(value: number): number {
   const sign = value < 0 ? -1 : 1;
   const abs = Math.abs(value);
+  // Unter einem halben Rappen → 0; verhindert zudem Exponent-Strings wie «5e-8e2».
+  if (!(abs >= 0.005)) return 0;
   const rounded = Number(`${Math.round(Number(`${abs}e2`))}e-2`);
   return sign * rounded;
 }
