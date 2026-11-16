@@ -31,8 +31,9 @@ export function QuantityPriceComparison({
   const [soldUnitWeightUnit, setSoldUnitWeightUnit] = useState<MassUnit>("g");
   const packMode = salePackKg !== null;
   const result = compareQuantityPrice({
-    grossPrice: packMode && !(salePackKg > 0) ? null : grossPrice,
-    quantityUnit: packMode ? "kg" : quantityUnit,
+    grossPrice,
+    quantityUnit,
+    knownSoldUnitKg: salePackKg,
     basis,
     packPrice,
     packWeight,
@@ -40,14 +41,6 @@ export function QuantityPriceComparison({
     soldUnitWeight,
     soldUnitWeightUnit,
   });
-  if (packMode && result.ours !== null && salePackKg > 0) {
-    // Unser Bruttopreis pro Verkaufspackung → pro kg / 100 g.
-    const perKg = (grossPrice ?? 0) / salePackKg;
-    const factor = basis === "100g" ? 0.1 : 1;
-    result.ours = perKg * factor;
-    result.difference =
-      result.competitor !== null ? ((result.ours - result.competitor) / result.competitor) * 100 : null;
-  }
   const suffix = basis === "kg" ? "kg" : "100 g";
   const showInvalid = (packPrice !== "" || packWeight !== "") && result.competitor === null;
   return (
