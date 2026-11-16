@@ -143,8 +143,7 @@ export function PublicationWorkspace({
   const storedGenerated = item.post_generated_text;
   const hasManualEdits = storedGenerated !== null && finalText.trim() !== storedGenerated.trim();
   const unsaved = finalText !== (item.post_final_text ?? "");
-  const templateUpdated =
-    staleDraft && isTemplateOnlyChange(item.post_source_signature, signature);
+  const templateUpdated = staleDraft && isTemplateOnlyChange(item.post_source_signature, signature);
 
   const saveText = useMutation({
     mutationFn: async (args: { text: string; reason: "generated" | "edited" | "reset" }) => {

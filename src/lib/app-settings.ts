@@ -118,7 +118,13 @@ export function legacyTemplateText(parts: {
   footer: string;
 }): string {
   const clean = (v: string) => v.trim();
-  return [clean(parts.header), clean(parts.intro), clean(parts.claim), CATCH_MARKER, clean(parts.footer)]
+  return [
+    clean(parts.header),
+    clean(parts.intro),
+    clean(parts.claim),
+    CATCH_MARKER,
+    clean(parts.footer),
+  ]
     .filter((part) => part !== "")
     .join("\n\n");
 }
