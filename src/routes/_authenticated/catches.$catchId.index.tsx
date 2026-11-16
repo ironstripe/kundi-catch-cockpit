@@ -181,7 +181,7 @@ function CatchDetailPage() {
             <CalculationCard
               result={calculation}
               input={catchToCalculationInput(item)}
-              pricingBasis={item.pricing_basis}
+              pricingBasis={item.pricing_basis ?? null}
               comparison={
                 <QuantityPriceComparison
                   key={item.id}
