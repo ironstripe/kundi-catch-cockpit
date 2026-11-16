@@ -238,6 +238,37 @@ export function CatchForm({
     busy: readOnly || saving || uploading,
   });
 
+  /**
+   * VP und Normalpreis gelten pro Einheit (gemeinsam) bzw. pro Verkaufspackung
+   * (getrennt). Beim Basiswechsel werden sie nie still übernommen: die Beträge
+   * der alten Basis werden zurückgelegt und beim Zurückwechseln wiederhergestellt.
+   */
+  const priceStash = useRef<Partial<Record<"unit" | "pack", { catch: string; regular: string }>>>(
+    {},
+  );
+  const [pricesNeedReentry, setPricesNeedReentry] = useState(false);
+  function switchPricingMode(next: "unit" | "pack") {
+    setValues((current) => {
+      if (current.pricing_mode === next) return current;
+      priceStash.current[current.pricing_mode] = {
+        catch: current.catch_price,
+        regular: current.regular_price,
+      };
+      const restored = priceStash.current[next] ?? { catch: "", regular: "" };
+      setPricesNeedReentry(
+        (current.catch_price !== "" || current.regular_price !== "") &&
+          restored.catch === "" &&
+          restored.regular === "",
+      );
+      return {
+        ...current,
+        pricing_mode: next,
+        catch_price: restored.catch,
+        regular_price: restored.regular,
+      };
+    });
+  }
+
   function set<K extends keyof CatchFormValues>(key: K, value: CatchFormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
   }
@@ -482,13 +513,19 @@ export function CatchForm({
                   variant="outline"
                   value={values.pricing_mode}
                   onValueChange={(next) => {
-                    if (next) set("pricing_mode", next as "unit" | "pack");
+                    if (next) switchPricingMode(next as "unit" | "pack");
                   }}
                   className="justify-start"
                 >
                   <ToggleGroupItem value="unit">Gemeinsame Einheit</ToggleGroupItem>
                   <ToggleGroupItem value="pack">Einkauf und Verkauf getrennt</ToggleGroupItem>
                 </ToggleGroup>
+                {pricesNeedReentry ? (
+                  <p role="status" className="mt-2 text-sm text-warning-foreground">
+                    Preisbasis gewechselt: Food-Catch-Preis und Normalpreis bitte neu{" "}
+                    {packMode ? "pro Verkaufspackung" : "pro Einheit"} erfassen.
+                  </p>
+                ) : null}
               </Field>
 
               {packMode ? (
