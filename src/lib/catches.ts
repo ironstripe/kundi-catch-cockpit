@@ -808,10 +808,12 @@ export function catchToCalculationInput(
   item: CatchListItem,
   defaultVatRate: number = DEFAULT_VAT_RATE,
 ): CalculationInput {
+  // Packungsmodus: immer das exakte Modell, nie die gerundete Kompatibilitätsspalte.
+  const exact = exactPackColumns(item.pricing_basis ?? null);
   return {
-    purchase_quantity: item.purchase_quantity || null,
+    purchase_quantity: (exact ? exact.purchase_quantity : item.purchase_quantity) || null,
     quantity_unit: displayUnit(item),
-    purchase_price: item.purchase_price,
+    purchase_price: exact ? exact.purchase_price : item.purchase_price,
     delivery_cost: item.delivery_included ? 0 : item.delivery_cost,
     regular_price: item.regular_price,
     catch_price: item.catch_price,
