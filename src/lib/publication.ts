@@ -5,6 +5,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { CATCH_IMAGE_BUCKET, type CatchDetail } from "@/lib/catches";
+import { salePackLabel } from "@/lib/pricing-basis";
 import { optimizeImageBlob, OPTIMIZED_PREFIX } from "@/lib/whatsapp-image";
 import type { PostSource } from "@/lib/whatsapp-post";
 
@@ -29,6 +30,7 @@ export function catchToPostSource(item: CatchDetail): PostSource {
     regular_price: item.regular_price,
     catch_price: item.catch_price,
     quantity_unit: item.quantity_unit,
+    ...(item.pricing_basis ? { sale_unit_label: salePackLabel(item.pricing_basis) } : {}),
     locations: item.locations.map((location) => ({
       name: location.name,
       address: location.address,
