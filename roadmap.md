@@ -1,9 +1,9 @@
 # Food Catch Cockpit — Roadmap
 
 ## Calculation usability (2026-11-16)
-- [ ] Fixed CHF/kg comparison with grouped, labelled comparison-pack weight
-- [ ] Shared original net purchase basis / gross sale-pack summary
-- [ ] Focused fixture, full suite and changed-file lint; automatic preview verification
+- [x] Fixed CHF/kg comparison with grouped, labelled comparison-pack weight
+- [x] Shared original net purchase basis / gross sale-pack summary
+- [x] 326 tests / 27 files, changed-file ESLint clean, automatic preview build/typecheck OK; no separate manual typecheck or signed-in browser check
 
 ## Final daily-use review (2026-10-28)
 - [x] Visible planned-maximum/net DB labels
