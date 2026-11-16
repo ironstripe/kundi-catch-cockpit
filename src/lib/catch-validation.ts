@@ -1,4 +1,4 @@
-import type { CatchFormValues } from "@/lib/catches";
+import { formPackModel, type CatchFormValues } from "@/lib/catches";
 import { validateProductUrl } from "@/lib/product-link";
 
 export interface FieldIssue {
@@ -31,6 +31,9 @@ export function validateDraft(values: CatchFormValues): FieldIssue[] {
       message: "Interner Aufwand pro Einheit darf nicht negativ sein.",
     });
   }
+  // Packungsmodus: nur echte Fehler blockieren den Entwurf, Fehlendes nicht.
+  const pack = formPackModel(values);
+  if (pack) issues.push(...pack.issues);
   return issues;
 }
 
@@ -45,13 +48,21 @@ export function validateReady(values: CatchFormValues, hasImage: boolean): Field
     issues.push({ field: "supplier_id", message: "Lieferant auswählen." });
   }
 
+  const pack = formPackModel(values);
+  if (pack && !pack.model && pack.issues.length === 0) {
+    issues.push({
+      field: values.purchase_basis === "per_pack" ? "purchase_pack_count" : "purchase_total_weight",
+      message: "Einkaufspreis, Einkaufsmenge und Gewicht der Verkaufspackung vollständig erfassen.",
+    });
+  }
+
   const quantity = toNumber(values.purchase_quantity);
-  if (quantity === null || quantity <= 0) {
+  if (!pack && (quantity === null || quantity <= 0)) {
     issues.push({ field: "purchase_quantity", message: "Einkaufsmenge muss grösser als 0 sein." });
   }
 
   const purchasePrice = toNumber(values.purchase_price);
-  if (purchasePrice === null || purchasePrice < 0) {
+  if (!pack && (purchasePrice === null || purchasePrice < 0)) {
     issues.push({
       field: "purchase_price",
       message: "Einkaufspreis pro Einheit ist erforderlich und darf nicht negativ sein.",
