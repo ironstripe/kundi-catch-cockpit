@@ -81,7 +81,7 @@ describe("Preisbasis-Wechsel", () => {
     expect(price("regular_price").value).toBe("");
     expect(screen.getByText(/Preisbasis gewechselt/).textContent).toContain("pro Verkaufspackung");
 
-    fireEvent.click(screen.getByRole("button", { name: /^(Änderungen|Entwurf) speichern$/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Als Entwurf speichern" }));
     await waitFor(() => expect(mocks.save).toHaveBeenCalled());
     const saved = mocks.save.mock.calls[0]![0].values as CatchFormValues;
     expect(saved.pricing_mode).toBe("pack");
@@ -95,7 +95,7 @@ describe("Preisbasis-Wechsel", () => {
 
   it("gespeicherter Catch ohne Wechsel behält seine Preise", async () => {
     renderForm(legacy);
-    fireEvent.click(screen.getByRole("button", { name: /^(Änderungen|Entwurf) speichern$/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Als Entwurf speichern" }));
     await waitFor(() => expect(mocks.save).toHaveBeenCalled());
     const saved = mocks.save.mock.calls[0]![0].values as CatchFormValues;
     expect(saved.catch_price).toBe("20");
