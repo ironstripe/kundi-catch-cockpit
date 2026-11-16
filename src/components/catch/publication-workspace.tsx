@@ -366,7 +366,7 @@ export function PublicationWorkspace({
                   value={
                     item.catch_price === null
                       ? "—"
-                      : `CHF ${item.catch_price.toFixed(2)}/${item.quantity_unit}`
+                      : `CHF ${item.catch_price.toFixed(2)}/${displayUnit(item)}`
                   }
                 />
                 <Fact label="Abholorte" value={pickupSummary(item.locations) ?? "—"} />

@@ -96,7 +96,7 @@ export function CatchCard({ item }: { item: CatchListItem }) {
               <dl className="grid grid-cols-2 gap-3 border-t pt-3 sm:grid-cols-3 xl:grid-cols-5">
                 <Field
                   label="Einkaufsmenge"
-                  value={formatQuantity(item.purchase_quantity, item.quantity_unit)}
+                  value={formatQuantity(item.purchase_quantity, displayUnit(item))}
                 />
                 <Field
                   label="Verkaufte Menge"
@@ -125,7 +125,7 @@ export function CatchCard({ item }: { item: CatchListItem }) {
                   label="Einkaufsmenge"
                   value={
                     item.purchase_quantity
-                      ? formatQuantity(item.purchase_quantity, item.quantity_unit)
+                      ? formatQuantity(item.purchase_quantity, displayUnit(item))
                       : "—"
                   }
                 />
@@ -134,7 +134,7 @@ export function CatchCard({ item }: { item: CatchListItem }) {
                   value={
                     item.catch_price === null
                       ? "—"
-                      : `${formatCurrency(item.catch_price)} / ${item.quantity_unit}`
+                      : `${formatCurrency(item.catch_price)} / ${displayUnit(item)}`
                   }
                 />
                 <Field

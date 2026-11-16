@@ -44,20 +44,20 @@ export function CatchRow({ item }: { item: CatchListItem }) {
         label="Einkaufsmenge"
         value={
           item.purchase_quantity > 0
-            ? formatQuantity(item.purchase_quantity, item.quantity_unit)
+            ? formatQuantity(item.purchase_quantity, displayUnit(item))
             : "—"
         }
       />
       <Value
         label="EK netto"
-        value={ek === null ? "—" : `${formatCurrency(ek)} / ${item.quantity_unit}`}
+        value={ek === null ? "—" : `${formatCurrency(ek)} / ${displayUnit(item)}`}
       />
       <Value
         label="VP inkl. MWST"
         value={
           item.catch_price === null
             ? "—"
-            : `${formatCurrency(item.catch_price)} / ${item.quantity_unit}`
+            : `${formatCurrency(item.catch_price)} / ${displayUnit(item)}`
         }
       />
       <div className="text-sm lg:text-right">
