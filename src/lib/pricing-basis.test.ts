@@ -344,7 +344,16 @@ describe("Round-trip durch numeric(12,2) (PGlite)", () => {
       JSON.stringify(basis),
     ]);
     const read = async () => {
-      const r = (await db.query<Record<string, unknown>>("SELECT * FROM c")).rows[0]!;
+      const r = (
+        await db.query<{
+          quantity_unit: string;
+          purchase_quantity: unknown;
+          purchase_price: unknown;
+          catch_price: unknown;
+          regular_price: unknown;
+          pricing_basis: unknown;
+        }>("SELECT * FROM c")
+      ).rows[0]!;
       const toNum = (v: unknown) => (v === null ? null : Number(v));
       const row = {
         quantity_unit: String(r.quantity_unit),
@@ -386,9 +395,7 @@ describe("Round-trip durch numeric(12,2) (PGlite)", () => {
     const text = generatePostText(catchToPostSource({ ...item, locations: [] }));
     expect(text).toContain("CHF 3.33 pro 300-g-Packung");
     // Reload → Formular → erneutes Speichern ist stabil.
-    expect(pricingColumns(catchDetailToForm(item)).pricing_basis!.legacy).toEqual(
-      basis!.legacy,
-    );
+    expect(pricingColumns(catchDetailToForm(item)).pricing_basis!.legacy).toEqual(basis!.legacy);
     await db.close();
   });
 

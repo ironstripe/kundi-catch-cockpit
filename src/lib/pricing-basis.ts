@@ -175,7 +175,9 @@ export function derivePackModel(
   if (!Number.isSafeInteger(totalMg) || totalMg > MAX_TOTAL_MG) {
     return {
       model: null,
-      issues: [{ field: "purchase_total_weight", message: "Einkaufsgewicht ist unrealistisch gross." }],
+      issues: [
+        { field: "purchase_total_weight", message: "Einkaufsgewicht ist unrealistisch gross." },
+      ],
       incomplete: false,
     };
   }
@@ -187,7 +189,9 @@ export function derivePackModel(
   if (!Number.isFinite(purchaseTotal) || purchaseTotal > MAX_MONEY) {
     return {
       model: null,
-      issues: [{ field: "purchase_rate", message: "Einkaufsbetrag ist ausserhalb des gültigen Bereichs." }],
+      issues: [
+        { field: "purchase_rate", message: "Einkaufsbetrag ist ausserhalb des gültigen Bereichs." },
+      ],
       incomplete: false,
     };
   }
